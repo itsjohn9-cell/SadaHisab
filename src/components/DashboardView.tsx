@@ -48,7 +48,7 @@ interface DashboardViewProps {
   fxRates: FXRate[];
   khumsSnapshots: KhumsSnapshot[];
   sponsorships: Sponsorship[];
-  primaryCurrency: 'PKR' | 'AED';
+  primaryCurrency: 'PKR' | 'AED' | 'USD';
   onNavigateTab: (tab: any) => void;
   onOpenAddModal: () => void;
   onOpenVoiceLogger?: () => void;
@@ -84,6 +84,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [fxRates]);
 
   const aedRate = fxMap.get('AED') || 74.31;
+  const usdRate = fxMap.get('USD') || 278.50;
 
   // Calculate high-level financial KPIs
   const metrics = useMemo(() => {
@@ -144,8 +145,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return {
       totalNetWorthPKR,
       totalNetWorthAED: totalNetWorthPKR / aedRate,
+      totalNetWorthUSD: totalNetWorthPKR / usdRate,
       spendableCashPKR,
       spendableCashAED: spendableCashPKR / aedRate,
+      spendableCashUSD: spendableCashPKR / usdRate,
       custodialCashPKR,
       totalLiabilitiesPKR,
       monthlyBurnRatePKR,
@@ -153,7 +156,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       latestSnapshot,
       activeSponsorshipsPKR
     };
-  }, [accounts, transactions, fxMap, aedRate, khumsSnapshots, sponsorships]);
+  }, [accounts, transactions, fxMap, aedRate, usdRate, khumsSnapshots, sponsorships]);
 
   // Utility Bill Variance & Spike Detector (> 15% surge vs lastMonthReferenceAmount or benchmark)
   const utilityVarianceAlerts = useMemo(() => {
@@ -368,7 +371,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <h3 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
               {primaryCurrency === 'PKR' 
                 ? formatCurrencyMasked(metrics.totalNetWorthPKR, 'PKR', isPrivacyMasked)
-                : formatCurrencyMasked(metrics.totalNetWorthAED, 'AED', isPrivacyMasked)}
+                : primaryCurrency === 'AED'
+                ? formatCurrencyMasked(metrics.totalNetWorthAED, 'AED', isPrivacyMasked)
+                : formatCurrencyMasked(metrics.totalNetWorthUSD, 'USD', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-slate-400 mt-1 flex items-center space-x-1">
               <span>Equivalent:</span>
@@ -400,7 +405,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <h3 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
               {primaryCurrency === 'PKR' 
                 ? formatCurrencyMasked(metrics.spendableCashPKR, 'PKR', isPrivacyMasked)
-                : formatCurrencyMasked(metrics.spendableCashAED, 'AED', isPrivacyMasked)}
+                : primaryCurrency === 'AED'
+                ? formatCurrencyMasked(metrics.spendableCashAED, 'AED', isPrivacyMasked)
+                : formatCurrencyMasked(metrics.spendableCashUSD, 'USD', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-slate-400 mt-1">
               Excludes Wife ({formatCurrencyMasked(metrics.custodialCashPKR, 'PKR', isPrivacyMasked)}) & Bonds

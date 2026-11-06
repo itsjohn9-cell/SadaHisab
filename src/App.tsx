@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   db, 
   initializeDatabase, 
@@ -45,6 +45,8 @@ import { BillScannerModal } from './components/BillScannerModal';
 import { VoiceLoggerModal } from './components/VoiceLoggerModal';
 import { CoordinatorManagerView } from './components/CoordinatorManagerView';
 import { NoCodeStudioView } from './components/NoCodeStudioView';
+import { GlobalControlBar, GlobalFilterState } from './components/GlobalControlBar';
+import { GoogleSheetSyncModal } from './components/GoogleSheetSyncModal';
 import { platformBridge } from './services/platformBridge';
 import { Mic } from 'lucide-react';
 
@@ -62,8 +64,14 @@ export const App: React.FC = () => {
   const [isBillScannerOpen, setIsBillScannerOpen] = useState(false);
   const [isVoiceLoggerOpen, setIsVoiceLoggerOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isGoogleSheetModalOpen, setIsGoogleSheetModalOpen] = useState(false);
   const [pastedClipboardText, setPastedClipboardText] = useState('');
-  const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED'>('PKR');
+  const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED' | 'USD'>('PKR');
+  const [globalFilters, setGlobalFilters] = useState<GlobalFilterState>({
+    currency: 'PKR',
+    year: 'ALL',
+    region: 'ALL'
+  });
   const [fxValuationMode, setFxModeState] = useState<FXValuationMode>(getFXValuationMode);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -269,6 +277,26 @@ export const App: React.FC = () => {
     showToast(res.message);
   };
 
+  // Global Filters application
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      if (globalFilters.year !== 'ALL' && t.date && !t.date.startsWith(globalFilters.year)) {
+        return false;
+      }
+      return true;
+    });
+  }, [transactions, globalFilters.year]);
+
+  const filteredAccounts = useMemo(() => {
+    return accounts.filter(acc => {
+      if (globalFilters.region === 'PK') return acc.currency === 'PKR' && !acc.isCustodial;
+      if (globalFilters.region === 'AE') return acc.currency === 'AED';
+      if (globalFilters.region === 'INTL') return ['USD', 'GBP', 'SAR', 'MYR', 'IQD'].includes(acc.currency);
+      if (globalFilters.region === 'CUSTODIAL') return acc.isCustodial;
+      return true;
+    });
+  }, [accounts, globalFilters.region]);
+
   const needsReviewCount = transactions.filter(t => t.status === 'NEEDS_REVIEW').length;
   const sampleDataCount = transactions.filter(t => t.isSampleData).length;
 
@@ -315,12 +343,25 @@ export const App: React.FC = () => {
         onOpenBillScanner={() => setIsBillScannerOpen(true)}
         onOpenVoiceLogger={() => setIsVoiceLoggerOpen(true)}
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
+        onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
         primaryCurrency={primaryCurrency}
         setPrimaryCurrency={setPrimaryCurrency}
         fxValuationMode={fxValuationMode}
         setFxValuationMode={handleFXModeChange}
         isPrivacyMasked={isPrivacyMasked}
         onTogglePrivacyMask={() => setIsPrivacyMasked(prev => !prev)}
+      />
+
+      {/* Global High-Visibility Currency Switcher & Filter Bar */}
+      <GlobalControlBar
+        primaryCurrency={primaryCurrency}
+        setPrimaryCurrency={setPrimaryCurrency}
+        filterState={globalFilters}
+        setFilterState={setGlobalFilters}
+        isPrivacyMasked={isPrivacyMasked}
+        onTogglePrivacyMask={() => setIsPrivacyMasked(prev => !prev)}
+        onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
+        totalTransactionsCount={filteredTransactions.length}
       />
 
       {/* Global Toast Notification */}
@@ -354,8 +395,8 @@ export const App: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <DashboardView
-            accounts={accounts}
-            transactions={transactions}
+            accounts={filteredAccounts}
+            transactions={filteredTransactions}
             fxRates={fxRates}
             khumsSnapshots={khumsSnapshots}
             sponsorships={sponsorships}
@@ -419,8 +460,8 @@ export const App: React.FC = () => {
 
         {activeTab === 'ledger' && (
           <LedgerView
-            transactions={transactions}
-            accounts={accounts}
+            transactions={filteredTransactions}
+            accounts={filteredAccounts}
             initialFilterTab="ALL"
             onOpenAddModal={() => setIsAddModalOpen(true)}
             onRefreshData={refreshAllData}
@@ -513,6 +554,14 @@ export const App: React.FC = () => {
           setSecuritySettings(newSec);
           showToast('Security settings updated successfully.');
         }}
+      />
+
+      {/* Google Sheet Two-Way Live Sync Hub Modal */}
+      <GoogleSheetSyncModal
+        isOpen={isGoogleSheetModalOpen}
+        onClose={() => setIsGoogleSheetModalOpen(false)}
+        onRefreshData={refreshAllData}
+        showToast={showToast}
       />
 
     </div>

@@ -57,8 +57,9 @@ interface NavbarProps {
   onOpenBillScanner: () => void;
   onOpenVoiceLogger: () => void;
   onOpenSecurityModal: () => void;
-  primaryCurrency: 'PKR' | 'AED';
-  setPrimaryCurrency: (c: 'PKR' | 'AED') => void;
+  onOpenGoogleSheetModal?: () => void;
+  primaryCurrency: 'PKR' | 'AED' | 'USD';
+  setPrimaryCurrency: (c: 'PKR' | 'AED' | 'USD') => void;
   fxValuationMode: FXValuationMode;
   setFxValuationMode: (m: FXValuationMode) => void;
   isPrivacyMasked?: boolean;
@@ -79,6 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenBillScanner,
   onOpenVoiceLogger,
   onOpenSecurityModal,
+  onOpenGoogleSheetModal,
   primaryCurrency,
   setPrimaryCurrency,
   fxValuationMode,
@@ -361,29 +363,53 @@ export const Navbar: React.FC<NavbarProps> = ({
               <kbd className="hidden xl:inline-block ml-1 px-1 py-0.2 text-[9px] font-mono bg-slate-900 border border-slate-700 rounded text-slate-400">Ctrl+V</kbd>
             </button>
 
-            {/* Currency Toggle (PKR / AED) */}
+            {/* Google Sheet Sync Button in Navbar */}
+            {onOpenGoogleSheetModal && (
+              <button
+                type="button"
+                onClick={onOpenGoogleSheetModal}
+                className="hidden md:flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-lg text-xs font-semibold transition"
+                title="Google Sheet Live Sync (1UybhQ...)"
+              >
+                <ArrowLeftRight className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="hidden xl:inline">Google Sheet</span>
+              </button>
+            )}
+
+            {/* Currency Toggle (PKR / AED / USD) */}
             <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-semibold">
               <button
                 onClick={() => setPrimaryCurrency('PKR')}
-                className={`px-2 py-1 rounded transition-colors ${
+                className={`px-1.5 sm:px-2 py-1 rounded transition-colors ${
                   primaryCurrency === 'PKR' 
                     ? 'bg-emerald-600 text-white shadow-sm' 
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="View Net Worth in Pakistani Rupees"
+                title="View in Pakistani Rupees"
               >
                 PKR
               </button>
               <button
                 onClick={() => setPrimaryCurrency('AED')}
-                className={`px-2 py-1 rounded transition-colors ${
+                className={`px-1.5 sm:px-2 py-1 rounded transition-colors ${
                   primaryCurrency === 'AED' 
                     ? 'bg-emerald-600 text-white shadow-sm' 
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="View Net Worth in UAE Dirhams"
+                title="View in UAE Dirhams"
               >
                 AED
+              </button>
+              <button
+                onClick={() => setPrimaryCurrency('USD')}
+                className={`px-1.5 sm:px-2 py-1 rounded transition-colors ${
+                  primaryCurrency === 'USD' 
+                    ? 'bg-emerald-600 text-white shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="View in US Dollars"
+              >
+                USD
               </button>
             </div>
 
