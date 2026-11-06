@@ -287,3 +287,4 @@ export const HealerQueueView: React.FC<HealerQueueViewProps> = ({
     </div>
   );
 };
+

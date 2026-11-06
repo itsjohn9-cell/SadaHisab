@@ -482,3 +482,4 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
     </div>
   );
 };
+

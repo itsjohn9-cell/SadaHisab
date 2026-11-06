@@ -1,6 +1,28 @@
 import Dexie, { Table } from 'dexie';
-import { Account, Transaction, FXRate, KhumsSnapshot, Sponsorship } from '../types';
-import { DEFAULT_ACCOUNTS, DEFAULT_FX_RATES, HISTORICAL_KHUMS_SNAPSHOTS, DEFAULT_SPONSORSHIPS } from './defaultData';
+import { 
+  Account, 
+  Transaction, 
+  FXRate, 
+  KhumsSnapshot, 
+  Sponsorship, 
+  MerchantRule, 
+  RosterItem, 
+  RosterBatchDraftItem 
+} from '../types';
+import { 
+  DEFAULT_ACCOUNTS, 
+  DEFAULT_FX_RATES, 
+  HISTORICAL_KHUMS_SNAPSHOTS, 
+  DEFAULT_SPONSORSHIPS,
+  DEFAULT_MERCHANT_RULES,
+  DEFAULT_ROSTER_ITEMS
+} from './defaultData';
+import { convertToPKR } from '../services/fxService';
+
+export interface AppSetting {
+  key: string;
+  value: any;
+}
 
 export class SadaHisabDatabase extends Dexie {
   accounts!: Table<Account, string>;
@@ -8,22 +30,28 @@ export class SadaHisabDatabase extends Dexie {
   fx_rates!: Table<FXRate, string>;
   khums_snapshots!: Table<KhumsSnapshot, number>;
   sponsorships!: Table<Sponsorship, string>;
+  merchant_rules!: Table<MerchantRule, string>;
+  roster_items!: Table<RosterItem, string>;
+  app_settings!: Table<AppSetting, string>;
 
   constructor() {
     super('SadaHisabDB');
-    this.version(1).stores({
+    this.version(2).stores({
       accounts: 'id, name, type, currency, isCustodial, isKhumsExempt, country, isSampleData',
-      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId',
+      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth',
       fx_rates: 'currency, baseCurrency',
       khums_snapshots: 'year, cutoffDate, isLocked, isSampleData',
-      sponsorships: 'id, category, active, dueDay'
+      sponsorships: 'id, category, active, dueDay',
+      merchant_rules: 'id, keyword, category, defaultAccountId',
+      roster_items: 'id, name, category, defaultDay, isActive',
+      app_settings: 'key'
     });
   }
 }
 
 export const db = new SadaHisabDatabase();
 
-// Seed initial default accounts, FX rates and historical snapshots
+// Seed initial default accounts, FX rates, historical snapshots, merchant rules and roster items
 export async function initializeDatabase() {
   const accountCount = await db.accounts.count();
   if (accountCount === 0) {
@@ -44,6 +72,113 @@ export async function initializeDatabase() {
   if (sponsCount === 0) {
     await db.sponsorships.bulkAdd(DEFAULT_SPONSORSHIPS);
   }
+
+  const rulesCount = await db.merchant_rules.count();
+  if (rulesCount === 0) {
+    await db.merchant_rules.bulkAdd(DEFAULT_MERCHANT_RULES);
+  }
+
+  const rosterCount = await db.roster_items.count();
+  if (rosterCount === 0) {
+    await db.roster_items.bulkAdd(DEFAULT_ROSTER_ITEMS);
+  }
+
+  // Initialize blocked OTP counter
+  const otpSetting = await db.app_settings.get('blockedOTPsCount');
+  if (!otpSetting) {
+    await db.app_settings.put({ key: 'blockedOTPsCount', value: 0 });
+  }
+}
+
+// Security: Increment Blocked OTPs Protected Counter
+export async function incrementBlockedOTPCounter(): Promise<number> {
+  const current = await db.app_settings.get('blockedOTPsCount');
+  const count = (current ? Number(current.value) : 0) + 1;
+  await db.app_settings.put({ key: 'blockedOTPsCount', value: count });
+  return count;
+}
+
+export async function getBlockedOTPCounter(): Promise<number> {
+  const current = await db.app_settings.get('blockedOTPsCount');
+  return current ? Number(current.value) : 0;
+}
+
+// Learn or update a merchant rule permanently
+export async function learnMerchantRule(
+  keyword: string,
+  category: string,
+  subCategory?: string,
+  defaultAccountId?: string
+): Promise<MerchantRule> {
+  const existing = await db.merchant_rules.where('keyword').equalsIgnoreCase(keyword.trim()).first();
+  
+  const rule: MerchantRule = {
+    id: existing ? existing.id : `rule-${Date.now()}`,
+    keyword: keyword.trim(),
+    category: category.trim(),
+    subCategory: subCategory?.trim() || undefined,
+    defaultAccountId,
+    matchCount: existing ? (existing.matchCount || 0) + 1 : 1,
+    createdAt: existing ? existing.createdAt : new Date().toISOString()
+  };
+
+  await db.merchant_rules.put(rule);
+  return rule;
+}
+
+// 1-Click Commit Monthly Recurring Batch
+export async function commitRosterBatch(
+  monthStr: string, // e.g. "2026-11"
+  items: RosterBatchDraftItem[]
+): Promise<{ count: number; totalPKR: number }> {
+  const transactionsToCreate: Transaction[] = [];
+  let totalPKR = 0;
+
+  for (const item of items) {
+    if (!item.selected) continue;
+
+    const dayStr = String(item.defaultDay || 1).padStart(2, '0');
+    const txDate = `${monthStr}-${dayStr}`;
+
+    const converted = await convertToPKR(item.adjustedAmount, item.currency);
+    totalPKR += converted.amountPKR;
+
+    const tx: Transaction = {
+      id: `roster-tx-${item.id}-${monthStr}-${Date.now()}`,
+      date: txDate,
+      type: item.category.toLowerCase().includes('income') ? 'INCOME' : 'EXPENSE',
+      amount: item.adjustedAmount,
+      currency: item.currency,
+      convertedAmountPKR: converted.amountPKR,
+      fxRateUsed: converted.fxRate,
+      category: item.category,
+      subCategory: item.subCategory,
+      merchantOrRecipient: item.name,
+      sourceAccountId: item.sourceAccountId,
+      beneficiaryPhone: item.beneficiaryPhone,
+      paymentChannel: item.paymentChannel,
+      description: item.adjustmentNote ? `[Batch ${monthStr}] ${item.adjustmentNote}` : `Monthly recurring roster: ${monthStr}`,
+      status: 'CONFIRMED',
+      rosterBatchMonth: monthStr
+    };
+
+    transactionsToCreate.push(tx);
+
+    // Update roster item lastCommittedMonth
+    await db.roster_items.update(item.id, {
+      lastCommittedMonth: monthStr
+    });
+  }
+
+  if (transactionsToCreate.length > 0) {
+    await db.transactions.bulkAdd(transactionsToCreate);
+    await recalculateAllAccountBalances();
+  }
+
+  return {
+    count: transactionsToCreate.length,
+    totalPKR
+  };
 }
 
 // Recalculate account balances based on initialBalance + all non-sample or sample transactions
@@ -61,7 +196,6 @@ export async function recalculateAllAccountBalances() {
         } else if (tx.type === 'TRANSFER') {
           balance -= Number(tx.amount || 0);
         } else if (tx.type === 'CREDIT_CARD_SWIPE') {
-          // For credit card liability, swipe increases liability (so decreases negative balance)
           balance -= Number(tx.amount || 0);
         }
       }
@@ -82,7 +216,6 @@ export async function recalculateAllAccountBalances() {
 
 // 1-Click Load Realistic Sample Data
 export async function loadSampleData() {
-  // Clear any existing sample data first to avoid duplicates
   await clearSampleData();
 
   const sampleTransactions: Transaction[] = [
@@ -195,7 +328,6 @@ export async function loadSampleData() {
       status: 'CONFIRMED',
       isSampleData: true
     },
-    // Remittance / Transfer from UAE to PKR
     {
       id: 'sample-tx-7',
       date: '2026-11-04',
@@ -213,7 +345,6 @@ export async function loadSampleData() {
       status: 'CONFIRMED',
       isSampleData: true
     },
-    // Wise USD Consulting Income
     {
       id: 'sample-tx-8',
       date: '2026-11-05',
@@ -231,7 +362,6 @@ export async function loadSampleData() {
       status: 'CONFIRMED',
       isSampleData: true
     },
-    // Row flagged for Needs Review (Healed Shifted Column)
     {
       id: 'sample-tx-9',
       date: '2026-11-06',
@@ -254,7 +384,6 @@ export async function loadSampleData() {
         'Flagged for review because date was inferred from adjacent row'
       ]
     },
-    // Custodial Children Galla Deposit (Excluded from Khums)
     {
       id: 'sample-tx-10',
       date: '2026-11-06',

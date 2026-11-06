@@ -55,6 +55,11 @@ export interface Transaction {
   isSampleData?: boolean;
   healingNotes?: string[];
   lastMonthReferenceAmount?: number;
+  rosterBatchMonth?: string; // e.g. "2026-11" for monthly recurring batch
+  fuelDetails?: {
+    liters?: number;
+    pricePerLiter?: number;
+  };
   createdAt?: string;
 }
 
@@ -98,6 +103,63 @@ export interface Sponsorship {
   active: boolean;
   notes?: string;
   lastPaidDate?: string;
+}
+
+export interface MerchantRule {
+  id: string;
+  keyword: string; // e.g. 'StromFiber', 'PSO', 'Green Island'
+  category: string;
+  subCategory?: string;
+  defaultAccountId?: string;
+  defaultAmount?: number;
+  notes?: string;
+  matchCount?: number;
+  createdAt: string;
+}
+
+export interface RosterItem {
+  id: string;
+  name: string; // e.g., 'Green Island School', 'Asghar Bhai Van', 'Maulana Qalbe Ali'
+  category: string;
+  subCategory?: string;
+  defaultAmount: number;
+  currency: Currency;
+  sourceAccountId: string;
+  beneficiaryPhone?: string;
+  paymentChannel?: string;
+  defaultDay: number; // e.g., 1st or 5th
+  notes?: string;
+  isActive: boolean;
+  lastCommittedMonth?: string; // e.g., '2026-10'
+}
+
+export interface RosterBatchDraftItem extends RosterItem {
+  selected: boolean;
+  adjustedAmount: number;
+  adjustmentNote?: string;
+}
+
+export interface ParsedSMSResult {
+  rawText: string;
+  isOTPBlocked: boolean;
+  blockedReason?: string;
+  date: string;
+  amount: number;
+  currency: Currency;
+  direction: TransactionType;
+  inferredAccountId?: string;
+  merchantOrRecipient: string;
+  category: string;
+  subCategory?: string;
+  beneficiaryPhone?: string;
+  paymentChannel?: string;
+  referenceNumber?: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  fuelDetails?: {
+    liters?: number;
+    pricePerLiter?: number;
+  };
+  ruleApplied?: string;
 }
 
 export interface ReconciliationComparison {

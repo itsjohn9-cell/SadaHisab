@@ -527,3 +527,4 @@ export const KhumsView: React.FC<KhumsViewProps> = ({
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-import { Account, FXRate, KhumsSnapshot, Sponsorship } from '../types';
+import { Account, FXRate, KhumsSnapshot, Sponsorship, MerchantRule, RosterItem } from '../types';
 
 export const DEFAULT_ACCOUNTS: Account[] = [
   // Pakistan Banks
@@ -355,7 +355,7 @@ export const DEFAULT_FX_RATES: FXRate[] = [
     currency: 'USD',
     baseCurrency: 'PKR',
     liveRate: 276.53,
-    spreadAdjustment: -1.0, // Sheet Totals!O5:O9 conservative spread
+    spreadAdjustment: -1.0,
     effectiveRate: 275.53,
     updatedAt: new Date().toISOString()
   },
@@ -493,7 +493,7 @@ export const HISTORICAL_KHUMS_SNAPSHOTS: KhumsSnapshot[] = [
     totalSavingsPKR: 7420000,
     unusedConsumables20PctPKR: 68000,
     newUnusedItems25PctPKR: 48000,
-    loansGivenReceivablesPKR: 328369, // Note: Loan given to family matching prompt
+    loansGivenReceivablesPKR: 328369,
     wifeAndCustodialSubtractPKR: 420000,
     pendingLiabilitiesCCSubtractPKR: 215000,
     priorYearKhumsedCapitalPKR: 5662000,
@@ -592,5 +592,354 @@ export const DEFAULT_SPONSORSHIPS: Sponsorship[] = [
     active: true,
     notes: 'Monthly ration & medical allowance for 3 orphans',
     lastPaidDate: '2026-11-01'
+  }
+];
+
+// Pre-seeded Adaptive Merchant-to-Category Rules from Historical Sheet
+export const DEFAULT_MERCHANT_RULES: MerchantRule[] = [
+  {
+    id: 'rule-stromfiber',
+    keyword: 'StromFiber',
+    category: 'Bill Payment',
+    subCategory: 'Internet',
+    defaultAccountId: 'nayapay-pkr',
+    notes: 'Auto-maps StromFiber broadband invoices to Nayapay / Al Habib',
+    matchCount: 14,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-imtiaz',
+    keyword: 'Imtiaz',
+    category: 'Grocery',
+    subCategory: 'Supermarket',
+    defaultAccountId: 'al-habib-pkr',
+    notes: 'Imtiaz Super Market groceries',
+    matchCount: 28,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-bread-drink',
+    keyword: 'Bread + Drink',
+    category: 'Grocery',
+    subCategory: 'Daily Essentials',
+    defaultAccountId: 'cash-wallet-pkr',
+    notes: 'Daily bakery & dairy quick cash expense',
+    matchCount: 42,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-pso',
+    keyword: 'PSO',
+    category: 'Petrol',
+    subCategory: 'Fuel',
+    defaultAccountId: 'scb-pkr',
+    notes: 'Pakistan State Oil - triggers automated liters and price/liter extraction',
+    matchCount: 35,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-shell',
+    keyword: 'Shell',
+    category: 'Petrol',
+    subCategory: 'Fuel',
+    defaultAccountId: 'scb-pkr',
+    notes: 'Shell fuel station auto extraction',
+    matchCount: 19,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-green-island',
+    keyword: 'Green Island',
+    category: 'School',
+    subCategory: 'Tuition Fee',
+    defaultAccountId: 'al-habib-pkr',
+    defaultAmount: 12525,
+    notes: 'Green Island School standard fee (12,525 PKR)',
+    matchCount: 22,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-asghar-van',
+    keyword: 'Asghar Bhai Van',
+    category: 'Van',
+    subCategory: 'School Transport',
+    defaultAccountId: 'easypaisa-pkr',
+    defaultAmount: 3500,
+    notes: 'Monthly student van pool (3,500 PKR)',
+    matchCount: 22,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-muhammadi-trust',
+    keyword: 'Muhammadi Welfare Trust',
+    category: 'Donation',
+    subCategory: 'Charity & Welfare',
+    defaultAccountId: 'easypaisa-pkr',
+    notes: 'Monthly charity disbursement',
+    matchCount: 18,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-maulana-generic',
+    keyword: 'Maulana',
+    category: 'Donation',
+    subCategory: 'Religious Honorarium',
+    defaultAccountId: 'jazzcash-pkr',
+    notes: 'Religious teaching and community honorariums',
+    matchCount: 25,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-adcb-card',
+    keyword: 'ADCB Cr.Card',
+    category: 'Living Expenses',
+    subCategory: 'Credit Card Swipe',
+    defaultAccountId: 'credit-card-aed',
+    notes: 'ADCB Credit Card daily swipes in UAE',
+    matchCount: 52,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-lulu',
+    keyword: 'Lulu',
+    category: 'Grocery',
+    subCategory: 'Supermarket',
+    defaultAccountId: 'adcb-aed',
+    notes: 'Lulu Hypermarket UAE household supplies',
+    matchCount: 30,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'rule-carrefour',
+    keyword: 'Carrefour',
+    category: 'Grocery',
+    subCategory: 'Supermarket',
+    defaultAccountId: 'adcb-aed',
+    notes: 'Carrefour UAE grocery spending',
+    matchCount: 24,
+    createdAt: '2026-01-01T00:00:00Z'
+  }
+];
+
+// Pre-seeded Monthly Recurring Roster Items (~20 Items matching Excel sheets)
+export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
+  // 1. School Fees & Transport
+  {
+    id: 'roster-green-island',
+    name: 'Green Island School Fees',
+    category: 'School',
+    subCategory: 'Tuition Fee',
+    defaultAmount: 12525,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 5,
+    isActive: true,
+    notes: 'Standard monthly fee voucher'
+  },
+  {
+    id: 'roster-asghar-van',
+    name: 'Asghar Bhai Van Pool',
+    category: 'Van',
+    subCategory: 'School Transport',
+    defaultAmount: 3500,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    defaultDay: 5,
+    isActive: true,
+    notes: 'Student school transport monthly pick & drop'
+  },
+  {
+    id: 'roster-mustafa-fee',
+    name: 'Mustafa Student Fee',
+    category: 'School',
+    subCategory: 'Tuition Fee',
+    defaultAmount: 8500,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    beneficiaryPhone: '03123456789',
+    paymentChannel: 'Easypaisa',
+    defaultDay: 5,
+    isActive: true,
+    notes: 'Mustafa high school fee'
+  },
+  {
+    id: 'roster-fatima-fbis',
+    name: 'Fatima - FBIS Exam & Board Fees',
+    category: 'School',
+    subCategory: 'FBIS Exam Fees',
+    defaultAmount: 6200,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    beneficiaryPhone: '03335551212',
+    paymentChannel: 'Bank Transfer',
+    defaultDay: 10,
+    isActive: true,
+    notes: 'Federal Board intermediate registration installment'
+  },
+
+  // 2. Religious & Community Sponsorships
+  {
+    id: 'roster-qalbe-ali',
+    name: 'Student Fees via Maulana Qalbe Ali',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship',
+    defaultAmount: 15000,
+    currency: 'PKR',
+    sourceAccountId: 'jazzcash-pkr',
+    beneficiaryPhone: '03009876543',
+    paymentChannel: 'JazzCash',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly educational sponsorship for deserving students'
+  },
+  {
+    id: 'roster-khatoon-khatoon',
+    name: 'Khatoon Khatoon Sponsorship',
+    category: 'Donation',
+    subCategory: 'Family Welfare',
+    defaultAmount: 6000,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly family stipend'
+  },
+  {
+    id: 'roster-zaibun-nisa',
+    name: 'Zaibun Nisa Sponsorship',
+    category: 'Donation',
+    subCategory: 'Family Welfare',
+    defaultAmount: 5000,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly widow & family support'
+  },
+  {
+    id: 'roster-muhammadi-trust',
+    name: 'Muhammadi Welfare Trust',
+    category: 'Donation',
+    subCategory: 'Charity & Welfare',
+    defaultAmount: 10000,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly ration & medical charity'
+  },
+  {
+    id: 'roster-lutf-latif',
+    name: 'Maulana Lutf Latif Honorarium',
+    category: 'Donation',
+    subCategory: 'Religious Honorarium',
+    defaultAmount: 12000,
+    currency: 'PKR',
+    sourceAccountId: 'jazzcash-pkr',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly wazeefa for community religious services'
+  },
+  {
+    id: 'roster-syed-orphans',
+    name: 'Syed Orphan Family Support',
+    category: 'Donation',
+    subCategory: 'Orphan Support',
+    defaultAmount: 20000,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    beneficiaryPhone: '03451122334',
+    paymentChannel: 'Easypaisa',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly ration for 3 orphans'
+  },
+
+  // 3. Household Bills & Utilities
+  {
+    id: 'roster-stromfiber',
+    name: 'StromFiber Fiber Broadband',
+    category: 'Bill Payment',
+    subCategory: 'Internet',
+    defaultAmount: 3500,
+    currency: 'PKR',
+    sourceAccountId: 'nayapay-pkr',
+    defaultDay: 10,
+    isActive: true,
+    notes: 'Home 50Mbps unlimited broadband'
+  },
+  {
+    id: 'roster-m106-utilities',
+    name: 'M106 Gas / Water / Electricity',
+    category: 'Utilities',
+    subCategory: 'Utility Pool',
+    defaultAmount: 8500,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 15,
+    isActive: true,
+    notes: 'Combined apartment building utility maintenance'
+  },
+  {
+    id: 'roster-water-sufi',
+    name: 'Sufi Mineral Water Cans Delivery',
+    category: 'Household',
+    subCategory: 'Drinking Water',
+    defaultAmount: 2700,
+    currency: 'PKR',
+    sourceAccountId: 'cash-wallet-pkr',
+    defaultDay: 20,
+    isActive: true,
+    notes: 'Monthly mineral water bottle delivery'
+  },
+  {
+    id: 'roster-wife-monthly',
+    name: 'Wife Monthly Household & Private Pay',
+    category: 'Household',
+    subCategory: 'Amanat / Personal',
+    defaultAmount: 60000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Monthly household allowance & wife private funds (Amanat/Khums Exempt)'
+  },
+
+  // 4. UAE Recurring
+  {
+    id: 'roster-uae-etisalat',
+    name: 'Etisalat Home Fiber (UAE)',
+    category: 'Utilities',
+    subCategory: 'Internet & Mobile',
+    defaultAmount: 389,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 15,
+    isActive: true,
+    notes: 'Elife home fiber connection'
+  },
+  {
+    id: 'roster-uae-addc',
+    name: 'ADDC Electricity & Water (Abu Dhabi)',
+    category: 'Utilities',
+    subCategory: 'Electricity & Water',
+    defaultAmount: 365.87,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 25,
+    isActive: true,
+    notes: 'Monthly utility bill'
+  },
+  {
+    id: 'roster-uae-salik',
+    name: 'Salik Toll Auto Recharge',
+    category: 'Transport',
+    subCategory: 'Toll Gate',
+    defaultAmount: 100,
+    currency: 'AED',
+    sourceAccountId: 'credit-card-aed',
+    defaultDay: 1,
+    isActive: true,
+    notes: 'Automatic 100 AED Salik tag top-up'
   }
 ];

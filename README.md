@@ -140,3 +140,4 @@ npx cap open android
 ---
 
 &copy; 2026 Sada Hisab. Built with React, TypeScript, Tailwind CSS, Dexie.js & SheetJS.
+

@@ -136,3 +136,4 @@ export async function generateKhumsDraftFromAccounts(year: number): Promise<Khum
 export async function saveKhumsSnapshot(snapshot: KhumsSnapshot): Promise<void> {
   await db.khums_snapshots.put(snapshot);
 }
+

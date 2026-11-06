@@ -348,3 +348,4 @@ export const SponsorshipView: React.FC<SponsorshipViewProps> = ({
     </div>
   );
 };
+

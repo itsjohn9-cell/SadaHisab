@@ -13,7 +13,7 @@ import {
   Sponsorship 
 } from './types';
 import { fetchLiveFXRates } from './services/fxService';
-import { Navbar } from './components/Navbar';
+import { Navbar, NavTabType } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { LedgerView } from './components/LedgerView';
 import { HealerQueueView } from './components/HealerQueueView';
@@ -21,9 +21,12 @@ import { KhumsView } from './components/KhumsView';
 import { SponsorshipView } from './components/SponsorshipView';
 import { ImportExportView } from './components/ImportExportView';
 import { TransactionModal } from './components/TransactionModal';
+import { MagicInboxView } from './components/MagicInboxView';
+import { MonthlyRosterView } from './components/MonthlyRosterView';
+import { QuickPasteModal } from './components/QuickPasteModal';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'ledger' | 'healer' | 'khums' | 'sponsorships' | 'import-export'>('dashboard');
+  const [activeTab, setActiveTab] = useState<NavTabType>('dashboard');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [fxRates, setFxRates] = useState<FXRate[]>([]);
@@ -32,6 +35,8 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncingFX, setIsSyncingFX] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isQuickPasteOpen, setIsQuickPasteOpen] = useState(false);
+  const [pastedClipboardText, setPastedClipboardText] = useState('');
   const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED'>('PKR');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -61,16 +66,51 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Initial mount
+  // Initial mount & URL Scheme Handler for Android Bridge (?quickAdd=...)
   useEffect(() => {
     async function init() {
       setIsLoading(true);
       await initializeDatabase();
       await refreshAllData();
       setIsLoading(false);
+
+      // Check if URL has ?quickAdd= query parameter from MacroDroid or Android shortcut
+      const urlParams = new URLSearchParams(window.location.search);
+      const quickAddParam = urlParams.get('quickAdd');
+      if (quickAddParam) {
+        setPastedClipboardText(quickAddParam);
+        setIsQuickPasteOpen(true);
+        // Clean URL without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
     init();
   }, [refreshAllData]);
+
+  // Global Ctrl+V / Cmd+V Anywhere in App
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      // Don't intercept if user is typing into an active input or textarea
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      const pasted = e.clipboardData?.getData('text');
+      if (pasted && pasted.trim().length > 5) {
+        // Check if looks like a financial SMS, receipt or notification
+        const looksLikeFinancial = /(AED|PKR|Rs|USD|\$|£|debited|credited|spent|used for|paid to|sent to|account|card|balance|otp)/i.test(pasted);
+        if (looksLikeFinancial) {
+          e.preventDefault();
+          setPastedClipboardText(pasted.trim());
+          setIsQuickPasteOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener('paste', handleGlobalPaste);
+    return () => window.removeEventListener('paste', handleGlobalPaste);
+  }, []);
 
   // Load realistic sample data
   const handleLoadSample = async () => {
@@ -127,6 +167,10 @@ export const App: React.FC = () => {
         onSyncFX={handleSyncFX}
         isSyncingFX={isSyncingFX}
         onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenQuickPaste={() => {
+          setPastedClipboardText('');
+          setIsQuickPasteOpen(true);
+        }}
         primaryCurrency={primaryCurrency}
         setPrimaryCurrency={setPrimaryCurrency}
       />
@@ -151,6 +195,23 @@ export const App: React.FC = () => {
             primaryCurrency={primaryCurrency}
             onNavigateTab={setActiveTab}
             onOpenAddModal={() => setIsAddModalOpen(true)}
+          />
+        )}
+
+        {/* NEW: Magic Inbox & Smart SMS Parser */}
+        {activeTab === 'magic-inbox' && (
+          <MagicInboxView
+            accounts={accounts}
+            onRefreshData={refreshAllData}
+            initialPastedText={pastedClipboardText}
+          />
+        )}
+
+        {/* NEW: 1-Click Monthly Recurring Roster */}
+        {activeTab === 'roster' && (
+          <MonthlyRosterView
+            accounts={accounts}
+            onRefreshData={refreshAllData}
           />
         )}
 
@@ -197,15 +258,24 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-5 text-center text-xs text-slate-500">
-        <p>Sada Hisab &bull; 100% Local-First Multi-Currency & Annual Khums Accounting &bull; Zero Server Tracking</p>
+        <p>Sada Hisab &bull; Zero-Manual-Effort Multi-Currency Cash & Khums Suite &bull; 100% Local-First & Air-Gapped</p>
       </footer>
 
-      {/* Transaction Recording Modal */}
+      {/* Manual Transaction Recording Modal */}
       <TransactionModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         accounts={accounts}
         fxRates={fxRates}
+        onSuccess={refreshAllData}
+      />
+
+      {/* Global Floating Quick Paste SMS Modal (Ctrl+V) */}
+      <QuickPasteModal
+        isOpen={isQuickPasteOpen}
+        onClose={() => setIsQuickPasteOpen(false)}
+        accounts={accounts}
+        initialPastedText={pastedClipboardText}
         onSuccess={refreshAllData}
       />
 
