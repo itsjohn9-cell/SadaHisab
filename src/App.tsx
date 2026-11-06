@@ -325,19 +325,19 @@ export const App: React.FC = () => {
 
       {/* Global Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/50 text-slate-100 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>{toastMessage}</span>
+        <div className="fixed bottom-24 sm:bottom-8 right-4 sm:right-24 z-50 bg-slate-900 border border-emerald-500/50 text-slate-100 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 max-w-[calc(100vw-2rem)]">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
       {/* Floating Microphone Action Button for Instant Voice Logging */}
       <button
         onClick={() => setIsVoiceLoggerOpen(true)}
-        className="fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-tr from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full shadow-2xl shadow-rose-600/40 hover:scale-105 active:scale-95 transition-all border-2 border-rose-400/40"
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-4 sm:right-6 z-40 p-3.5 sm:p-4 bg-gradient-to-tr from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full shadow-2xl shadow-rose-600/40 hover:scale-105 active:scale-95 transition-all border-2 border-rose-400/40"
         title="Hands-Free Voice Logger (Say: 'Paid 365 AED for DEWA from ADCB')"
       >
-        <Mic className="w-6 h-6" />
+        <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
       {/* Main Content Area */}
