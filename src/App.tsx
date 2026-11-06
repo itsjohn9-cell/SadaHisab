@@ -33,6 +33,12 @@ import { ReconciliationAuditView } from './components/ReconciliationAuditView';
 import { AppLockScreen } from './components/AppLockScreen';
 import { SecuritySettingsModal } from './components/SecuritySettingsModal';
 import { BackupReminderBanner } from './components/BackupReminderBanner';
+import { PlannedRemindersView } from './components/PlannedRemindersView';
+import { AdvancedReportsView } from './components/AdvancedReportsView';
+import { LoansLedgerView } from './components/LoansLedgerView';
+import { BillScannerModal } from './components/BillScannerModal';
+import { VoiceLoggerModal } from './components/VoiceLoggerModal';
+import { Mic } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTabType>('dashboard');
@@ -45,6 +51,8 @@ export const App: React.FC = () => {
   const [isSyncingFX, setIsSyncingFX] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isQuickPasteOpen, setIsQuickPasteOpen] = useState(false);
+  const [isBillScannerOpen, setIsBillScannerOpen] = useState(false);
+  const [isVoiceLoggerOpen, setIsVoiceLoggerOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [pastedClipboardText, setPastedClipboardText] = useState('');
   const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED'>('PKR');
@@ -218,7 +226,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white relative">
       
       {/* App Lock Screen Overlay */}
       {isLocked && (
@@ -246,6 +254,8 @@ export const App: React.FC = () => {
           setPastedClipboardText('');
           setIsQuickPasteOpen(true);
         }}
+        onOpenBillScanner={() => setIsBillScannerOpen(true)}
+        onOpenVoiceLogger={() => setIsVoiceLoggerOpen(true)}
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
         primaryCurrency={primaryCurrency}
         setPrimaryCurrency={setPrimaryCurrency}
@@ -258,6 +268,15 @@ export const App: React.FC = () => {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* Floating Microphone Action Button for Instant Voice Logging */}
+      <button
+        onClick={() => setIsVoiceLoggerOpen(true)}
+        className="fixed bottom-6 right-6 z-40 p-4 bg-gradient-to-tr from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full shadow-2xl shadow-rose-600/40 hover:scale-105 active:scale-95 transition-all border-2 border-rose-400/40"
+        title="Hands-Free Voice Logger (Say: 'Paid 365 AED for DEWA from ADCB')"
+      >
+        <Mic className="w-6 h-6" />
+      </button>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -297,6 +316,21 @@ export const App: React.FC = () => {
             accounts={accounts}
             onRefreshData={refreshAllData}
           />
+        )}
+
+        {/* Planned Schedules & Calendar Reminders */}
+        {activeTab === 'reminders' && (
+          <PlannedRemindersView />
+        )}
+
+        {/* Advanced Reports & Donation % Tracker */}
+        {activeTab === 'reports' && (
+          <AdvancedReportsView />
+        )}
+
+        {/* Loans, Receivables, Fiqh Checklist & Google Drive Sync */}
+        {activeTab === 'loans' && (
+          <LoansLedgerView />
         )}
 
         {/* Financial Integrity & Reconciliation Auditor */}
@@ -369,6 +403,22 @@ export const App: React.FC = () => {
         onClose={() => setIsQuickPasteOpen(false)}
         accounts={accounts}
         initialPastedText={pastedClipboardText}
+        onSuccess={refreshAllData}
+      />
+
+      {/* Multimodal Bill, Receipt & PDF Statement Scanner */}
+      <BillScannerModal
+        isOpen={isBillScannerOpen}
+        onClose={() => setIsBillScannerOpen(false)}
+        accounts={accounts}
+        onSuccess={refreshAllData}
+      />
+
+      {/* Voice Note / Speech-to-Transaction Logger */}
+      <VoiceLoggerModal
+        isOpen={isVoiceLoggerOpen}
+        onClose={() => setIsVoiceLoggerOpen(false)}
+        accounts={accounts}
         onSuccess={refreshAllData}
       />
 

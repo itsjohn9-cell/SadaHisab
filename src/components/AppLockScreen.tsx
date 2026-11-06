@@ -174,3 +174,4 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
     </div>
   );
 };
+

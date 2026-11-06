@@ -64,6 +64,11 @@ export interface Transaction {
     pricePerLiter?: number;
   };
   isReconciliationAdjustment?: boolean;
+  dedupeHash?: string; // Tier 1 Deterministic Fingerprint
+  receiptThumbnail?: string; // Base64 thumbnail or icon
+  receiptBlobId?: string; // Attached receipt ID
+  sourceChannel?: 'MANUAL' | 'EXCEL' | 'SMS' | 'OCR' | 'AI_VISION' | 'VOICE' | 'STATEMENT';
+  linkedTransferTxId?: string; // Tier 3 Linked transfer/card payment
   createdAt?: string;
 }
 
@@ -78,7 +83,7 @@ export interface FXRate {
 
 export interface KhumsSnapshot {
   year: number;
-  cutoffDate: string; // YYYY-11-30
+  cutoffDate: string; // Custom configurable date, default YYYY-11-30
   totalSavingsPKR: number;
   unusedConsumables20PctPKR: number; // food/perfumes left over
   newUnusedItems25PctPKR: number; // unworn clothes, unopened goods
@@ -111,7 +116,7 @@ export interface Sponsorship {
 
 export interface MerchantRule {
   id: string;
-  keyword: string; // e.g. 'StromFiber', 'PSO', 'Green Island'
+  keyword: string;
   category: string;
   subCategory?: string;
   defaultAccountId?: string;
@@ -131,9 +136,11 @@ export interface RosterItem {
   sourceAccountId: string;
   beneficiaryPhone?: string;
   paymentChannel?: string;
-  defaultDay: number;
+  defaultDay: number; // 1-31
   notes?: string;
   isActive: boolean;
+  isBillReminder?: boolean;
+  reminderType?: 'FAMILY_ALLOWANCE' | 'FIXED_BILL' | 'EDUCATION' | 'SADAQAH_ROSTER';
   lastCommittedMonth?: string;
 }
 
@@ -141,6 +148,77 @@ export interface RosterBatchDraftItem extends RosterItem {
   selected: boolean;
   adjustedAmount: number;
   adjustmentNote?: string;
+}
+
+// Module 5: Loans & Receivables Ledger
+export interface LoanRecord {
+  id: string;
+  type: 'LENT_RECEIVABLE' | 'BORROWED_LIABILITY';
+  counterpartyName: string; // e.g. "Family Member (328,369 loan)"
+  relationship?: string;
+  originalAmount: number;
+  remainingAmount: number;
+  currency: Currency;
+  lentDate: string; // YYYY-MM-DD
+  dueDate?: string;
+  isRecoverable: boolean; // Accessible/Recoverable (Include in Khums) vs Doubtful (Exclude)
+  notes?: string;
+  repayments?: Array<{
+    date: string;
+    amount: number;
+    notes?: string;
+  }>;
+}
+
+// Module 5: App Settings
+export interface AppSecuritySettings {
+  isAppLockEnabled: boolean;
+  pinHash?: string;
+  pinSalt?: string;
+  hasBiometrics: boolean;
+  biometricCredentialId?: string;
+  autoLockTimeoutMs: number;
+  lastBackupDate?: string;
+  geminiApiKey?: string;
+  customKhumsCutoffMonthDay?: string; // e.g. "11-30" (Nov 30 default)
+  targetDonationPercentage?: number; // e.g. 10%
+  googleDriveClientId?: string;
+  googleDriveAccessToken?: string;
+  googleDriveAutoSync?: boolean;
+  googleDriveLastSync?: string;
+}
+
+// Module 1: OCR & Bill Extracted Item
+export interface ExtractedBillData {
+  merchant: string;
+  date: string;
+  totalAmount: number;
+  taxAmount?: number;
+  currency: Currency;
+  category: string;
+  subCategory?: string;
+  accountHint?: string;
+  billReferenceNumber?: string;
+  lineItems?: Array<{
+    description: string;
+    amount: number;
+    quantity?: number;
+  }>;
+  rawText: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  sourceEngine: 'LOCAL_PDF' | 'LOCAL_OCR' | 'GEMINI_VISION';
+}
+
+export interface StatementRowDraft {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  currency: Currency;
+  direction: TransactionType;
+  inferredCategory: string;
+  inferredAccountId: string;
+  selected: boolean;
 }
 
 export interface ParsedSMSResult {
@@ -164,16 +242,6 @@ export interface ParsedSMSResult {
     pricePerLiter?: number;
   };
   ruleApplied?: string;
-}
-
-export interface AppSecuritySettings {
-  isAppLockEnabled: boolean;
-  pinHash?: string;
-  pinSalt?: string;
-  hasBiometrics: boolean;
-  biometricCredentialId?: string;
-  autoLockTimeoutMs: number; // 300000 = 5 minutes
-  lastBackupDate?: string;
 }
 
 export interface ReconciliationComparison {
@@ -208,4 +276,12 @@ export interface ExcelHealingSummary {
   phonesExtractedCount: number;
   items: HealingReportItem[];
   reconciliation: ReconciliationComparison[];
+}
+
+export interface PotentialDuplicateMatch {
+  existingTransaction: Transaction;
+  incomingTransaction: Partial<Transaction>;
+  matchReason: string;
+  dateDiffDays: number;
+  amountDiffPercent: number;
 }

@@ -1,4 +1,4 @@
-import { Account, FXRate, KhumsSnapshot, Sponsorship, MerchantRule, RosterItem } from '../types';
+import { Account, FXRate, KhumsSnapshot, Sponsorship, MerchantRule, RosterItem, LoanRecord } from '../types';
 
 export const DEFAULT_ACCOUNTS: Account[] = [
   // Pakistan Banks
@@ -259,7 +259,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     name: 'Credit Card (PKR/AED)',
     type: 'CREDIT_CARD',
     currency: 'AED',
-    initialBalance: -4500, // Liability
+    initialBalance: -4500,
     currentBalance: -4500,
     isCustodial: false,
     isKhumsExempt: true,
@@ -595,7 +595,6 @@ export const DEFAULT_SPONSORSHIPS: Sponsorship[] = [
   }
 ];
 
-// Pre-seeded Adaptive Merchant-to-Category Rules from Historical Sheet
 export const DEFAULT_MERCHANT_RULES: MerchantRule[] = [
   {
     id: 'rule-stromfiber',
@@ -721,7 +720,6 @@ export const DEFAULT_MERCHANT_RULES: MerchantRule[] = [
   }
 ];
 
-// Pre-seeded Monthly Recurring Roster Items (~20 Items matching Excel sheets)
 export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
   // 1. School Fees & Transport
   {
@@ -734,6 +732,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'al-habib-pkr',
     defaultDay: 5,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'EDUCATION',
     notes: 'Standard monthly fee voucher'
   },
   {
@@ -746,6 +746,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'easypaisa-pkr',
     defaultDay: 5,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'EDUCATION',
     notes: 'Student school transport monthly pick & drop'
   },
   {
@@ -760,6 +762,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     paymentChannel: 'Easypaisa',
     defaultDay: 5,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'EDUCATION',
     notes: 'Mustafa high school fee'
   },
   {
@@ -774,6 +778,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     paymentChannel: 'Bank Transfer',
     defaultDay: 10,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'EDUCATION',
     notes: 'Federal Board intermediate registration installment'
   },
 
@@ -790,6 +796,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     paymentChannel: 'JazzCash',
     defaultDay: 1,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
     notes: 'Monthly educational sponsorship for deserving students'
   },
   {
@@ -802,6 +810,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'easypaisa-pkr',
     defaultDay: 1,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
     notes: 'Monthly family stipend'
   },
   {
@@ -814,6 +824,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'easypaisa-pkr',
     defaultDay: 1,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
     notes: 'Monthly widow & family support'
   },
   {
@@ -821,24 +833,28 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     name: 'Muhammadi Welfare Trust',
     category: 'Donation',
     subCategory: 'Charity & Welfare',
-    defaultAmount: 10000,
+    defaultAmount: 25000,
     currency: 'PKR',
     sourceAccountId: 'easypaisa-pkr',
     defaultDay: 1,
     isActive: true,
-    notes: 'Monthly ration & medical charity'
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Monthly ration & medical charity (25,000 PKR)'
   },
   {
     id: 'roster-lutf-latif',
     name: 'Maulana Lutf Latif Honorarium',
     category: 'Donation',
     subCategory: 'Religious Honorarium',
-    defaultAmount: 12000,
+    defaultAmount: 9000,
     currency: 'PKR',
     sourceAccountId: 'jazzcash-pkr',
     defaultDay: 1,
     isActive: true,
-    notes: 'Monthly wazeefa for community religious services'
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Monthly wazeefa for community religious services (9,000 PKR)'
   },
   {
     id: 'roster-syed-orphans',
@@ -852,6 +868,8 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     paymentChannel: 'Easypaisa',
     defaultDay: 1,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'SADAQAH_ROSTER',
     notes: 'Monthly ration for 3 orphans'
   },
 
@@ -866,31 +884,51 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'nayapay-pkr',
     defaultDay: 10,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
     notes: 'Home 50Mbps unlimited broadband'
   },
   {
-    id: 'roster-m106-utilities',
-    name: 'M106 Gas / Water / Electricity',
+    id: 'roster-m106-electricity',
+    name: 'M106 Electricity Utility Bill',
     category: 'Utilities',
-    subCategory: 'Utility Pool',
-    defaultAmount: 8500,
+    subCategory: 'Electricity',
+    defaultAmount: 5500,
     currency: 'PKR',
     sourceAccountId: 'al-habib-pkr',
     defaultDay: 15,
     isActive: true,
-    notes: 'Combined apartment building utility maintenance'
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    notes: 'Apartment electricity bill'
   },
   {
-    id: 'roster-water-sufi',
-    name: 'Sufi Mineral Water Cans Delivery',
-    category: 'Household',
-    subCategory: 'Drinking Water',
-    defaultAmount: 2700,
+    id: 'roster-m106-gas',
+    name: 'M106 Gas Utility Bill',
+    category: 'Utilities',
+    subCategory: 'Gas',
+    defaultAmount: 1800,
     currency: 'PKR',
-    sourceAccountId: 'cash-wallet-pkr',
-    defaultDay: 20,
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 15,
     isActive: true,
-    notes: 'Monthly mineral water bottle delivery'
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    notes: 'Apartment gas cylinder / pipeline'
+  },
+  {
+    id: 'roster-m106-water',
+    name: 'M106 Water Tanker Maintenance',
+    category: 'Utilities',
+    subCategory: 'Water',
+    defaultAmount: 1200,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 15,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    notes: 'Building water pump & tanker share'
   },
   {
     id: 'roster-wife-monthly',
@@ -902,21 +940,39 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'al-habib-pkr',
     defaultDay: 1,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'FAMILY_ALLOWANCE',
     notes: 'Monthly household allowance & wife private funds (Amanat/Khums Exempt)'
+  },
+  {
+    id: 'roster-family-remittance-rohia',
+    name: 'Family Remittance (Rohia / Children)',
+    category: 'Family Support',
+    subCategory: 'Remittance',
+    defaultAmount: 35000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FAMILY_ALLOWANCE',
+    notes: 'Monthly family support remittance'
   },
 
   // 4. UAE Recurring
   {
-    id: 'roster-uae-etisalat',
-    name: 'Etisalat Home Fiber (UAE)',
+    id: 'roster-uae-mobile-48',
+    name: 'Mobile 48 AED Combo Recharge',
     category: 'Utilities',
-    subCategory: 'Internet & Mobile',
-    defaultAmount: 389,
+    subCategory: 'Mobile Prepaid',
+    defaultAmount: 48,
     currency: 'AED',
-    sourceAccountId: 'adcb-aed',
-    defaultDay: 15,
+    sourceAccountId: 'credit-card-aed',
+    defaultDay: 28,
     isActive: true,
-    notes: 'Elife home fiber connection'
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    notes: 'Virgin/Etisalat monthly local combo plan'
   },
   {
     id: 'roster-uae-addc',
@@ -928,18 +984,54 @@ export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
     sourceAccountId: 'adcb-aed',
     defaultDay: 25,
     isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
     notes: 'Monthly utility bill'
   },
   {
-    id: 'roster-uae-salik',
-    name: 'Salik Toll Auto Recharge',
-    category: 'Transport',
-    subCategory: 'Toll Gate',
-    defaultAmount: 100,
+    id: 'roster-uae-cc-bill',
+    name: 'ADCB Credit Card Bill Payment',
+    category: 'Liabilities',
+    subCategory: 'Credit Card Bill',
+    defaultAmount: 4500,
     currency: 'AED',
-    sourceAccountId: 'credit-card-aed',
-    defaultDay: 1,
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 20,
     isActive: true,
-    notes: 'Automatic 100 AED Salik tag top-up'
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    notes: 'Monthly full cycle credit card payment from ADCB Bank'
+  }
+];
+
+// Pre-seeded Default Loan Records
+export const DEFAULT_LOANS: LoanRecord[] = [
+  {
+    id: 'loan-family-328k',
+    type: 'LENT_RECEIVABLE',
+    counterpartyName: 'Family Member (Personal Loan)',
+    relationship: 'Immediate Family',
+    originalAmount: 328369,
+    remainingAmount: 328369,
+    currency: 'PKR',
+    lentDate: '2023-04-15',
+    dueDate: '2026-12-31',
+    isRecoverable: true, // Included in Khums
+    notes: 'Longstanding family loan (Rs. 328,369) active in workbook Khums audits since 2023',
+    repayments: []
+  },
+  {
+    id: 'loan-borrowed-emergency',
+    type: 'BORROWED_LIABILITY',
+    counterpartyName: 'Short-Term Community Loan Taken',
+    relationship: 'Friend',
+    originalAmount: 50000,
+    remainingAmount: 50000,
+    currency: 'PKR',
+    lentDate: '2026-09-01',
+    dueDate: '2026-11-25',
+    isRecoverable: true,
+    notes: 'Pending liability to be settled before Nov 30 (deducted from Khums savings)',
+    repayments: []
   }
 ];

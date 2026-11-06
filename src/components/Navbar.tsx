@@ -4,9 +4,7 @@ import {
   BookOpen, 
   ShieldCheck, 
   Scale, 
-  HeartHandshake, 
   ArrowLeftRight, 
-  RefreshCw, 
   Sparkles, 
   Trash2, 
   PlusCircle,
@@ -14,7 +12,12 @@ import {
   CalendarCheck2,
   ClipboardPaste,
   Wrench,
-  Lock
+  Lock,
+  ScanLine,
+  Mic,
+  Calendar,
+  FileText,
+  HandCoins
 } from 'lucide-react';
 import { PrivacyShieldBadge } from './PrivacyShieldBadge';
 
@@ -23,6 +26,9 @@ export type NavTabType =
   | 'ledger' 
   | 'magic-inbox' 
   | 'roster' 
+  | 'reminders'
+  | 'reports'
+  | 'loans'
   | 'reconcile'
   | 'healer' 
   | 'khums' 
@@ -40,6 +46,8 @@ interface NavbarProps {
   isSyncingFX: boolean;
   onOpenAddModal: () => void;
   onOpenQuickPaste: () => void;
+  onOpenBillScanner: () => void;
+  onOpenVoiceLogger: () => void;
   onOpenSecurityModal: () => void;
   primaryCurrency: 'PKR' | 'AED';
   setPrimaryCurrency: (c: 'PKR' | 'AED') => void;
@@ -56,6 +64,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSyncingFX,
   onOpenAddModal,
   onOpenQuickPaste,
+  onOpenBillScanner,
+  onOpenVoiceLogger,
   onOpenSecurityModal,
   primaryCurrency,
   setPrimaryCurrency
@@ -107,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Inbox className="h-4 w-4 text-emerald-400" />
-              <span>Magic Inbox</span>
+              <span>Inbox</span>
             </button>
 
             {/* Monthly Roster */}
@@ -121,6 +131,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <CalendarCheck2 className="h-4 w-4 text-cyan-400" />
               <span>Roster</span>
+            </button>
+
+            {/* Planned Reminders */}
+            <button
+              onClick={() => setActiveTab('reminders')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'reminders'
+                  ? 'bg-slate-800 text-teal-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Calendar className="h-4 w-4 text-teal-400" />
+              <span>Schedules</span>
+            </button>
+
+            {/* Reports & Charity % */}
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'reports'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <FileText className="h-4 w-4 text-amber-400" />
+              <span>Reports</span>
+            </button>
+
+            {/* Loans & Fiqh Checklist */}
+            <button
+              onClick={() => setActiveTab('loans')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'loans'
+                  ? 'bg-slate-800 text-indigo-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <HandCoins className="h-4 w-4 text-indigo-400" />
+              <span>Loans & Fiqh</span>
             </button>
 
             {/* Reconcile & Audit */}
@@ -196,6 +245,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Live Privacy Shield Badge */}
             <PrivacyShieldBadge />
 
+            {/* Multimodal Bill & OCR Scanner Trigger */}
+            <button
+              onClick={onOpenBillScanner}
+              className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-lg text-xs font-semibold transition"
+              title="Scan Bill / PDF Statement (Local OCR + BYOK Vision)"
+            >
+              <ScanLine className="h-3.5 w-3.5 text-teal-400" />
+              <span className="hidden lg:inline">Scan Bill</span>
+            </button>
+
+            {/* Voice Logger Modal Trigger */}
+            <button
+              onClick={onOpenVoiceLogger}
+              className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 rounded-lg text-xs font-semibold transition"
+              title="Voice Note Expense Logger (Hands-Free Speech NLP)"
+            >
+              <Mic className="h-3.5 w-3.5 text-rose-400" />
+              <span className="hidden lg:inline">Voice</span>
+            </button>
+
             {/* App Lock & Security Settings Trigger */}
             <button
               onClick={onOpenSecurityModal}
@@ -212,8 +281,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Quick Paste SMS / Receipt (Ctrl+V)"
             >
               <ClipboardPaste className="h-3.5 w-3.5" />
-              <span className="hidden xl:inline">Paste SMS</span>
-              <kbd className="hidden lg:inline-block ml-1 px-1 py-0.2 text-[9px] font-mono bg-slate-900 border border-slate-700 rounded text-slate-400">Ctrl+V</kbd>
+              <span className="hidden 2xl:inline">Paste SMS</span>
+              <kbd className="hidden xl:inline-block ml-1 px-1 py-0.2 text-[9px] font-mono bg-slate-900 border border-slate-700 rounded text-slate-400">Ctrl+V</kbd>
             </button>
 
             {/* Currency Toggle (PKR / AED) */}
@@ -295,6 +364,27 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <CalendarCheck2 className="h-3 w-3" />
             <span>Roster</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('reminders')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'reminders' ? 'bg-slate-800 text-teal-400' : 'text-slate-400'}`}
+          >
+            <Calendar className="h-3 w-3" />
+            <span>Schedules</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'reports' ? 'bg-slate-800 text-amber-400' : 'text-slate-400'}`}
+          >
+            <FileText className="h-3 w-3" />
+            <span>Reports</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'loans' ? 'bg-slate-800 text-indigo-400' : 'text-slate-400'}`}
+          >
+            <HandCoins className="h-3 w-3" />
+            <span>Loans</span>
           </button>
           <button
             onClick={() => setActiveTab('reconcile')}

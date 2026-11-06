@@ -12,10 +12,12 @@
     "clsx": "^2.1.1",
     "dexie": "^4.0.11",
     "lucide-react": "^1.16.0",
+    "pdfjs-dist": "^5.4.624",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.1",
     "tailwind-merge": "^3.0.2",
+    "tesseract.js": "^7.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -29,4 +31,3 @@
     "vite": "^5.4.14"
   }
 }
-

@@ -7,7 +7,8 @@ import {
   Sponsorship, 
   MerchantRule, 
   RosterItem, 
-  RosterBatchDraftItem 
+  RosterBatchDraftItem,
+  LoanRecord 
 } from '../types';
 import { 
   DEFAULT_ACCOUNTS, 
@@ -15,13 +16,21 @@ import {
   HISTORICAL_KHUMS_SNAPSHOTS, 
   DEFAULT_SPONSORSHIPS,
   DEFAULT_MERCHANT_RULES,
-  DEFAULT_ROSTER_ITEMS
+  DEFAULT_ROSTER_ITEMS,
+  DEFAULT_LOANS
 } from './defaultData';
 import { convertToPKR } from '../services/fxService';
 
 export interface AppSetting {
   key: string;
   value: any;
+}
+
+export interface ReceiptBlobRecord {
+  id: string;
+  data: string; // Base64 or ObjectURL string
+  mimeType: string;
+  createdAt: string;
 }
 
 export class SadaHisabDatabase extends Dexie {
@@ -32,18 +41,22 @@ export class SadaHisabDatabase extends Dexie {
   sponsorships!: Table<Sponsorship, string>;
   merchant_rules!: Table<MerchantRule, string>;
   roster_items!: Table<RosterItem, string>;
+  loans!: Table<LoanRecord, string>;
+  receipt_blobs!: Table<ReceiptBlobRecord, string>;
   app_settings!: Table<AppSetting, string>;
 
   constructor() {
     super('SadaHisabDB');
-    this.version(2).stores({
+    this.version(3).stores({
       accounts: 'id, name, type, currency, isCustodial, isKhumsExempt, country, isSampleData',
-      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth',
+      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth, dedupeHash',
       fx_rates: 'currency, baseCurrency',
       khums_snapshots: 'year, cutoffDate, isLocked, isSampleData',
       sponsorships: 'id, category, active, dueDay',
       merchant_rules: 'id, keyword, category, defaultAccountId',
-      roster_items: 'id, name, category, defaultDay, isActive',
+      roster_items: 'id, name, category, defaultDay, isActive, isBillReminder',
+      loans: 'id, type, counterpartyName, isRecoverable',
+      receipt_blobs: 'id',
       app_settings: 'key'
     });
   }
@@ -51,7 +64,7 @@ export class SadaHisabDatabase extends Dexie {
 
 export const db = new SadaHisabDatabase();
 
-// Seed initial default accounts, FX rates, historical snapshots, merchant rules and roster items
+// Seed initial default accounts, FX rates, historical snapshots, merchant rules, roster items and loans
 export async function initializeDatabase() {
   const accountCount = await db.accounts.count();
   if (accountCount === 0) {
@@ -83,10 +96,20 @@ export async function initializeDatabase() {
     await db.roster_items.bulkAdd(DEFAULT_ROSTER_ITEMS);
   }
 
-  // Initialize blocked OTP counter
+  const loansCount = await db.loans.count();
+  if (loansCount === 0) {
+    await db.loans.bulkAdd(DEFAULT_LOANS);
+  }
+
+  // Initialize blocked OTP counter & settings
   const otpSetting = await db.app_settings.get('blockedOTPsCount');
   if (!otpSetting) {
     await db.app_settings.put({ key: 'blockedOTPsCount', value: 0 });
+  }
+
+  const cutoffSetting = await db.app_settings.get('customKhumsCutoffMonthDay');
+  if (!cutoffSetting) {
+    await db.app_settings.put({ key: 'customKhumsCutoffMonthDay', value: '11-30' });
   }
 }
 
@@ -191,7 +214,7 @@ export async function recalculateAllAccountBalances() {
 
     for (const tx of transactions) {
       if (tx.sourceAccountId === acc.id) {
-        if (tx.type === 'EXPENSE' || tx.type === 'CREDIT_CARD_PAYMENT') {
+        if (tx.type === 'EXPENSE' || tx.type === 'CREDIT_CARD_PAYMENT' || tx.type === 'RECONCILIATION_ADJUSTMENT') {
           balance -= Number(tx.amount || 0);
         } else if (tx.type === 'TRANSFER') {
           balance -= Number(tx.amount || 0);
@@ -201,7 +224,7 @@ export async function recalculateAllAccountBalances() {
       }
 
       if (tx.destinationAccountId === acc.id) {
-        if (tx.type === 'TRANSFER' || tx.type === 'INCOME' || tx.type === 'CREDIT_CARD_PAYMENT') {
+        if (tx.type === 'TRANSFER' || tx.type === 'INCOME' || tx.type === 'CREDIT_CARD_PAYMENT' || tx.type === 'RECONCILIATION_ADJUSTMENT') {
           balance += Number(tx.amount || 0);
         }
       }
@@ -219,7 +242,6 @@ export async function loadSampleData() {
   await clearSampleData();
 
   const sampleTransactions: Transaction[] = [
-    // UAE ADCB Income & Expenses
     {
       id: 'sample-tx-1',
       date: '2026-10-28',
@@ -271,7 +293,6 @@ export async function loadSampleData() {
       isSampleData: true,
       healingNotes: ['Healed prefix: "dh 365.87" -> 365.87 AED']
     },
-    // Pakistan Sponsorships via Easypaisa & Al Habib
     {
       id: 'sample-tx-4',
       date: '2026-11-02',

@@ -9,13 +9,41 @@
 
 **Sada Hisab** replaces fragile legacy spreadsheets with a resilient, reactive, local-first accounting system. It is engineered specifically for individuals managing multi-currency personal finances across **Pakistan (`PKR`)**, the **UAE (`AED`)**, and global remote platforms (**USD**, **GBP**, **SAR**, **MYR**, **IQD**), featuring:
 
-1. **Zero-Trust Local Security & Cryptographic Vault:** Built-in **App Lock** (PBKDF2 4–6 digit PIN & WebAuthn biometrics for TouchID / Android Fingerprint) with 5-minute inactivity auto-lock, and passphrase-derived **AES-256-GCM encrypted `.khumsvault` backups**.
-2. **Strict Network Isolation & Privacy Shield:** Continuous live header audit verifying 100% on-device IndexedDB storage, zero cloud telemetry, and zero outbound network traffic (except explicit manual currency rate refresh via `open.er-api.com`).
-3. **Financial Integrity & Reconciliation Auditor:** Real-time side-by-side comparison between calculated ledger balances and actual bank balances with 1-click auto-reconcile adjustments (matching your Excel `Totals!Adjusted` workflow), plus non-double-counting Credit Card Statement reconciliation.
-4. **Zero-Hazard Smart SMS / Receipt Parser ("Magic Inbox"):** Ingests raw banking SMS, WhatsApp receipts, and notification dumps. Protected by a **Hard OTP Security Firewall** that immediately intercepts and scrubs verification codes from memory without writing them to disk.
-5. **1-Click Monthly Recurring Roster:** Automatically batches ~25 recurring monthly entries (Green Island School, Asghar Bhai Van, Maulana Qalbe Ali, Khatoon Khatoon, Zaibun Nisa, StromFiber, Wife Monthly Allowance, M106 utilities) with 1-click batch ledger commit.
-6. **Annual Islamic Khums Engine (November 30 Cutoff):** Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
-7. **Legacy Excel Healer:** Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
+1. **Multimodal Bill, Receipt & PDF Invoice Scanner:**
+   - 100% on-device text-layer extraction for digital PDFs (`pdfjs-dist`) and on-device OCR for receipts & photos (`tesseract.js`).
+   - Optional Bring-Your-Own-Key (BYOK) Gemini Flash Vision mode stored exclusively in local `localStorage`.
+   - Single bill auto-fill vs. multi-row 50+ line bank & card statement tabular staging parser.
+2. **Hands-Free Voice Note Expense & Bill Logger:**
+   - Powered by Web Speech API (`webkitSpeechRecognition`) supporting natural spoken sentences mixing English, Urdu, and Arabic terms (*"Paid 365.87 AED for DEWA bill from ADCB"*, *"Sent 12,525 rupees to Green Island School from Al Habib"*).
+   - Deterministic and fuzzy NLP parser with live interactive card, account suggestions, and a 3-second auto-save countdown.
+3. **3-Tier Anti-Duplication & Cross-Channel Reconciliation Engine:**
+   - **Tier 1:** Deterministic SHA-256 fingerprint hash (`date:amount:currency:merchant:account`).
+   - **Tier 2:** Cross-channel fuzzy collision detector (±2 days window, identical amount/currency or ≤1.5% FX variance) with side-by-side "Merge or Keep Both" interactive card.
+   - **Tier 3:** Credit Card & Transfer double-count guard preventing debt payments from inflating expenses.
+4. **Planned Schedules, Reminders & iCalendar (.ics) Sync:**
+   - Day-of-month tracking (1st–31st) for Family allowances (Wife, Rohia, Children), utilities (StromFiber, M106, Mobile 48 AED), education/transport (Green Island, Asghar Van), and monthly Sadaqah roster.
+   - On-device browser notifications and 1-click RFC 5545 `.ics` export for Google Calendar, Apple Calendar, and Outlook.
+5. **Yearly Donation & Sadaqah % Calculator:**
+   - Live tracking of non-Khums charitable contributions as a percentage of gross annual income.
+   - Interactive target % slider (3% to 25%), progress bar, and breakdown across Student Education, Clergy Stipends, and Welfare Trusts.
+6. **Advanced Financial Reporting Suite:**
+   - Multi-period analysis: Khums Fiscal Year (Dec 1–Nov 30), Calendar Year (Jan 1–Dec 31), or custom date range.
+   - Dual-currency base toggle (PKR / AED), visual monthly inflow vs outflow charts, category spending breakdown, clean printable PDF layout (`window.print()`), and multi-tab `.xlsx` download.
+7. **Loans & Receivables Ledger, 20% Consumables Checklist & Google Drive Sync:**
+   - Dedicated loans given tracking with **Recoverable (In Khums)** vs **Doubtful (Excluded)** toggles.
+   - Fiqh checklist for 20% Khums on year-end surplus consumables, pantry reserves, and unused goods.
+   - Client-side zero-backend Google Drive OAuth2 sync (`drive.file`) directly to `SadaCash_Backups/` folder.
+8. **Zero-Trust Local Security & Cryptographic Vault:**
+   - Built-in **App Lock** (PBKDF2 4–6 digit PIN & WebAuthn biometrics for TouchID / Android Fingerprint) with 5-minute inactivity auto-lock.
+   - Passphrase-derived **AES-256-GCM encrypted `.khumsvault` backups** alongside unencrypted JSON and multi-tab `.xlsx`.
+9. **Zero-Hazard Smart SMS / Receipt Parser ("Magic Inbox"):**
+   - Ingests raw banking SMS, WhatsApp receipts, and notification dumps. Protected by a **Hard OTP Security Firewall** that immediately intercepts and scrubs verification codes from memory without writing them to disk.
+10. **1-Click Monthly Recurring Roster:**
+    - Automatically batches ~25 recurring monthly entries (Green Island School, Asghar Bhai Van, Maulana Qalbe Ali, Khatoon Khatoon, Zaibun Nisa, StromFiber, Wife Monthly Allowance, M106 utilities) with 1-click batch ledger commit.
+11. **Annual Islamic Khums Engine (November 30 Cutoff):**
+    - Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
+12. **Legacy Excel Healer:**
+    - Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
 
 ---
 
@@ -23,16 +51,18 @@
 
 ```mermaid
 graph TD
-    A[Excel Migration / User Input] --> B[Data Healer & Sanitizer]
-    B --> C[(Dexie.js IndexedDB)]
+    A[Excel Migration / OCR / SMS / Voice] --> B[Data Healer & 3-Tier Deduplication]
+    B --> C[(Dexie.js IndexedDB - 100% Local)]
     C --> D[Executive Dashboard]
     C --> E[Unified Ledger]
-    C --> F[Annual Khums Engine]
-    C --> G[Sponsorship Manager]
-    H[Open FX Rates API] -->|Offline Fallback + -1 PKR Spread| I[FX Engine]
-    I --> D
-    I --> F
-    C --> J[Multi-Sheet Excel / JSON Backup Exporter]
+    C --> F[Annual Khums Engine & Fiqh Checklist]
+    C --> G[Schedules & Planned Reminders]
+    C --> H[Advanced Reports & Charity % Tracker]
+    C --> I[Loans & Receivables Ledger]
+    J[Open FX Rates API] -->|Offline Fallback + -1 PKR Spread| K[FX Engine]
+    K --> D
+    K --> F
+    C --> L[AES-256-GCM Vault / Excel / GDrive Sync]
 ```
 
 ### Pre-Configured Accounts
@@ -55,7 +85,7 @@ Where:
 - $S$: Total liquid savings across all operational bank accounts and foreign cash holdings converted to PKR at conservative rates.
 - $C_{20\%}$: Remaining value of unused consumables (groceries, perfumes, toiletries) on November 30.
 - $I_{25\%}$: Unused new goods, unworn clothing, and unopened electronics acquired during the year.
-- $R$: Active loan receivables given to others (e.g., the Rs. 328,369 family loan receivable—taxable because it is expected back).
+- $R$: Active recoverable loan receivables given to others (e.g., the Rs. 328,369 family loan receivable—taxable because it is expected back).
 - $A_{\text{custodial}}$: Excluded custodial funds (Wife's personal wealth, Children Galla, Hajj savings).
 - $L_{\text{CC}}$: Pending credit card debt and unpaid short-term liabilities (deducted).
 - $K_{\text{prior}}$: **Prior Year Purified Capital** (net wealth on which Khums was already paid in previous Nov 30 snapshots—deducted to prevent double taxation).
@@ -137,9 +167,9 @@ npx cap open android
 ## 🔒 Privacy & Local-First Philosophy
 - **No Remote Database:** All accounts, transactions, and snapshots exist solely in your device's browser IndexedDB.
 - **Offline Capable:** Offline fallback exchange rates (`USD=276.53`, `AED=75.31`, `SAR=73.68`, etc.) ensure complete independence from external network availability.
+- **Client-Side Zero-Backend Cloud Sync:** Optional Google Drive backup uploads encrypted snapshots directly via browser OAuth2 without touching any third-party intermediate server.
 - **Portability:** Export your entire ledger back to clean multi-sheet `.xlsx` or complete JSON backup with a single click at any time.
 
 ---
 
 &copy; 2026 Sada Hisab. Built with React, TypeScript, Tailwind CSS, Dexie.js & SheetJS.
-
