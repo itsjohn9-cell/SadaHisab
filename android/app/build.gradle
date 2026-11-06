@@ -5,10 +5,10 @@ def uploadJks = new File("${userHome}/.karachi-runner-keys/upload.jks")
 def hasUploadKey = uploadJks.exists()
 
 android {
-    namespace "com.sadacash.ledger"
+    namespace "sada.hisab"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.sadacash.ledger"
+        applicationId "sada.hisab"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -27,3 +27,4 @@ node scripts/go_live.mjs
 - **100% Local-First & Zero-Trust**: All financial ledger records, sponsorships, and Khums calculations are stored in local IndexedDB (Dexie). No external tracking servers.
 - **Multi-Currency Support**: PKR, AED, USD, GBP, SAR, MYR, IQD with manual or user-triggered FX sync.
 - **Triple Deployment Targets**: Web/PWA, Native Android Capacitor, and Desktop PWA from a single codebase.
+

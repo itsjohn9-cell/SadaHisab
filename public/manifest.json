@@ -1,7 +1,7 @@
 {
-  "short_name": "Sada Cash",
-  "name": "Sada Cash - Multi-Currency Cash & Khums Accounting",
-  "id": "com.sadacash.ledger",
+  "short_name": "Sada Hisab",
+  "name": "Sada Hisab - Multi-Currency Cash & Khums Accounting",
+  "id": "sada.hisab",
   "icons": [
     {
       "src": "/icon.svg",

@@ -11,7 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import { google } from 'googleapis';
 
-const PACKAGE_NAME = 'com.sadacash.ledger';
+const PACKAGE_NAME = 'sada.hisab';
 const DEFAULT_AAB_PATH = path.resolve('android/app/build/outputs/bundle/release/app-release.aab');
 
 const POSSIBLE_KEY_PATHS = [
@@ -185,3 +185,4 @@ async function publish() {
 }
 
 publish();
+

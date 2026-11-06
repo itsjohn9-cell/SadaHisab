@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.sadacash.ledger',
-  appName: 'Sada Cash',
+  appId: 'sada.hisab',
+  appName: 'Sada Hisab',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

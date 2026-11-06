@@ -101,3 +101,4 @@ jobs:
           name: SadaCash-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+

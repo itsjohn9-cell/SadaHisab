@@ -1,4 +1,4 @@
-package com.sadacash.ledger;
+package sada.hisab;
 
 import com.getcapacitor.BridgeActivity;
 

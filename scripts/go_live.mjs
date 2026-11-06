@@ -137,3 +137,4 @@ console.log('✓ Closed Play Group   : Track "alpha" on Play Console');
 console.log('✓ Internal Play Group : Track "internal" on Play Console');
 console.log(`✓ Direct APK Download : ${fs.existsSync(apkPath) ? apkPath : 'Ready'}`);
 console.log('================================================================\n');
+
