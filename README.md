@@ -9,11 +9,12 @@
 
 **Sada Hisab** replaces fragile legacy spreadsheets with a resilient, reactive, local-first accounting system. It is engineered specifically for individuals managing multi-currency personal finances across **Pakistan (`PKR`)**, the **UAE (`AED`)**, and global remote platforms (**USD**, **GBP**, **SAR**, **MYR**, **IQD**), featuring:
 
-1. **Annual Islamic Khums Engine (November 30 Cutoff):** Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
-2. **Legacy Excel Healer:** Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
-3. **Monthly Sponsorships & Charity Manager:** Automated tracking of recurring student tuition fees (Mustafa, Fatima FBIS), Maulana honorariums, and orphan welfare with 1-click ledger logging.
-4. **100% Local-First & Air-Gapped:** All data resides in client-side IndexedDB (`Dexie.js`). Zero servers, zero telemetry, zero privacy leakage.
-5. **Multi-Platform Deployment:** Ready as a Progressive Web App (PWA), Android App (via Capacitor / TWA), and desktop web app.
+1. **Zero-Hazard Smart SMS / Receipt Parser ("Magic Inbox"):** Ingests raw banking SMS, WhatsApp receipts, and notification dumps. Protected by a **Hard OTP Security Firewall** that immediately intercepts and scrubs verification codes from memory without writing them to disk.
+2. **1-Click Monthly Recurring Roster:** Automatically batches ~25 recurring monthly entries (Green Island School, Asghar Bhai Van, Maulana Qalbe Ali, Khatoon Khatoon, Zaibun Nisa, StromFiber, Wife Monthly Allowance, M106 utilities) with 1-click batch ledger commit.
+3. **Android MacroDroid / Tasker / Samsung Routines Bridge:** Forward banking notifications from your phone directly into the local app queue via `/?quickAdd=...`.
+4. **Annual Islamic Khums Engine (November 30 Cutoff):** Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
+5. **Legacy Excel Healer:** Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
+6. **100% Local-First & Air-Gapped:** All data resides in client-side IndexedDB (`Dexie.js`). Zero servers, zero telemetry, zero privacy leakage.
 
 ---
 
