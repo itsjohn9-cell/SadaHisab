@@ -49,3 +49,4 @@ export async function updateRosterItem(id: string, updates: Partial<RosterItem>)
 export async function deleteRosterItem(id: string): Promise<void> {
   await db.roster_items.delete(id);
 }
+

@@ -314,3 +314,4 @@ export async function parseBulkSMSMessages(rawBlock: string): Promise<ParsedSMSR
 
   return results;
 }
+

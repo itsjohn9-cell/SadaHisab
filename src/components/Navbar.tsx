@@ -12,14 +12,18 @@ import {
   PlusCircle,
   Inbox,
   CalendarCheck2,
-  ClipboardPaste
+  ClipboardPaste,
+  Wrench,
+  Lock
 } from 'lucide-react';
+import { PrivacyShieldBadge } from './PrivacyShieldBadge';
 
 export type NavTabType = 
   | 'dashboard' 
   | 'ledger' 
   | 'magic-inbox' 
   | 'roster' 
+  | 'reconcile'
   | 'healer' 
   | 'khums' 
   | 'sponsorships' 
@@ -36,6 +40,7 @@ interface NavbarProps {
   isSyncingFX: boolean;
   onOpenAddModal: () => void;
   onOpenQuickPaste: () => void;
+  onOpenSecurityModal: () => void;
   primaryCurrency: 'PKR' | 'AED';
   setPrimaryCurrency: (c: 'PKR' | 'AED') => void;
 }
@@ -51,6 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSyncingFX,
   onOpenAddModal,
   onOpenQuickPaste,
+  onOpenSecurityModal,
   primaryCurrency,
   setPrimaryCurrency
 }) => {
@@ -70,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-lg text-white tracking-tight">Sada Hisab</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                  Zero-Manual
+                  Zero-Trust
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">Automated Cash & Khums Suite</p>
@@ -78,10 +84,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Navigation Tabs */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
+          <nav className="hidden xl:flex items-center space-x-1">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'dashboard'
                   ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -91,10 +97,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Dashboard</span>
             </button>
 
-            {/* NEW: Magic Inbox */}
+            {/* Magic Inbox */}
             <button
               onClick={() => setActiveTab('magic-inbox')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'magic-inbox'
                   ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -104,22 +110,35 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Magic Inbox</span>
             </button>
 
-            {/* NEW: Monthly Roster */}
+            {/* Monthly Roster */}
             <button
               onClick={() => setActiveTab('roster')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'roster'
                   ? 'bg-slate-800 text-cyan-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <CalendarCheck2 className="h-4 w-4 text-cyan-400" />
-              <span>1-Click Roster</span>
+              <span>Roster</span>
+            </button>
+
+            {/* Reconcile & Audit */}
+            <button
+              onClick={() => setActiveTab('reconcile')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'reconcile'
+                  ? 'bg-slate-800 text-amber-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Wrench className="h-4 w-4 text-amber-400" />
+              <span>Reconcile</span>
             </button>
 
             <button
               onClick={() => setActiveTab('ledger')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'ledger'
                   ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -131,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('healer')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors relative ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors relative ${
                 activeTab === 'healer'
                   ? 'bg-slate-800 text-amber-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -148,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('khums')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'khums'
                   ? 'bg-slate-800 text-purple-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -160,24 +179,36 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('import-export')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'import-export'
                   ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <ArrowLeftRight className="h-4 w-4" />
-              <span>Import</span>
+              <span>Vault</span>
             </button>
           </nav>
 
           {/* Right Action Controls */}
           <div className="flex items-center space-x-2 sm:space-x-2.5">
             
+            {/* Live Privacy Shield Badge */}
+            <PrivacyShieldBadge />
+
+            {/* App Lock & Security Settings Trigger */}
+            <button
+              onClick={onOpenSecurityModal}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 border border-slate-700 rounded-lg text-xs font-semibold transition"
+              title="App Lock & Security Settings (PIN / Biometrics)"
+            >
+              <Lock className="h-4 w-4" />
+            </button>
+
             {/* Quick Paste Floating Trigger */}
             <button
               onClick={onOpenQuickPaste}
-              className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 rounded-lg text-xs font-semibold transition"
+              className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 rounded-lg text-xs font-semibold transition"
               title="Quick Paste SMS / Receipt (Ctrl+V)"
             >
               <ClipboardPaste className="h-3.5 w-3.5" />
@@ -219,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Remove sample transactions"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">Clear Sample</span>
+                <span className="hidden lg:inline">Clear</span>
               </button>
             ) : (
               <button
@@ -228,7 +259,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="Load sample data"
               >
                 <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                <span className="hidden lg:inline">Sample Data</span>
+                <span className="hidden lg:inline">Sample</span>
               </button>
             )}
 
@@ -243,8 +274,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Mobile Sub-Navigation Bar */}
-        <div className="flex md:hidden overflow-x-auto py-2 space-x-1 border-t border-slate-800/60 no-scrollbar text-xs">
+        {/* Mobile / Tablet Sub-Navigation Bar */}
+        <div className="flex xl:hidden overflow-x-auto py-2 space-x-1 border-t border-slate-800/60 no-scrollbar text-xs">
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`px-3 py-1 rounded-md whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}
@@ -263,7 +294,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'roster' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400'}`}
           >
             <CalendarCheck2 className="h-3 w-3" />
-            <span>1-Click Roster</span>
+            <span>Roster</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('reconcile')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'reconcile' ? 'bg-slate-800 text-amber-400' : 'text-slate-400'}`}
+          >
+            <Wrench className="h-3 w-3" />
+            <span>Reconcile</span>
           </button>
           <button
             onClick={() => setActiveTab('ledger')}
@@ -287,7 +325,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveTab('import-export')}
             className={`px-3 py-1 rounded-md whitespace-nowrap ${activeTab === 'import-export' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}
           >
-            Import
+            Vault
           </button>
         </div>
       </div>

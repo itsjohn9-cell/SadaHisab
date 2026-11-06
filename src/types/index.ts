@@ -23,6 +23,8 @@ export interface Account {
   country: AccountCountry;
   notes?: string;
   isSampleData?: boolean;
+  lastReconciledDate?: string;
+  lastReconciledBalance?: number;
   updatedAt?: string;
 }
 
@@ -31,7 +33,8 @@ export type TransactionType =
   | 'INCOME' 
   | 'TRANSFER' 
   | 'CREDIT_CARD_SWIPE' 
-  | 'CREDIT_CARD_PAYMENT';
+  | 'CREDIT_CARD_PAYMENT'
+  | 'RECONCILIATION_ADJUSTMENT';
 
 export type TransactionStatus = 'CONFIRMED' | 'NEEDS_REVIEW';
 
@@ -60,6 +63,7 @@ export interface Transaction {
     liters?: number;
     pricePerLiter?: number;
   };
+  isReconciliationAdjustment?: boolean;
   createdAt?: string;
 }
 
@@ -119,7 +123,7 @@ export interface MerchantRule {
 
 export interface RosterItem {
   id: string;
-  name: string; // e.g., 'Green Island School', 'Asghar Bhai Van', 'Maulana Qalbe Ali'
+  name: string;
   category: string;
   subCategory?: string;
   defaultAmount: number;
@@ -127,10 +131,10 @@ export interface RosterItem {
   sourceAccountId: string;
   beneficiaryPhone?: string;
   paymentChannel?: string;
-  defaultDay: number; // e.g., 1st or 5th
+  defaultDay: number;
   notes?: string;
   isActive: boolean;
-  lastCommittedMonth?: string; // e.g., '2026-10'
+  lastCommittedMonth?: string;
 }
 
 export interface RosterBatchDraftItem extends RosterItem {
@@ -160,6 +164,16 @@ export interface ParsedSMSResult {
     pricePerLiter?: number;
   };
   ruleApplied?: string;
+}
+
+export interface AppSecuritySettings {
+  isAppLockEnabled: boolean;
+  pinHash?: string;
+  pinSalt?: string;
+  hasBiometrics: boolean;
+  biometricCredentialId?: string;
+  autoLockTimeoutMs: number; // 300000 = 5 minutes
+  lastBackupDate?: string;
 }
 
 export interface ReconciliationComparison {

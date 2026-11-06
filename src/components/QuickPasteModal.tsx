@@ -246,3 +246,4 @@ export const QuickPasteModal: React.FC<QuickPasteModalProps> = ({
     </div>
   );
 };
+

@@ -153,3 +153,4 @@ export const AndroidBridgeModal: React.FC<AndroidBridgeModalProps> = ({
     </div>
   );
 };
+

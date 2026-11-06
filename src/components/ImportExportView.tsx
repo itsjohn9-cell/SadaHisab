@@ -5,6 +5,11 @@ import {
   exportJSONBackup, 
   restoreJSONBackup 
 } from '../services/excelHealer';
+import { 
+  encryptBackupVault, 
+  decryptBackupVault, 
+  markBackupCompleted 
+} from '../services/cryptoSecurity';
 import { ExcelHealingSummary } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { 
@@ -17,11 +22,10 @@ import {
   Sparkles, 
   FileJson, 
   RotateCcw,
-  RefreshCw,
-  Phone,
-  Calendar,
-  Layers,
-  ArrowRight
+  Lock,
+  KeyRound,
+  X,
+  Shield
 } from 'lucide-react';
 
 interface ImportExportViewProps {
@@ -34,12 +38,27 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [healingSummary, setHealingSummary] = useState<ExcelHealingSummary | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Encrypted Vault Modal states
+  const [showEncryptModal, setShowEncryptModal] = useState<boolean>(false);
+  const [showDecryptModal, setShowDecryptModal] = useState<boolean>(false);
+  const [vaultPassphrase, setVaultPassphrase] = useState<string>('');
+  const [confirmPassphrase, setConfirmPassphrase] = useState<string>('');
+  const [pendingVaultFileContent, setPendingVaultFileContent] = useState<string | null>(null);
 
   // Handle file drop / upload
   const handleFileUpload = async (file: File) => {
+    if (file.name.endsWith('.khumsvault')) {
+      const text = await file.text();
+      setPendingVaultFileContent(text);
+      setShowDecryptModal(true);
+      return;
+    }
+
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      setErrorMessage('Please upload a valid Excel (.xlsx / .xls) workbook.');
+      setErrorMessage('Please upload a valid Excel (.xlsx / .xls) workbook or an encrypted .khumsvault file.');
       return;
     }
 
@@ -62,11 +81,9 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
     setIsProcessing(true);
     setErrorMessage(null);
     try {
-      // Mock an Excel buffer containing the user's legacy structures
       const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
 
-      // Expense sheet with legacy bugs: "dh 63.11", shifted PKR, "-" date, phone numbers
       const rawExpenseData = [
         { 'Date': '2025-10-15', 'Amount': 'dh 63.11', 'Currency': '', 'Category': 'Groceries', 'Spent At': 'Lulu Hypermarket Khalidiyah', 'Source': 'ADCB (AED)' },
         { 'Date': '2025-10-20', 'Amount': 'dn 470.27', 'Currency': '', 'Category': 'Household', 'Spent At': 'Carrefour Marina Mall', 'Source': 'ADCB (AED)' },
@@ -77,7 +94,6 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
         { 'Date': '2025-11-10', 'Amount': 6200, 'Currency': 'PKR', 'Category': 'Exam Fees', 'Spent At': 'Fatima FBIS Board Registration 03335551212', 'Source': 'Al Habib - Rs (PKR)' }
       ];
 
-      // Add extra simulated rows to demonstrate the Row-66 truncation fix
       for (let i = 8; i <= 85; i++) {
         rawExpenseData.push({
           'Date': `2025-11-${String((i % 28) + 1).padStart(2, '0')}`,
@@ -120,7 +136,66 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
     }
   };
 
-  // Export JSON Backup
+  // Export Encrypted .khumsvault
+  const handleExecuteEncryptExport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vaultPassphrase || vaultPassphrase.length < 6) {
+      alert('Passphrase must be at least 6 characters long.');
+      return;
+    }
+    if (vaultPassphrase !== confirmPassphrase) {
+      alert('Passphrases do not match.');
+      return;
+    }
+
+    try {
+      const jsonBackup = await exportJSONBackup();
+      const encryptedVault = await encryptBackupVault(jsonBackup, vaultPassphrase);
+      
+      const blob = new Blob([encryptedVault], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Sada_Hisab_Vault_${new Date().toISOString().split('T')[0]}.khumsvault`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      await markBackupCompleted();
+      setShowEncryptModal(false);
+      setVaultPassphrase('');
+      setConfirmPassphrase('');
+      setSuccessMessage('Encrypted .khumsvault backup exported successfully! 14-day timer reset.');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      alert(`Encryption failed: ${err.message}`);
+    }
+  };
+
+  // Decrypt and restore .khumsvault
+  const handleExecuteDecryptRestore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingVaultFileContent || !vaultPassphrase) return;
+
+    try {
+      const decryptedJson = await decryptBackupVault(pendingVaultFileContent, vaultPassphrase);
+      const res = await restoreJSONBackup(decryptedJson);
+
+      if (res.success) {
+        setShowDecryptModal(false);
+        setVaultPassphrase('');
+        setPendingVaultFileContent(null);
+        setSuccessMessage('Encrypted vault successfully verified, decrypted, and restored!');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        onRefreshData();
+      } else {
+        alert(res.message);
+      }
+    } catch (err: any) {
+      alert(`Decryption failed: Incorrect passphrase or damaged cryptographic ciphertext.`);
+    }
+  };
+
+  // Export standard JSON
   const handleExportJSON = async () => {
     try {
       const json = await exportJSONBackup();
@@ -136,10 +211,18 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
     }
   };
 
-  // Restore JSON Backup
+  // Restore standard JSON
   const handleRestoreJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.name.endsWith('.khumsvault')) {
+      const text = await file.text();
+      setPendingVaultFileContent(text);
+      setShowDecryptModal(true);
+      return;
+    }
+
     const text = await file.text();
     const res = await restoreJSONBackup(text);
     if (res.success) {
@@ -161,14 +244,22 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
               <FileSpreadsheet className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Import, Export & Data Healer Hub</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">Import, Export & Cryptographic Vault</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Drag-and-drop your legacy <span className="font-mono text-emerald-300">Khums - November 30 2025 - Daily.xlsx</span> workbook to automatically heal string amounts, resolve shifted columns, extract phones, and recalculate balances beyond row 66.
+                Drag-and-drop legacy Excel workbooks or AES-256-GCM encrypted <code className="text-emerald-400">.khumsvault</code> backups.
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowEncryptModal(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-950/40 transition"
+            >
+              <Lock className="h-4 w-4" />
+              <span>Export .khumsvault</span>
+            </button>
+
             <button
               onClick={handleRunSimulation}
               disabled={isProcessing}
@@ -179,6 +270,13 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
             </button>
           </div>
         </div>
+
+        {successMessage && (
+          <div className="mt-4 p-3 bg-emerald-950/90 border border-emerald-700 text-emerald-200 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in fade-in">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <span>{successMessage}</span>
+          </div>
+        )}
       </div>
 
       {errorMessage && (
@@ -206,25 +304,41 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
       >
         <UploadCloud className="h-12 w-12 mx-auto text-emerald-400 mb-3 animate-pulse" />
         <h4 className="text-base font-bold text-white">
-          Drop your Excel workbook here, or click to browse
+          Drop your Excel workbook or .khumsvault file here
         </h4>
         <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-          Supports 11-sheet workbook formats with sheets: Expense, Income, Transferred, Totals, Credit Card (Loan), and Khums.
+          Supports 11-sheet workbook formats (.xlsx / .xls) and passphrase-protected AES-256 (.khumsvault) archives.
         </p>
 
-        <label className="inline-flex items-center space-x-2 mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-950/40 cursor-pointer transition">
-          <FileSpreadsheet className="h-4 w-4" />
-          <span>Select Excel File (.xlsx)</span>
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileUpload(file);
-            }}
-            className="hidden"
-          />
-        </label>
+        <div className="flex items-center justify-center space-x-3 mt-5">
+          <label className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-950/40 cursor-pointer transition">
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Select Excel (.xlsx)</span>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              className="hidden"
+            />
+          </label>
+
+          <label className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 rounded-xl text-xs font-semibold shadow-md cursor-pointer transition">
+            <Lock className="h-4 w-4" />
+            <span>Restore .khumsvault</span>
+            <input
+              type="file"
+              accept=".khumsvault"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
 
       {/* Row-66 Truncation Bug Fix Comparison Card */}
@@ -283,97 +397,39 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
         </div>
       )}
 
-      {/* Healing Summary Statistics & Log */}
-      {healingSummary && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span>Automated Healing Report ({healingSummary.totalRowsProcessed} Rows Analyzed)</span>
-            </h4>
-            <span className="text-xs text-slate-400">
-              {healingSummary.items.length} Healed Adjustments
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-slate-400">String Amounts Healed</span>
-              <div className="text-xl font-bold text-emerald-400 font-mono mt-1">
-                {healingSummary.healedAmountsCount}
-              </div>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-slate-400">Shifted Columns Fixed</span>
-              <div className="text-xl font-bold text-amber-400 font-mono mt-1">
-                {healingSummary.shiftedColumnsFixedCount}
-              </div>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-slate-400">Missing Dates Inferred</span>
-              <div className="text-xl font-bold text-cyan-400 font-mono mt-1">
-                {healingSummary.missingDatesInferredCount}
-              </div>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center">
-              <span className="text-slate-400">Phones Extracted</span>
-              <div className="text-xl font-bold text-purple-400 font-mono mt-1">
-                {healingSummary.phonesExtractedCount}
-              </div>
-            </div>
-          </div>
-
-          {/* Healing Log Table */}
-          <div className="overflow-x-auto max-h-72">
-            <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-slate-950 text-slate-400 sticky top-0">
-                <tr>
-                  <th className="py-2 px-3">Row</th>
-                  <th className="py-2 px-3">Type</th>
-                  <th className="py-2 px-3">Issue Detected</th>
-                  <th className="py-2 px-3">Original Raw Value</th>
-                  <th className="py-2 px-3">Healed Value</th>
-                  <th className="py-2 px-3 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {healingSummary.items.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-800/30">
-                    <td className="py-2 px-3 text-slate-400">{item.rowNumber}</td>
-                    <td className="py-2 px-3 text-slate-300 font-bold">{item.issueType}</td>
-                    <td className="py-2 px-3 text-slate-400">{item.description}</td>
-                    <td className="py-2 px-3 text-rose-300 truncate max-w-[120px]">{item.before}</td>
-                    <td className="py-2 px-3 text-emerald-400 font-semibold truncate max-w-[150px]">{item.after}</td>
-                    <td className="py-2 px-3 text-center">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                        item.status === 'AUTO_HEALED' 
-                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' 
-                          : 'bg-amber-950 text-amber-300 border border-amber-800'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Export Section */}
+      {/* Export Section with 3 Formats */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
         <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-          Export & Local Backup
+          Export & Local Backup Formats
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           
-          {/* Excel Export Card */}
+          {/* Format 1: AES-256 Encrypted .khumsvault */}
+          <div className="bg-slate-950/70 border border-emerald-900/60 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
+                <Lock className="h-4 w-4" />
+                <span>Encrypted (.khumsvault)</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                AES-256-GCM cipher with PBKDF2 passphrase key derivation (100,000 iterations). Maximum security.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowEncryptModal(true)}
+              className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md transition"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export .khumsvault</span>
+            </button>
+          </div>
+
+          {/* Format 2: Excel Workbook (.xlsx) */}
           <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center space-x-2 text-white font-bold text-sm">
                 <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                <span>Clean Multi-Sheet Excel (.xlsx)</span>
+                <span>Clean Excel (.xlsx)</span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
                 Generates a clean 6-sheet workbook: Expense, Income, Transferred, Totals, Khums, and Sponsorships.
@@ -384,46 +440,148 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
               className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-700 transition"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Download .xlsx Workbook</span>
+              <span>Download .xlsx</span>
             </button>
           </div>
 
-          {/* JSON Full Backup Card */}
+          {/* Format 3: JSON Full Backup */}
           <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center space-x-2 text-white font-bold text-sm">
                 <FileJson className="h-4 w-4 text-cyan-400" />
-                <span>Full Local JSON Backup & Restore</span>
+                <span>Plain JSON Backup</span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                100% complete dump of IndexedDB stores including historical Khums audits, FX spreads and custom accounts.
+                Direct JSON dump of Dexie stores for debugging or developer migration.
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleExportJSON}
-                className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-700 transition"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Export JSON</span>
-              </button>
-              <label className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-600/40 rounded-lg text-xs font-semibold cursor-pointer transition">
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>Restore JSON</span>
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleRestoreJSON}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            <button
+              onClick={handleExportJSON}
+              className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-700 transition"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export JSON</span>
+            </button>
           </div>
 
         </div>
       </div>
 
+      {/* Encrypt Passphrase Modal */}
+      {showEncryptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <Lock className="h-5 w-5 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">Create Encrypted .khumsvault Backup</h3>
+              </div>
+              <button onClick={() => setShowEncryptModal(false)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleExecuteEncryptExport} className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400">Vault Passphrase (Min. 6 chars)</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter strong passphrase..."
+                  value={vaultPassphrase}
+                  onChange={(e) => setVaultPassphrase(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400">Confirm Passphrase</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Re-enter passphrase..."
+                  value={confirmPassphrase}
+                  onChange={(e) => setConfirmPassphrase(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="p-3 bg-emerald-950/40 border border-emerald-900/60 rounded-xl text-[11px] text-emerald-200">
+                Your passphrase derives a 256-bit AES-GCM key directly in your browser. If you lose this passphrase, the data cannot be recovered by anyone.
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEncryptModal(false)}
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md transition"
+                >
+                  Encrypt & Download
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Decrypt Passphrase Modal */}
+      {showDecryptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <KeyRound className="h-5 w-5 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">Unlock & Restore .khumsvault</h3>
+              </div>
+              <button onClick={() => setShowDecryptModal(false)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleExecuteDecryptRestore} className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400">Vault Passphrase</label>
+                <input
+                  type="password"
+                  required
+                  autoFocus
+                  placeholder="Enter vault passphrase..."
+                  value={vaultPassphrase}
+                  onChange={(e) => setVaultPassphrase(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-950/40 border border-amber-900/60 rounded-xl text-[11px] text-amber-200">
+                Warning: Restoring this encrypted vault will replace existing local records with the decrypted data from the backup archive.
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDecryptModal(false)}
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md transition"
+                >
+                  Decrypt & Restore
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
-

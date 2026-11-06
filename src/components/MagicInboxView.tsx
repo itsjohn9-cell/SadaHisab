@@ -496,3 +496,4 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   db, 
   initializeDatabase, 
@@ -10,9 +10,14 @@ import {
   Transaction, 
   FXRate, 
   KhumsSnapshot, 
-  Sponsorship 
+  Sponsorship, 
+  AppSecuritySettings 
 } from './types';
 import { fetchLiveFXRates } from './services/fxService';
+import { 
+  getSecuritySettings, 
+  checkBackupRecency 
+} from './services/cryptoSecurity';
 import { Navbar, NavTabType } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { LedgerView } from './components/LedgerView';
@@ -24,6 +29,10 @@ import { TransactionModal } from './components/TransactionModal';
 import { MagicInboxView } from './components/MagicInboxView';
 import { MonthlyRosterView } from './components/MonthlyRosterView';
 import { QuickPasteModal } from './components/QuickPasteModal';
+import { ReconciliationAuditView } from './components/ReconciliationAuditView';
+import { AppLockScreen } from './components/AppLockScreen';
+import { SecuritySettingsModal } from './components/SecuritySettingsModal';
+import { BackupReminderBanner } from './components/BackupReminderBanner';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTabType>('dashboard');
@@ -36,9 +45,26 @@ export const App: React.FC = () => {
   const [isSyncingFX, setIsSyncingFX] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isQuickPasteOpen, setIsQuickPasteOpen] = useState(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [pastedClipboardText, setPastedClipboardText] = useState('');
   const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED'>('PKR');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Security & App Lock State
+  const [securitySettings, setSecuritySettings] = useState<AppSecuritySettings>({
+    isAppLockEnabled: false,
+    hasBiometrics: false,
+    autoLockTimeoutMs: 300000 // 5 minutes
+  });
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const lastActivityRef = useRef<number>(Date.now());
+
+  // 14-Day Backup Health Reminder state
+  const [backupReminder, setBackupReminder] = useState<{ daysSinceLastBackup: number; needsReminder: boolean }>({
+    daysSinceLastBackup: 0,
+    needsReminder: false
+  });
+  const [dismissedReminder, setDismissedReminder] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -48,12 +74,14 @@ export const App: React.FC = () => {
   // Fetch all state from Dexie IndexedDB
   const refreshAllData = useCallback(async () => {
     try {
-      const [accs, txs, fx, khums, spons] = await Promise.all([
+      const [accs, txs, fx, khums, spons, sec, bRecency] = await Promise.all([
         db.accounts.toArray(),
         db.transactions.toArray(),
         db.fx_rates.toArray(),
         db.khums_snapshots.toArray(),
-        db.sponsorships.toArray()
+        db.sponsorships.toArray(),
+        getSecuritySettings(),
+        checkBackupRecency()
       ]);
 
       setAccounts(accs);
@@ -61,6 +89,8 @@ export const App: React.FC = () => {
       setFxRates(fx);
       setKhumsSnapshots(khums);
       setSponsorships(spons);
+      setSecuritySettings(sec);
+      setBackupReminder(bRecency);
     } catch (err) {
       console.error('Error refreshing local database:', err);
     }
@@ -72,6 +102,12 @@ export const App: React.FC = () => {
       setIsLoading(true);
       await initializeDatabase();
       await refreshAllData();
+      
+      const sec = await getSecuritySettings();
+      if (sec.isAppLockEnabled && sec.pinHash) {
+        setIsLocked(true); // Lock on fresh launch if enabled
+      }
+
       setIsLoading(false);
 
       // Check if URL has ?quickAdd= query parameter from MacroDroid or Android shortcut
@@ -80,17 +116,46 @@ export const App: React.FC = () => {
       if (quickAddParam) {
         setPastedClipboardText(quickAddParam);
         setIsQuickPasteOpen(true);
-        // Clean URL without reloading
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
     init();
   }, [refreshAllData]);
 
+  // 5-Minute Inactivity Auto-Lock Timer
+  useEffect(() => {
+    const handleUserActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity);
+
+    // Inactivity interval checker every 10 seconds
+    const interval = setInterval(() => {
+      if (securitySettings.isAppLockEnabled && securitySettings.pinHash && !isLocked) {
+        const idleTime = Date.now() - lastActivityRef.current;
+        if (idleTime >= (securitySettings.autoLockTimeoutMs || 300000)) {
+          setIsLocked(true);
+        }
+      }
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      clearInterval(interval);
+    };
+  }, [securitySettings, isLocked]);
+
   // Global Ctrl+V / Cmd+V Anywhere in App
   useEffect(() => {
     const handleGlobalPaste = (e: ClipboardEvent) => {
-      // Don't intercept if user is typing into an active input or textarea
+      if (isLocked) return;
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
         return;
@@ -98,7 +163,6 @@ export const App: React.FC = () => {
 
       const pasted = e.clipboardData?.getData('text');
       if (pasted && pasted.trim().length > 5) {
-        // Check if looks like a financial SMS, receipt or notification
         const looksLikeFinancial = /(AED|PKR|Rs|USD|\$|£|debited|credited|spent|used for|paid to|sent to|account|card|balance|otp)/i.test(pasted);
         if (looksLikeFinancial) {
           e.preventDefault();
@@ -110,7 +174,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('paste', handleGlobalPaste);
     return () => window.removeEventListener('paste', handleGlobalPaste);
-  }, []);
+  }, [isLocked]);
 
   // Load realistic sample data
   const handleLoadSample = async () => {
@@ -148,7 +212,7 @@ export const App: React.FC = () => {
         <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center animate-pulse">
           <div className="h-6 w-6 rounded-lg bg-emerald-400" />
         </div>
-        <p className="text-sm font-semibold text-slate-300">Initializing Sada Hisab Local Database...</p>
+        <p className="text-sm font-semibold text-slate-300">Initializing Sada Hisab Encrypted Local Database...</p>
       </div>
     );
   }
@@ -156,6 +220,17 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
       
+      {/* App Lock Screen Overlay */}
+      {isLocked && (
+        <AppLockScreen
+          securitySettings={securitySettings}
+          onUnlock={() => {
+            setIsLocked(false);
+            lastActivityRef.current = Date.now();
+          }}
+        />
+      )}
+
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -171,6 +246,7 @@ export const App: React.FC = () => {
           setPastedClipboardText('');
           setIsQuickPasteOpen(true);
         }}
+        onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
         primaryCurrency={primaryCurrency}
         setPrimaryCurrency={setPrimaryCurrency}
       />
@@ -185,6 +261,16 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        {/* 14-Day Automated Backup Health Reminder */}
+        {backupReminder.needsReminder && !dismissedReminder && (
+          <BackupReminderBanner
+            daysSinceLastBackup={backupReminder.daysSinceLastBackup}
+            onOpenBackupModal={() => setActiveTab('import-export')}
+            onDismiss={() => setDismissedReminder(true)}
+          />
+        )}
+
         {activeTab === 'dashboard' && (
           <DashboardView
             accounts={accounts}
@@ -198,7 +284,6 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* NEW: Magic Inbox & Smart SMS Parser */}
         {activeTab === 'magic-inbox' && (
           <MagicInboxView
             accounts={accounts}
@@ -207,10 +292,18 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* NEW: 1-Click Monthly Recurring Roster */}
         {activeTab === 'roster' && (
           <MonthlyRosterView
             accounts={accounts}
+            onRefreshData={refreshAllData}
+          />
+        )}
+
+        {/* Financial Integrity & Reconciliation Auditor */}
+        {activeTab === 'reconcile' && (
+          <ReconciliationAuditView
+            accounts={accounts}
+            transactions={transactions}
             onRefreshData={refreshAllData}
           />
         )}
@@ -258,7 +351,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-5 text-center text-xs text-slate-500">
-        <p>Sada Hisab &bull; Zero-Manual-Effort Multi-Currency Cash & Khums Suite &bull; 100% Local-First & Air-Gapped</p>
+        <p>Sada Hisab &bull; Zero-Trust Local-First Financial & Khums Accounting &bull; AES-256 Vault Protected</p>
       </footer>
 
       {/* Manual Transaction Recording Modal */}
@@ -277,6 +370,17 @@ export const App: React.FC = () => {
         accounts={accounts}
         initialPastedText={pastedClipboardText}
         onSuccess={refreshAllData}
+      />
+
+      {/* App Lock & Biometrics Settings Modal */}
+      <SecuritySettingsModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        securitySettings={securitySettings}
+        onUpdateSettings={(newSec) => {
+          setSecuritySettings(newSec);
+          showToast('Security settings updated successfully.');
+        }}
       />
 
     </div>
