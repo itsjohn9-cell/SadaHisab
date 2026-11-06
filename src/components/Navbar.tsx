@@ -19,7 +19,10 @@ import {
   FileText,
   HandCoins,
   Users,
-  Coins
+  Coins,
+  Eye,
+  EyeOff,
+  Sliders
 } from 'lucide-react';
 import { PrivacyShieldBadge } from './PrivacyShieldBadge';
 import { FXValuationMode } from '../types';
@@ -37,7 +40,8 @@ export type NavTabType =
   | 'healer' 
   | 'khums' 
   | 'sponsorships' 
-  | 'import-export';
+  | 'import-export'
+  | 'studio';
 
 interface NavbarProps {
   activeTab: NavTabType;
@@ -57,6 +61,8 @@ interface NavbarProps {
   setPrimaryCurrency: (c: 'PKR' | 'AED') => void;
   fxValuationMode: FXValuationMode;
   setFxValuationMode: (m: FXValuationMode) => void;
+  isPrivacyMasked?: boolean;
+  onTogglePrivacyMask?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -76,7 +82,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   primaryCurrency,
   setPrimaryCurrency,
   fxValuationMode,
-  setFxValuationMode
+  setFxValuationMode,
+  isPrivacyMasked = false,
+  onTogglePrivacyMask
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
@@ -258,11 +266,37 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ArrowLeftRight className="h-4 w-4" />
               <span>Vault</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('studio')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'studio'
+                  ? 'bg-slate-800 text-indigo-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Sliders className="h-4 w-4 text-indigo-400" />
+              <span>Studio</span>
+            </button>
           </nav>
 
           {/* Right Action Controls */}
           <div className="flex items-center space-x-2 sm:space-x-2.5">
             
+            {/* Shoulder-Surfing Privacy Mask Toggle (Ctrl+B) */}
+            <button
+              type="button"
+              onClick={onTogglePrivacyMask}
+              className={`p-1.5 rounded-xl border transition ${
+                isPrivacyMasked
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+              }`}
+              title={isPrivacyMasked ? "Privacy Mask Active: Balances Hidden (Ctrl+B)" : "Toggle Privacy Mask (Ctrl+B)"}
+            >
+              {isPrivacyMasked ? <EyeOff className="h-4 w-4 text-amber-400" /> : <Eye className="h-4 w-4" />}
+            </button>
+
             {/* Live Privacy Shield Badge */}
             <PrivacyShieldBadge />
 
@@ -465,6 +499,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             className={`px-3 py-1 rounded-md whitespace-nowrap ${activeTab === 'import-export' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}
           >
             Vault
+          </button>
+          <button
+            onClick={() => setActiveTab('studio')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap ${activeTab === 'studio' ? 'bg-slate-800 text-indigo-400' : 'text-slate-400'}`}
+          >
+            Studio
           </button>
         </div>
       </div>

@@ -124,6 +124,12 @@ export async function executeRosterCommit(
   }
 
   if (transactionsToCreate.length > 0) {
+    try {
+      const { platformBridge } = await import('./platformBridge');
+      await platformBridge.createTimeMachineSnapshot(`Auto-Checkpoint before Monthly Roster (${monthStr})`, 'ROSTER_BATCH');
+    } catch (e) {
+      console.warn('Time Machine pre-snapshot skipped', e);
+    }
     await db.transactions.bulkAdd(transactionsToCreate);
     await recalculateAllAccountBalances();
   }

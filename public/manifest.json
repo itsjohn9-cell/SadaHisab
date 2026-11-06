@@ -1,6 +1,7 @@
 {
-  "short_name": "Sada Hisab",
-  "name": "Sada Hisab - Multi-Currency & Annual Khums Accounting",
+  "short_name": "Sada Cash",
+  "name": "Sada Cash - Multi-Currency Cash & Khums Accounting",
+  "id": "com.sadacash.ledger",
   "icons": [
     {
       "src": "/icon.svg",
@@ -9,9 +10,48 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#090d16",
-  "theme_color": "#090d16",
+  "background_color": "#020617",
+  "theme_color": "#020617",
   "display": "standalone",
   "orientation": "portrait",
-  "categories": ["finance", "productivity", "utilities"]
+  "categories": ["finance", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "🎙️ Voice Expense",
+      "short_name": "Voice",
+      "description": "Log expense using voice note",
+      "url": "/?action=voice",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "📋 Paste SMS / Receipt",
+      "short_name": "Paste SMS",
+      "description": "Parse bank SMS with OTP firewall",
+      "url": "/?action=paste",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "⚡ Run Monthly Roster",
+      "short_name": "Roster",
+      "description": "1-click monthly sponsorships & bills commit",
+      "url": "/?action=roster",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "📸 Scan Bill / PDF",
+      "short_name": "Scan Bill",
+      "description": "Scan invoice or receipt photo",
+      "url": "/?action=scan",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "share_target": {
+    "action": "/?action=share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

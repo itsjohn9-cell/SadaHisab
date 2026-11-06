@@ -233,3 +233,4 @@ export const KematiTrackerCard: React.FC<Props> = ({ onTransactionCreated }) => 
     </div>
   );
 };
+

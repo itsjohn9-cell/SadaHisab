@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { db } from '../db/db';
 import { Transaction } from '../types';
+import { TimeMachineCard } from './TimeMachineCard';
 
 interface ImportExportViewProps {
   onRefreshData: () => void;
@@ -531,6 +532,9 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
 
         </div>
       </div>
+
+      {/* Rolling 10-Snapshot Time Machine */}
+      <TimeMachineCard onRestored={onRefreshData} />
 
       {/* Encrypt Passphrase Modal */}
       {showEncryptModal && (

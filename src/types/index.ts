@@ -421,3 +421,56 @@ export interface ExcelHealingSummary {
     resolvedAction?: 'DISCARD_DUPLICATE' | 'KEEP_BOTH' | 'MERGE';
   }>;
 }
+
+// Multi-Platform & Hybrid Storage Types
+export interface TimeMachineSnapshot {
+  id: string;
+  timestamp: string; // ISO format
+  label: string;
+  triggerType: 'EXCEL_IMPORT' | 'ROSTER_BATCH' | 'DELETE' | 'MANUAL';
+  dataJSON: string;
+  transactionsCount: number;
+  accountsCount: number;
+}
+
+export interface BankingAppPackage {
+  packageName: string;
+  appName: string;
+  region: 'UAE' | 'PK' | 'INTL' | 'GLOBAL';
+  currency: Currency;
+  isWhitelisted: boolean;
+  sampleSender: string;
+}
+
+// No-Code Extensibility Studio Types
+export type KhumsInclusionRule = 
+  | 'EXEMPT' 
+  | 'SAVINGS_100' 
+  | 'CONSUMABLE_20' 
+  | 'UNUSED_GOODS_25';
+
+export interface CustomAssetClass {
+  id: string;
+  name: string; // e.g. "Gold / Jewelry", "Rental Property", "Stocks / Crypto", "Kemati / ROSCA"
+  category: 'LIQUID' | 'FIXED' | 'COMMODITY' | 'RECEIVABLE';
+  estimatedValuePKR: number;
+  khumsInclusionRule: KhumsInclusionRule;
+  notes?: string;
+  updatedAt: string;
+}
+
+export interface CustomParserRule {
+  id: string;
+  ruleName: string;
+  sourceKeyword: string; // e.g. "ADCB", "NAYAPAY", "HBL"
+  regexPattern: string;
+  amountCaptureGroupIndex: number;
+  currencyCaptureGroupIndex: number;
+  merchantCaptureGroupIndex: number;
+  defaultCategory: string;
+  defaultSubCategory?: string;
+  defaultAccountId: string;
+  isActive: boolean;
+  createdAt: string;
+}
+

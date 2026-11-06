@@ -27,6 +27,23 @@ export function formatCurrency(amount: number, currency: Currency = 'PKR'): stri
   }
 }
 
+export function formatCurrencyMasked(
+  amount: number,
+  currency: Currency = 'PKR',
+  isMasked: boolean = false
+): string {
+  if (isMasked) {
+    switch (currency) {
+      case 'PKR': return 'Rs •••••••';
+      case 'AED': return 'AED ••••••';
+      case 'USD': return '$••••••';
+      case 'GBP': return '£••••••';
+      default: return `${currency} ••••••`;
+    }
+  }
+  return formatCurrency(amount, currency);
+}
+
 export function formatNumberOnly(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,

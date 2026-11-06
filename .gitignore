@@ -23,3 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 
+# Android Gradle build
+android/.gradle
+android/build
+android/app/build
+*.apk
+*.aab
+build-output/
+
+

@@ -44,6 +44,8 @@ import { LoansLedgerView } from './components/LoansLedgerView';
 import { BillScannerModal } from './components/BillScannerModal';
 import { VoiceLoggerModal } from './components/VoiceLoggerModal';
 import { CoordinatorManagerView } from './components/CoordinatorManagerView';
+import { NoCodeStudioView } from './components/NoCodeStudioView';
+import { platformBridge } from './services/platformBridge';
 import { Mic } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -80,6 +82,44 @@ export const App: React.FC = () => {
     needsReminder: false
   });
   const [dismissedReminder, setDismissedReminder] = useState<boolean>(false);
+
+  // Shoulder-Surfing Privacy Blur State (Ctrl+B)
+  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(false);
+
+  // Global Keyboard Shortcut: Ctrl+B / Cmd+B for Privacy Blur
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsPrivacyMasked(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Multi-Platform Bridge Initializer (Offline Storage, Deep Links, Native Alarms)
+  useEffect(() => {
+    platformBridge.requestPersistentStorage();
+
+    platformBridge.setupDeepLinkListener(({ text, source }) => {
+      setPastedClipboardText(text);
+      setIsQuickPasteOpen(true);
+      showToast(`Pushed from ${source || 'Android Intent'}!`);
+    });
+
+    platformBridge.schedulePersistentReminders();
+
+    const handleShortcutAction = (e: any) => {
+      const act = e.detail?.action;
+      if (act === 'paste') setIsQuickPasteOpen(true);
+      else if (act === 'voice') setIsVoiceLoggerOpen(true);
+      else if (act === 'scan') setIsBillScannerOpen(true);
+      else if (act === 'roster') setActiveTab('roster');
+    };
+    window.addEventListener('sadacash-shortcut-action', handleShortcutAction);
+    return () => window.removeEventListener('sadacash-shortcut-action', handleShortcutAction);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -279,6 +319,8 @@ export const App: React.FC = () => {
         setPrimaryCurrency={setPrimaryCurrency}
         fxValuationMode={fxValuationMode}
         setFxValuationMode={handleFXModeChange}
+        isPrivacyMasked={isPrivacyMasked}
+        onTogglePrivacyMask={() => setIsPrivacyMasked(prev => !prev)}
       />
 
       {/* Global Toast Notification */}
@@ -326,6 +368,7 @@ export const App: React.FC = () => {
               setPastedClipboardText(text || '');
               setIsQuickPasteOpen(true);
             }}
+            isPrivacyMasked={isPrivacyMasked}
           />
         )}
 
@@ -410,6 +453,13 @@ export const App: React.FC = () => {
 
         {activeTab === 'import-export' && (
           <ImportExportView
+            onRefreshData={refreshAllData}
+          />
+        )}
+
+        {activeTab === 'studio' && (
+          <NoCodeStudioView
+            accounts={accounts}
             onRefreshData={refreshAllData}
           />
         )}

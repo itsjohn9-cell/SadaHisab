@@ -7,7 +7,7 @@ import {
   Sponsorship, 
   Currency 
 } from '../types';
-import { formatCurrency, formatNumberOnly } from '../utils/formatters';
+import { formatCurrency, formatNumberOnly, formatCurrencyMasked } from '../utils/formatters';
 import { 
   Wallet, 
   TrendingUp, 
@@ -54,6 +54,7 @@ interface DashboardViewProps {
   onOpenVoiceLogger?: () => void;
   onOpenBillScanner?: () => void;
   onOpenQuickPaste?: (text?: string) => void;
+  isPrivacyMasked?: boolean;
 }
 
 const PIE_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#84cc16'];
@@ -69,7 +70,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenAddModal,
   onOpenVoiceLogger,
   onOpenBillScanner,
-  onOpenQuickPaste
+  onOpenQuickPaste,
+  isPrivacyMasked = false
 }) => {
   const [accountGroupFilter, setAccountGroupFilter] = useState<'ALL' | 'PK' | 'AE' | 'INTL' | 'CUSTODIAL'>('ALL');
 
@@ -365,15 +367,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-3">
             <h3 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
               {primaryCurrency === 'PKR' 
-                ? formatCurrency(metrics.totalNetWorthPKR, 'PKR')
-                : formatCurrency(metrics.totalNetWorthAED, 'AED')}
+                ? formatCurrencyMasked(metrics.totalNetWorthPKR, 'PKR', isPrivacyMasked)
+                : formatCurrencyMasked(metrics.totalNetWorthAED, 'AED', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-slate-400 mt-1 flex items-center space-x-1">
               <span>Equivalent:</span>
               <span className="font-mono text-emerald-400 font-medium">
                 {primaryCurrency === 'PKR'
-                  ? formatCurrency(metrics.totalNetWorthAED, 'AED')
-                  : formatCurrency(metrics.totalNetWorthPKR, 'PKR')}
+                  ? formatCurrencyMasked(metrics.totalNetWorthAED, 'AED', isPrivacyMasked)
+                  : formatCurrencyMasked(metrics.totalNetWorthPKR, 'PKR', isPrivacyMasked)}
               </span>
             </p>
           </div>
@@ -397,11 +399,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-3">
             <h3 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
               {primaryCurrency === 'PKR' 
-                ? formatCurrency(metrics.spendableCashPKR, 'PKR')
-                : formatCurrency(metrics.spendableCashAED, 'AED')}
+                ? formatCurrencyMasked(metrics.spendableCashPKR, 'PKR', isPrivacyMasked)
+                : formatCurrencyMasked(metrics.spendableCashAED, 'AED', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-slate-400 mt-1">
-              Excludes Wife ({formatCurrency(metrics.custodialCashPKR, 'PKR')}) & Bonds
+              Excludes Wife ({formatCurrencyMasked(metrics.custodialCashPKR, 'PKR', isPrivacyMasked)}) & Bonds
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
@@ -608,11 +610,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                 <div className="mt-2 flex items-baseline justify-between">
                   <div className="text-base font-bold text-white font-mono">
-                    {formatCurrency(account.currentBalance || 0, account.currency)}
+                    {formatCurrencyMasked(account.currentBalance || 0, account.currency, isPrivacyMasked)}
                   </div>
                   {account.currency !== 'PKR' && (
                     <span className="text-[10px] text-slate-400 font-mono">
-                      &asymp; {formatCurrency(balancePKR, 'PKR')}
+                      &asymp; {formatCurrencyMasked(balancePKR, 'PKR', isPrivacyMasked)}
                     </span>
                   )}
                 </div>

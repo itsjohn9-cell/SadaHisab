@@ -90,6 +90,25 @@ Built upon a forensic audit of all 731 rows of `Khums - November 30 2025 - Daily
 
 ---
 
+## 📱 Multi-Platform Architecture: Web, PWA & Native Android APK
+
+Sada Cash runs a **single unified codebase** across three deployment targets:
+1. **Desktop/Mobile Web Browser:** Instant zero-installation access with local IndexedDB.
+2. **100% Offline Installable PWA:** Workbox offline pre-caching, Service Worker, home screen icon shortcuts, and Web Share Target.
+3. **Native Android App (`.apk`) via Capacitor:** Built with `@capacitor/core` and `@capacitor/android` (`com.sadacash.ledger`).
+
+### Key Production Modules:
+- **`PlatformBridge` Abstraction (`src/services/platformBridge.ts`):** Detects execution context (`Capacitor.isNativePlatform()`), requests `navigator.storage.persist()`, and manages native Android features.
+- **Hands-Free Android Bank Notification Ingestion:** Native deep-link listener (`sadacash://ingest?payload=...`) linked to **Samsung Modes & Routines** and **MacroDroid** to push bank notifications automatically with zero manual entry and zero `READ_SMS` permission hazards.
+- **Whitelisted Banking Apps Only:** UAE (ADCB, Mashreq, Google Wallet, Samsung Wallet), Pakistan (Bank Al Habib, SCB, NayaPay, Easypaisa, JazzCash, HBL), and International (Wise, PayPal).
+- **Rolling 10-Snapshot Time Machine:** Automated recovery snapshots before bulk Excel imports, monthly roster commitments, or deletions, backed by 1-click restore.
+- **Native Android Documents Mirror:** Copies encrypted `.khumsvault` backups and snapshots to `@capacitor/filesystem` (`Directory.Documents/SadaCash_Backups/`) so data survives even if the APK is uninstalled.
+- **1-Tap Shoulder-Surfing Privacy Blur (`Ctrl+B` / `👁️`):** Header toggle that instantaneously masks net worth and account balances (`PKR •••••••` / `AED •••••`) in public spaces.
+- **Zero-Setup GitHub Actions Cloud APK Builder:** Automated CI/CD workflow (`.github/workflows/build-android-apk.yml`) that compiles an installable `SadaCash-debug.apk` and uploads it as a downloadable artifact on every code push.
+- **No-Code Extensibility Studio:** Visually build new regex parser rules for new bank notifications and register custom Khums asset classes (Gold, Property, Stocks, Kemati).
+
+---
+
 ## 🏛️ System Architecture
 
 ```mermaid

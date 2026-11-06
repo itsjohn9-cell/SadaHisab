@@ -10,7 +10,10 @@ import {
   RosterBatchDraftItem,
   LoanRecord,
   CoordinatorGroup,
-  KematiRecord
+  KematiRecord,
+  TimeMachineSnapshot,
+  CustomParserRule,
+  CustomAssetClass
 } from '../types';
 import { 
   DEFAULT_ACCOUNTS, 
@@ -50,10 +53,13 @@ export class SadaHisabDatabase extends Dexie {
   app_settings!: Table<AppSetting, string>;
   coordinator_groups!: Table<CoordinatorGroup, string>;
   kemati_records!: Table<KematiRecord, string>;
+  time_machine_snapshots!: Table<TimeMachineSnapshot, string>;
+  custom_parser_rules!: Table<CustomParserRule, string>;
+  custom_assets!: Table<CustomAssetClass, string>;
 
   constructor() {
     super('SadaHisabDB');
-    this.version(4).stores({
+    this.version(5).stores({
       accounts: 'id, name, type, currency, isCustodial, isKhumsExempt, country, isSampleData',
       transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth, dedupeHash, billingMonth, subBeneficiary, parentTransferId',
       fx_rates: 'currency, baseCurrency',
@@ -65,7 +71,10 @@ export class SadaHisabDatabase extends Dexie {
       receipt_blobs: 'id',
       app_settings: 'key',
       coordinator_groups: 'id, coordinatorName, phone, defaultAccountId',
-      kemati_records: 'id, name, isPayoutReceived, includeInKhums'
+      kemati_records: 'id, name, isPayoutReceived, includeInKhums',
+      time_machine_snapshots: 'id, timestamp, triggerType',
+      custom_parser_rules: 'id, ruleName, sourceKeyword, isActive',
+      custom_assets: 'id, name, category, khumsInclusionRule'
     });
   }
 }

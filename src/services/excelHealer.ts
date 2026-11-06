@@ -663,8 +663,14 @@ export async function parseAndHealExcelWorkbook(file: File): Promise<ExcelHealin
     }
   }
 
-  // 4. Save to Dexie
+  // 4. Save to Dexie with automatic Time Machine checkpoint
   if (parsedTransactions.length > 0) {
+    try {
+      const { platformBridge } = await import('./platformBridge');
+      await platformBridge.createTimeMachineSnapshot('Auto-Checkpoint before Excel Import', 'EXCEL_IMPORT');
+    } catch (e) {
+      console.warn('Time Machine pre-snapshot skipped', e);
+    }
     await db.transactions.bulkAdd(parsedTransactions);
     await recalculateAllAccountBalances();
   }
