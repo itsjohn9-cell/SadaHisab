@@ -6,7 +6,7 @@ import {
   TransactionType, 
   TransactionStatus 
 } from '../types';
-import { formatCurrency, formatDatePretty } from '../utils/formatters';
+import { formatCurrency, formatDatePretty, formatCurrencyMasked } from '../utils/formatters';
 import { 
   Search, 
   Filter, 
@@ -31,6 +31,7 @@ interface LedgerViewProps {
   initialFilterTab?: 'ALL' | 'NEEDS_REVIEW';
   onOpenAddModal: () => void;
   onRefreshData: () => void;
+  isPrivacyMasked?: boolean;
 }
 
 export const LedgerView: React.FC<LedgerViewProps> = ({
@@ -38,7 +39,8 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
   accounts,
   initialFilterTab = 'ALL',
   onOpenAddModal,
-  onRefreshData
+  onRefreshData,
+  isPrivacyMasked = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | TransactionType>('ALL');
@@ -407,7 +409,7 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
                           tx.type === 'TRANSFER' ? 'text-blue-400' : 'text-slate-100'
                         }>
                           {tx.type === 'INCOME' ? '+' : tx.type === 'EXPENSE' ? '-' : ''}
-                          {formatCurrency(tx.amount, tx.currency)}
+                          {formatCurrencyMasked(tx.amount, tx.currency, isPrivacyMasked)}
                         </span>
                       </td>
 
@@ -416,7 +418,7 @@ export const LedgerView: React.FC<LedgerViewProps> = ({
                         {tx.currency !== 'PKR' ? (
                           <div>
                             <span className="text-slate-300 font-medium">
-                              {formatCurrency(tx.convertedAmountPKR, 'PKR')}
+                              {formatCurrencyMasked(tx.convertedAmountPKR, 'PKR', isPrivacyMasked)}
                             </span>
                             <div className="text-[10px] text-slate-500">
                               @{tx.fxRateUsed}

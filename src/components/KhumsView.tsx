@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { KhumsSnapshot, Account } from '../types';
-import { formatCurrency, formatNumberOnly } from '../utils/formatters';
+import { formatCurrency, formatNumberOnly, formatCurrencyMasked } from '../utils/formatters';
 import { 
   computeKhums, 
   generateKhumsDraftFromAccounts, 
@@ -26,12 +26,14 @@ interface KhumsViewProps {
   khumsSnapshots: KhumsSnapshot[];
   accounts: Account[];
   onRefreshData: () => void;
+  isPrivacyMasked?: boolean;
 }
 
 export const KhumsView: React.FC<KhumsViewProps> = ({
   khumsSnapshots,
   accounts,
-  onRefreshData
+  onRefreshData,
+  isPrivacyMasked = false
 }) => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(2025);
@@ -394,10 +396,10 @@ export const KhumsView: React.FC<KhumsViewProps> = ({
             <div className="mt-4 pt-4 border-t border-slate-800">
               <span className="text-xs text-slate-400">Net Khumsable Wealth (Surplus):</span>
               <div className="text-2xl font-black text-white font-mono mt-1">
-                {formatCurrency(currentCalculation.netKhumsableAmountPKR, 'PKR')}
+                {formatCurrencyMasked(currentCalculation.netKhumsableAmountPKR, 'PKR', isPrivacyMasked)}
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                Total Assets ({formatCurrency(totalAssetsSum, 'PKR')}) &minus; Deductions ({formatCurrency(totalDeductionsSum, 'PKR')})
+                Total Assets ({formatCurrencyMasked(totalAssetsSum, 'PKR', isPrivacyMasked)}) &minus; Deductions ({formatCurrencyMasked(totalDeductionsSum, 'PKR', isPrivacyMasked)})
               </p>
             </div>
 
@@ -408,11 +410,11 @@ export const KhumsView: React.FC<KhumsViewProps> = ({
                 <span className="font-mono font-bold">20%</span>
               </div>
               <div className="text-3xl font-extrabold text-purple-300 font-mono mt-1 tracking-tight">
-                {formatCurrency(currentCalculation.khumsCalculated20PctPKR, 'PKR')}
+                {formatCurrencyMasked(currentCalculation.khumsCalculated20PctPKR, 'PKR', isPrivacyMasked)}
               </div>
               <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-purple-900/60 text-[10px] text-purple-200/80 font-mono">
-                <div>Sahm-e-Imam (10%): <br/><span className="text-white font-bold">{formatCurrency(currentCalculation.khumsCalculated20PctPKR / 2, 'PKR')}</span></div>
-                <div>Sahm-e-Sadat (10%): <br/><span className="text-white font-bold">{formatCurrency(currentCalculation.khumsCalculated20PctPKR / 2, 'PKR')}</span></div>
+                <div>Sahm-e-Imam (10%): <br/><span className="text-white font-bold">{formatCurrencyMasked(currentCalculation.khumsCalculated20PctPKR / 2, 'PKR', isPrivacyMasked)}</span></div>
+                <div>Sahm-e-Sadat (10%): <br/><span className="text-white font-bold">{formatCurrencyMasked(currentCalculation.khumsCalculated20PctPKR / 2, 'PKR', isPrivacyMasked)}</span></div>
               </div>
             </div>
 
@@ -420,7 +422,7 @@ export const KhumsView: React.FC<KhumsViewProps> = ({
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="text-slate-300 font-medium">Total Paid / Payable:</span>
               <span className="text-lg font-bold text-emerald-400 font-mono">
-                {formatCurrency(currentCalculation.khumsPaidPKR, 'PKR')}
+                {formatCurrencyMasked(currentCalculation.khumsPaidPKR, 'PKR', isPrivacyMasked)}
               </span>
             </div>
 

@@ -21,6 +21,7 @@ import {
 } from './services/fxService';
 import { 
   getSecuritySettings, 
+  saveSecuritySettings,
   checkBackupRecency 
 } from './services/cryptoSecurity';
 import { Navbar, NavTabType } from './components/Navbar';
@@ -36,6 +37,7 @@ import { MonthlyRosterView } from './components/MonthlyRosterView';
 import { QuickPasteModal } from './components/QuickPasteModal';
 import { ReconciliationAuditView } from './components/ReconciliationAuditView';
 import { AppLockScreen } from './components/AppLockScreen';
+import { PrivacyRevealModal } from './components/PrivacyRevealModal';
 import { SecuritySettingsModal } from './components/SecuritySettingsModal';
 import { BackupReminderBanner } from './components/BackupReminderBanner';
 import { PlannedRemindersView } from './components/PlannedRemindersView';
@@ -75,13 +77,14 @@ export const App: React.FC = () => {
   const [fxValuationMode, setFxModeState] = useState<FXValuationMode>(getFXValuationMode);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Security & App Lock State
+  // Security & App Lock State (Default Locked on App Launch)
   const [securitySettings, setSecuritySettings] = useState<AppSecuritySettings>({
     isAppLockEnabled: false,
     hasBiometrics: false,
     autoLockTimeoutMs: 300000 // 5 minutes
   });
-  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [isLocked, setIsLocked] = useState<boolean>(true);
+  const [isPrivacyRevealModalOpen, setIsPrivacyRevealModalOpen] = useState<boolean>(false);
   const lastActivityRef = useRef<number>(Date.now());
 
   // 14-Day Backup Health Reminder state
@@ -91,20 +94,35 @@ export const App: React.FC = () => {
   });
   const [dismissedReminder, setDismissedReminder] = useState<boolean>(false);
 
-  // Shoulder-Surfing Privacy Blur State (Ctrl+B)
-  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(false);
+  // Discreet Privacy Mode State (Default Masked on App Launch to prevent shoulder-surfing)
+  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(true);
+
+  // Toggle Discreet Privacy Mode with Security Check on Reveal
+  const handleTogglePrivacyMask = () => {
+    if (isPrivacyMasked) {
+      if (securitySettings.pinHash || securitySettings.hasBiometrics) {
+        setIsPrivacyRevealModalOpen(true);
+      } else {
+        setIsPrivacyMasked(false);
+        showToast('Confidential metrics revealed.');
+      }
+    } else {
+      setIsPrivacyMasked(true);
+      showToast('Discreet Privacy Mode active: metrics masked.');
+    }
+  };
 
   // Global Keyboard Shortcut: Ctrl+B / Cmd+B for Privacy Blur
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
-        setIsPrivacyMasked(prev => !prev);
+        handleTogglePrivacyMask();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isPrivacyMasked, securitySettings]);
 
   // Multi-Platform Bridge Initializer (Offline Storage, Deep Links, Native Alarms)
   useEffect(() => {
@@ -180,9 +198,9 @@ export const App: React.FC = () => {
       await refreshAllData();
       
       const sec = await getSecuritySettings();
-      if (sec.isAppLockEnabled && sec.pinHash) {
-        setIsLocked(true);
-      }
+      setSecuritySettings(sec);
+      // Always require authentication on launch
+      setIsLocked(true);
 
       setIsLoading(false);
 
@@ -209,10 +227,16 @@ export const App: React.FC = () => {
     window.addEventListener('touchstart', handleUserActivity);
 
     const interval = setInterval(() => {
-      if (securitySettings.isAppLockEnabled && securitySettings.pinHash && !isLocked) {
-        const idleTime = Date.now() - lastActivityRef.current;
+      const idleTime = Date.now() - lastActivityRef.current;
+      // Auto-remask confidential metrics after 2 minutes of inactivity
+      if (!isPrivacyMasked && idleTime >= 120000) {
+        setIsPrivacyMasked(true);
+      }
+      // Auto-lock entire app after configured timeout (default 5 mins)
+      if (!isLocked) {
         if (idleTime >= (securitySettings.autoLockTimeoutMs || 300000)) {
           setIsLocked(true);
+          setIsPrivacyMasked(true);
         }
       }
     }, 10000);
@@ -321,9 +345,26 @@ export const App: React.FC = () => {
           onUnlock={() => {
             setIsLocked(false);
             lastActivityRef.current = Date.now();
+            showToast('Vault unlocked.');
+          }}
+          onSaveSecuritySettings={async (updated) => {
+            await saveSecuritySettings(updated);
+            setSecuritySettings(updated);
           }}
         />
       )}
+
+      {/* Privacy Reveal Verification Modal */}
+      <PrivacyRevealModal
+        isOpen={isPrivacyRevealModalOpen}
+        onClose={() => setIsPrivacyRevealModalOpen(false)}
+        onSuccess={() => {
+          setIsPrivacyMasked(false);
+          lastActivityRef.current = Date.now();
+          showToast('Identity verified. Confidential balances revealed.');
+        }}
+        securitySettings={securitySettings}
+      />
 
       {/* Top Navbar */}
       <Navbar
@@ -349,7 +390,7 @@ export const App: React.FC = () => {
         fxValuationMode={fxValuationMode}
         setFxValuationMode={handleFXModeChange}
         isPrivacyMasked={isPrivacyMasked}
-        onTogglePrivacyMask={() => setIsPrivacyMasked(prev => !prev)}
+        onTogglePrivacyMask={handleTogglePrivacyMask}
       />
 
       {/* Global High-Visibility Currency Switcher & Filter Bar */}
@@ -359,7 +400,7 @@ export const App: React.FC = () => {
         filterState={globalFilters}
         setFilterState={setGlobalFilters}
         isPrivacyMasked={isPrivacyMasked}
-        onTogglePrivacyMask={() => setIsPrivacyMasked(prev => !prev)}
+        onTogglePrivacyMask={handleTogglePrivacyMask}
         onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
         totalTransactionsCount={filteredTransactions.length}
       />
@@ -410,6 +451,7 @@ export const App: React.FC = () => {
               setIsQuickPasteOpen(true);
             }}
             isPrivacyMasked={isPrivacyMasked}
+            onTogglePrivacyMask={handleTogglePrivacyMask}
           />
         )}
 
@@ -465,6 +507,7 @@ export const App: React.FC = () => {
             initialFilterTab="ALL"
             onOpenAddModal={() => setIsAddModalOpen(true)}
             onRefreshData={refreshAllData}
+            isPrivacyMasked={isPrivacyMasked}
           />
         )}
 
@@ -481,6 +524,7 @@ export const App: React.FC = () => {
             khumsSnapshots={khumsSnapshots}
             accounts={accounts}
             onRefreshData={refreshAllData}
+            isPrivacyMasked={isPrivacyMasked}
           />
         )}
 

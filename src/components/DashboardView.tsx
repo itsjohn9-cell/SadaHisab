@@ -27,7 +27,9 @@ import {
   Mic,
   ScanLine,
   AlertTriangle,
-  HeartHandshake
+  HeartHandshake,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -55,6 +57,7 @@ interface DashboardViewProps {
   onOpenBillScanner?: () => void;
   onOpenQuickPaste?: (text?: string) => void;
   isPrivacyMasked?: boolean;
+  onTogglePrivacyMask?: () => void;
 }
 
 const PIE_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#84cc16'];
@@ -71,7 +74,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenVoiceLogger,
   onOpenBillScanner,
   onOpenQuickPaste,
-  isPrivacyMasked = false
+  isPrivacyMasked = false,
+  onTogglePrivacyMask
 }) => {
   const [accountGroupFilter, setAccountGroupFilter] = useState<'ALL' | 'PK' | 'AE' | 'INTL' | 'CUSTODIAL'>('ALL');
 
@@ -355,6 +359,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </button>
       </div>
 
+      {/* Discreet Privacy Mode Notification Banner */}
+      {isPrivacyMasked && (
+        <div 
+          onClick={onTogglePrivacyMask}
+          className="bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/50 rounded-2xl p-3 sm:p-4 flex items-center justify-between text-xs text-amber-200 cursor-pointer hover:bg-amber-500/20 transition shadow-sm"
+        >
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 shrink-0">
+              <EyeOff className="h-4 w-4" />
+            </div>
+            <div>
+              <span className="font-bold text-amber-300">Discreet Privacy Mode Active</span>
+              <span className="text-amber-200/80 hidden sm:inline ml-1.5">— Core balances, cash, & Khums metrics are hidden on launch to prevent shoulder-surfing.</span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-1.5 font-bold text-amber-300 bg-amber-500/20 px-3 py-1.5 rounded-xl border border-amber-500/30 shrink-0 hover:bg-amber-500/30 transition">
+            <Eye className="h-3.5 w-3.5" />
+            <span>Tap to Reveal</span>
+          </div>
+        </div>
+      )}
+
       {/* 3. Top Banner & Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
@@ -429,10 +455,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3">
             <h3 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-              {formatCurrency(metrics.monthlyBurnRatePKR, 'PKR')}
+              {formatCurrencyMasked(metrics.monthlyBurnRatePKR, 'PKR', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-slate-400 mt-1">
-              Active Sponsorships: {formatCurrency(metrics.activeSponsorshipsPKR, 'PKR')}
+              Active Sponsorships: {formatCurrencyMasked(metrics.activeSponsorshipsPKR, 'PKR', isPrivacyMasked)}
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
@@ -457,11 +483,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-3">
             <h3 className="text-2xl lg:text-3xl font-extrabold text-purple-300 tracking-tight">
               {metrics.latestSnapshot 
-                ? formatCurrency(metrics.latestSnapshot.khumsPayablePKR || metrics.latestSnapshot.khumsCalculated20PctPKR || 0, 'PKR')
-                : 'Rs 652,674'}
+                ? formatCurrencyMasked(metrics.latestSnapshot.khumsPayablePKR || metrics.latestSnapshot.khumsCalculated20PctPKR || 0, 'PKR', isPrivacyMasked)
+                : formatCurrencyMasked(652674, 'PKR', isPrivacyMasked)}
             </h3>
             <p className="text-xs text-purple-300/80 mt-1">
-              Prior year capital deducted: {metrics.latestSnapshot ? formatCurrency(metrics.latestSnapshot.previousPurifiedCapitalPKR || metrics.latestSnapshot.priorYearKhumsedCapitalPKR || 0, 'PKR') : 'Purified'}
+              Prior year capital deducted: {metrics.latestSnapshot ? formatCurrencyMasked(metrics.latestSnapshot.previousPurifiedCapitalPKR || metrics.latestSnapshot.priorYearKhumsedCapitalPKR || 0, 'PKR', isPrivacyMasked) : 'Purified'}
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-purple-900/40 flex items-center justify-between text-xs text-purple-200">
