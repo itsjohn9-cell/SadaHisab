@@ -11,6 +11,7 @@ import { convertToPKR } from './fxService';
 
 export const DEFAULT_SHEET_ID = '1UybhQ6dyrudvKTqgGF7yXy2Y8m6XILTNRJus5r-leUQ';
 export const DEFAULT_SHEET_URL = `https://docs.google.com/spreadsheets/d/${DEFAULT_SHEET_ID}/edit`;
+export const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeslSOrs58SfuOfgrIM43mmJH-OA4ufBtcHMs-dBuJIMn1s9FkwRoCp23_IiV7VWbiHg/exec';
 
 export interface GoogleSheetSyncConfig {
   sheetId: string;
@@ -26,11 +27,18 @@ const STORAGE_KEY = 'sada_hisab_google_sheet_config';
 export function getGoogleSheetConfig(): GoogleSheetSyncConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.appsScriptWebAppUrl) {
+        parsed.appsScriptWebAppUrl = DEFAULT_APPS_SCRIPT_URL;
+      }
+      return parsed;
+    }
   } catch {}
   return {
     sheetId: DEFAULT_SHEET_ID,
     sheetUrl: DEFAULT_SHEET_URL,
+    appsScriptWebAppUrl: DEFAULT_APPS_SCRIPT_URL,
     syncStatus: 'IDLE'
   };
 }
@@ -163,12 +171,14 @@ async function processGoogleSheetRows(rows: any[][]): Promise<{
   duplicateCount: number;
   message: string;
 }> {
-  if (rows.length < 2) {
+  const cleanRows = rows.filter(r => r && Array.isArray(r) && r.some(c => String(c ?? '').trim().length > 0));
+
+  if (cleanRows.length < 2) {
     return {
       success: true,
       importedCount: 0,
       duplicateCount: 0,
-      message: 'Google Sheet appears empty or has only a header row.'
+      message: 'Connected to Google Sheet successfully! The sheet is currently fresh or has only headers.'
     };
   }
 
@@ -177,8 +187,8 @@ async function processGoogleSheetRows(rows: any[][]): Promise<{
   let duplicateCount = 0;
 
   // Assume standard columns: Date, Amount, Description/Merchant, Category, Currency, Account
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
+  for (let i = 1; i < cleanRows.length; i++) {
+    const row = cleanRows[i];
     if (!row || row.length === 0 || !row[0]) continue;
 
     const rawDate = String(row[0]).trim();

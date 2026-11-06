@@ -20,7 +20,8 @@ import {
   pullFromGoogleSheet, 
   getAppsScriptSnippet, 
   DEFAULT_SHEET_ID, 
-  DEFAULT_SHEET_URL 
+  DEFAULT_SHEET_URL,
+  DEFAULT_APPS_SCRIPT_URL
 } from '../services/googleSheetSync';
 import { exportToExcelWorkbook } from '../services/excelHealer';
 
@@ -38,14 +39,16 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
   showToast
 }) => {
   const [config, setConfig] = useState(getGoogleSheetConfig());
-  const [webAppUrl, setWebAppUrl] = useState(config.appsScriptWebAppUrl || '');
+  const [webAppUrl, setWebAppUrl] = useState(config.appsScriptWebAppUrl || DEFAULT_APPS_SCRIPT_URL);
   const [sheetId, setSheetId] = useState(config.sheetId || DEFAULT_SHEET_ID);
   const [isSyncing, setIsSyncing] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [activeTab, setActiveTab] = useState<'sync' | 'script' | 'schema'>('sync');
 
   useEffect(() => {
-    setConfig(getGoogleSheetConfig());
+    const cfg = getGoogleSheetConfig();
+    setConfig(cfg);
+    setWebAppUrl(cfg.appsScriptWebAppUrl || DEFAULT_APPS_SCRIPT_URL);
   }, [isOpen]);
 
   if (!isOpen) return null;
