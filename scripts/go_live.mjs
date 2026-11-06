@@ -78,6 +78,19 @@ console.log('\n🤖 [3/5] Compiling Android Release AAB & Direct Download APK...
 const androidDir = path.resolve('android');
 const gradlewCmd = path.join(androidDir, 'gradlew');
 
+// Auto-increment versionCode in android/app/build.gradle
+const buildGradlePath = path.join(androidDir, 'app/build.gradle');
+if (fs.existsSync(buildGradlePath)) {
+  let content = fs.readFileSync(buildGradlePath, 'utf8');
+  const codeMatch = content.match(/versionCode\s+(\d+)/);
+  if (codeMatch) {
+    const nextCode = parseInt(codeMatch[1], 10) + 1;
+    content = content.replace(/versionCode\s+\d+/, `versionCode ${nextCode}`);
+    fs.writeFileSync(buildGradlePath, content, 'utf8');
+    console.log(`ℹ Incremented Android versionCode to ${nextCode}`);
+  }
+}
+
 // Compile Signed Release App Bundle (AAB) for Google Play
 run(gradlewCmd, [':app:bundleRelease', '--stacktrace'], 'Gradle Bundle Release (AAB)', { cwd: androidDir });
 
