@@ -9,12 +9,13 @@
 
 **Sada Hisab** replaces fragile legacy spreadsheets with a resilient, reactive, local-first accounting system. It is engineered specifically for individuals managing multi-currency personal finances across **Pakistan (`PKR`)**, the **UAE (`AED`)**, and global remote platforms (**USD**, **GBP**, **SAR**, **MYR**, **IQD**), featuring:
 
-1. **Zero-Hazard Smart SMS / Receipt Parser ("Magic Inbox"):** Ingests raw banking SMS, WhatsApp receipts, and notification dumps. Protected by a **Hard OTP Security Firewall** that immediately intercepts and scrubs verification codes from memory without writing them to disk.
-2. **1-Click Monthly Recurring Roster:** Automatically batches ~25 recurring monthly entries (Green Island School, Asghar Bhai Van, Maulana Qalbe Ali, Khatoon Khatoon, Zaibun Nisa, StromFiber, Wife Monthly Allowance, M106 utilities) with 1-click batch ledger commit.
-3. **Android MacroDroid / Tasker / Samsung Routines Bridge:** Forward banking notifications from your phone directly into the local app queue via `/?quickAdd=...`.
-4. **Annual Islamic Khums Engine (November 30 Cutoff):** Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
-5. **Legacy Excel Healer:** Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
-6. **100% Local-First & Air-Gapped:** All data resides in client-side IndexedDB (`Dexie.js`). Zero servers, zero telemetry, zero privacy leakage.
+1. **Zero-Trust Local Security & Cryptographic Vault:** Built-in **App Lock** (PBKDF2 4–6 digit PIN & WebAuthn biometrics for TouchID / Android Fingerprint) with 5-minute inactivity auto-lock, and passphrase-derived **AES-256-GCM encrypted `.khumsvault` backups**.
+2. **Strict Network Isolation & Privacy Shield:** Continuous live header audit verifying 100% on-device IndexedDB storage, zero cloud telemetry, and zero outbound network traffic (except explicit manual currency rate refresh via `open.er-api.com`).
+3. **Financial Integrity & Reconciliation Auditor:** Real-time side-by-side comparison between calculated ledger balances and actual bank balances with 1-click auto-reconcile adjustments (matching your Excel `Totals!Adjusted` workflow), plus non-double-counting Credit Card Statement reconciliation.
+4. **Zero-Hazard Smart SMS / Receipt Parser ("Magic Inbox"):** Ingests raw banking SMS, WhatsApp receipts, and notification dumps. Protected by a **Hard OTP Security Firewall** that immediately intercepts and scrubs verification codes from memory without writing them to disk.
+5. **1-Click Monthly Recurring Roster:** Automatically batches ~25 recurring monthly entries (Green Island School, Asghar Bhai Van, Maulana Qalbe Ali, Khatoon Khatoon, Zaibun Nisa, StromFiber, Wife Monthly Allowance, M106 utilities) with 1-click batch ledger commit.
+6. **Annual Islamic Khums Engine (November 30 Cutoff):** Automated audit calculation conforming strictly to classical Ja'fari fiqh rules—deducting prior purified capital, excluding family custodial amanat, and factoring loan receivables.
+7. **Legacy Excel Healer:** Ingests legacy spreadsheets (such as `Khums - November 30 2025 - Daily.xlsx`) and automatically repairs string amount prefixes (`dh 63.11`, `dn 470.27`), shifted columns, missing chronological dates, and the infamous Excel row-66 formula truncation bug.
 
 ---
 
