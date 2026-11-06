@@ -92,20 +92,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer shrink-0" onClick={() => setActiveTab('dashboard')}>
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
               <div className="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Scale className="h-5 w-5 text-emerald-400" />
+                <Scale className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-emerald-400" />
               </div>
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg text-white tracking-tight">Sada Hisab</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                  Zero-Trust
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <span className="font-bold text-base sm:text-lg text-white tracking-tight">Sada Cash</span>
+                <span className="text-[10px] px-1.5 py-0.2 sm:py-0.5 rounded font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                  سادہ حساب
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">Automated Cash & Khums Suite</p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Cross-Border Wealth & Khums Suite</p>
             </div>
           </div>
 

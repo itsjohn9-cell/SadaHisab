@@ -306,49 +306,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       )}
 
       {/* 2. Home Screen Quick-Action Bar ("Zero-Typing Mode") */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <button
           onClick={() => onNavigateTab('roster')}
-          className="p-4 bg-gradient-to-r from-cyan-900/60 to-cyan-950/80 hover:from-cyan-800/80 hover:to-cyan-900 border border-cyan-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left"
+          className="p-3 sm:p-4 bg-gradient-to-r from-cyan-900/60 to-cyan-950/80 hover:from-cyan-800/80 hover:to-cyan-900 border border-cyan-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left w-full"
         >
           <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 group-hover:bg-cyan-500/30 transition">
-            <Zap className="w-5 h-5" />
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-xs font-bold text-white mt-1">⚡ Run Monthly Roster</span>
-          <span className="text-[10px] text-cyan-200/70">1-Tap commit ~25 bills & fees</span>
+          <span className="text-xs font-bold text-white mt-1 truncate w-full">⚡ Run Monthly Roster</span>
+          <span className="text-[10px] text-cyan-200/70 truncate w-full">1-Tap commit ~25 bills</span>
         </button>
 
         <button
           onClick={handleQuickClipboardPaste}
-          className="p-4 bg-gradient-to-r from-emerald-900/60 to-emerald-950/80 hover:from-emerald-800/80 hover:to-emerald-900 border border-emerald-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left"
+          className="p-3 sm:p-4 bg-gradient-to-r from-emerald-900/60 to-emerald-950/80 hover:from-emerald-800/80 hover:to-emerald-900 border border-emerald-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left w-full"
         >
           <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30 transition">
-            <ClipboardPaste className="w-5 h-5" />
+            <ClipboardPaste className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-xs font-bold text-white mt-1">📋 Paste SMS / WhatsApp</span>
-          <span className="text-[10px] text-emerald-200/70">Zero-touch OTP scrub & parse</span>
+          <span className="text-xs font-bold text-white mt-1 truncate w-full">📋 Paste SMS / Receipt</span>
+          <span className="text-[10px] text-emerald-200/70 truncate w-full">OTP scrub & parse</span>
         </button>
 
         <button
           onClick={() => onOpenVoiceLogger && onOpenVoiceLogger()}
-          className="p-4 bg-gradient-to-r from-rose-900/60 to-rose-950/80 hover:from-rose-800/80 hover:to-rose-900 border border-rose-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left"
+          className="p-3 sm:p-4 bg-gradient-to-r from-rose-900/60 to-rose-950/80 hover:from-rose-800/80 hover:to-rose-900 border border-rose-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left w-full"
         >
           <div className="p-2 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 group-hover:bg-rose-500/30 transition">
-            <Mic className="w-5 h-5" />
+            <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-xs font-bold text-white mt-1">🎙️ Hold to Speak</span>
-          <span className="text-[10px] text-rose-200/70">Hands-free Urdu/Eng speech NLP</span>
+          <span className="text-xs font-bold text-white mt-1 truncate w-full">🎙️ Hold to Speak</span>
+          <span className="text-[10px] text-rose-200/70 truncate w-full">Hands-free voice note</span>
         </button>
 
         <button
           onClick={() => onOpenBillScanner && onOpenBillScanner()}
-          className="p-4 bg-gradient-to-r from-teal-900/60 to-teal-950/80 hover:from-teal-800/80 hover:to-teal-900 border border-teal-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left"
+          className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/60 to-teal-950/80 hover:from-teal-800/80 hover:to-teal-900 border border-teal-500/30 rounded-2xl flex flex-col items-start gap-1 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all group text-left w-full"
         >
           <div className="p-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30 group-hover:bg-teal-500/30 transition">
-            <ScanLine className="w-5 h-5" />
+            <ScanLine className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-xs font-bold text-white mt-1">📸 Scan Bill / Receipt</span>
-          <span className="text-[10px] text-teal-200/70">On-device OCR & PDF splitter</span>
+          <span className="text-xs font-bold text-white mt-1 truncate w-full">📸 Scan Bill / PDF</span>
+          <span className="text-[10px] text-teal-200/70 truncate w-full">On-device OCR & PDF</span>
         </button>
       </div>
 
