@@ -123,40 +123,60 @@ async function publish() {
     const versionName = pkg.version || '1.0.0';
 
     console.log(`🚀 [3/5] Assigning Version Code ${versionCode} (${versionName}) to tracks: [${tracks.join(', ')}]...`);
-    const releaseStatus = isDraft ? 'draft' : 'completed';
+    let releaseStatus = isDraft ? 'draft' : 'completed';
     const releaseNotes = [
       {
         language: 'en-US',
-        text: `Release ${versionName}: Production release of Sada Cash - Multi-Currency Cash, Sponsorship & Khums Accounting Suite.`
+        text: `Release ${versionName}: Production release of Sada Hisab - Multi-Currency Cash, Sponsorship & Khums Accounting Suite.`
       }
     ];
 
-    for (const t of tracks) {
-      await play.edits.tracks.update({
-        packageName: PACKAGE_NAME,
-        editId,
-        track: t,
-        requestBody: {
+    const assignTracks = async (status) => {
+      for (const t of tracks) {
+        await play.edits.tracks.update({
+          packageName: PACKAGE_NAME,
+          editId,
           track: t,
-          releases: [
-            {
-              name: `v${versionName} (${versionCode})`,
-              versionCodes: [versionCode.toString()],
-              status: releaseStatus,
-              releaseNotes
-            }
-          ]
-        }
-      });
-      console.log(`✔ Track [${t}] updated successfully (${releaseStatus}).`);
-    }
+          requestBody: {
+            track: t,
+            releases: [
+              {
+                name: `v${versionName} (${versionCode})`,
+                versionCodes: [versionCode.toString()],
+                status,
+                releaseNotes
+              }
+            ]
+          }
+        });
+        console.log(`✔ Track [${t}] updated successfully (${status}).`);
+      }
+    };
+
+    await assignTracks(releaseStatus);
 
     console.log('🚀 [4/5] Validating Play Console Edit transaction...');
-    await play.edits.validate({
-      packageName: PACKAGE_NAME,
-      editId
-    });
-    console.log('✔ Validation passed without errors.');
+    try {
+      await play.edits.validate({
+        packageName: PACKAGE_NAME,
+        editId
+      });
+      console.log('✔ Validation passed without errors.');
+    } catch (valErr) {
+      const valErrMsg = valErr.response?.data?.error?.message || valErr.message || '';
+      if (valErrMsg.includes('draft app') || valErrMsg.includes('status draft')) {
+        console.log('ℹ Notice: App is currently in Draft state in Play Console. Switching release status to "draft"...');
+        releaseStatus = 'draft';
+        await assignTracks(releaseStatus);
+        await play.edits.validate({
+          packageName: PACKAGE_NAME,
+          editId
+        });
+        console.log('✔ Validation passed as Draft release.');
+      } else {
+        throw valErr;
+      }
+    }
 
     console.log('🚀 [5/5] Committing release to Google Play...');
     await play.edits.commit({
@@ -167,7 +187,7 @@ async function publish() {
     console.log('\n====================================================');
     console.log('🎉 PUBLISHED TO GOOGLE PLAY CONSOLE SUCCESSFULLY!   ');
     console.log('====================================================');
-    console.log(`App Name    : Sada Cash`);
+    console.log(`App Name    : Sada Hisab`);
     console.log(`Package ID  : ${PACKAGE_NAME}`);
     console.log(`Tracks      : ${tracks.map(t => TRACK_LABELS[t] || t).join(', ')}`);
     console.log(`Status      : ${releaseStatus.toUpperCase()}`);
