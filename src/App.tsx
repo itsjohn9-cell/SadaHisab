@@ -11,9 +11,14 @@ import {
   FXRate, 
   KhumsSnapshot, 
   Sponsorship, 
-  AppSecuritySettings 
+  AppSecuritySettings,
+  FXValuationMode
 } from './types';
-import { fetchLiveFXRates } from './services/fxService';
+import { 
+  fetchLiveFXRates, 
+  getFXValuationMode, 
+  setFXValuationMode 
+} from './services/fxService';
 import { 
   getSecuritySettings, 
   checkBackupRecency 
@@ -38,6 +43,7 @@ import { AdvancedReportsView } from './components/AdvancedReportsView';
 import { LoansLedgerView } from './components/LoansLedgerView';
 import { BillScannerModal } from './components/BillScannerModal';
 import { VoiceLoggerModal } from './components/VoiceLoggerModal';
+import { CoordinatorManagerView } from './components/CoordinatorManagerView';
 import { Mic } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -56,6 +62,7 @@ export const App: React.FC = () => {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [pastedClipboardText, setPastedClipboardText] = useState('');
   const [primaryCurrency, setPrimaryCurrency] = useState<'PKR' | 'AED'>('PKR');
+  const [fxValuationMode, setFxModeState] = useState<FXValuationMode>(getFXValuationMode);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Security & App Lock State
@@ -77,6 +84,19 @@ export const App: React.FC = () => {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleFXModeChange = (mode: FXValuationMode) => {
+    setFXValuationMode(mode);
+    setFxModeState(mode);
+    refreshAllData();
+    showToast(`FX Mode Switched: ${
+      mode === 'CONSERVATIVE_SPREAD' 
+        ? 'Conservative (Live - 1 PKR Spread)' 
+        : mode === 'LIVE_MID_MARKET' 
+        ? 'Live Mid-Market' 
+        : 'Fixed Snapshot (Income tab)'
+    }`);
   };
 
   // Fetch all state from Dexie IndexedDB
@@ -113,12 +133,11 @@ export const App: React.FC = () => {
       
       const sec = await getSecuritySettings();
       if (sec.isAppLockEnabled && sec.pinHash) {
-        setIsLocked(true); // Lock on fresh launch if enabled
+        setIsLocked(true);
       }
 
       setIsLoading(false);
 
-      // Check if URL has ?quickAdd= query parameter from MacroDroid or Android shortcut
       const urlParams = new URLSearchParams(window.location.search);
       const quickAddParam = urlParams.get('quickAdd');
       if (quickAddParam) {
@@ -141,7 +160,6 @@ export const App: React.FC = () => {
     window.addEventListener('click', handleUserActivity);
     window.addEventListener('touchstart', handleUserActivity);
 
-    // Inactivity interval checker every 10 seconds
     const interval = setInterval(() => {
       if (securitySettings.isAppLockEnabled && securitySettings.pinHash && !isLocked) {
         const idleTime = Date.now() - lastActivityRef.current;
@@ -250,8 +268,8 @@ export const App: React.FC = () => {
         onSyncFX={handleSyncFX}
         isSyncingFX={isSyncingFX}
         onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenQuickPaste={() => {
-          setPastedClipboardText('');
+        onOpenQuickPaste={(text?: string) => {
+          setPastedClipboardText(text || '');
           setIsQuickPasteOpen(true);
         }}
         onOpenBillScanner={() => setIsBillScannerOpen(true)}
@@ -259,6 +277,8 @@ export const App: React.FC = () => {
         onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
         primaryCurrency={primaryCurrency}
         setPrimaryCurrency={setPrimaryCurrency}
+        fxValuationMode={fxValuationMode}
+        setFxValuationMode={handleFXModeChange}
       />
 
       {/* Global Toast Notification */}
@@ -300,6 +320,12 @@ export const App: React.FC = () => {
             primaryCurrency={primaryCurrency}
             onNavigateTab={setActiveTab}
             onOpenAddModal={() => setIsAddModalOpen(true)}
+            onOpenVoiceLogger={() => setIsVoiceLoggerOpen(true)}
+            onOpenBillScanner={() => setIsBillScannerOpen(true)}
+            onOpenQuickPaste={(text?: string) => {
+              setPastedClipboardText(text || '');
+              setIsQuickPasteOpen(true);
+            }}
           />
         )}
 
@@ -315,7 +341,13 @@ export const App: React.FC = () => {
           <MonthlyRosterView
             accounts={accounts}
             onRefreshData={refreshAllData}
+            onNavigateToCoordinators={() => setActiveTab('coordinators')}
           />
+        )}
+
+        {/* Coordinator Groups & Auto-Splitter */}
+        {activeTab === 'coordinators' && (
+          <CoordinatorManagerView />
         )}
 
         {/* Planned Schedules & Calendar Reminders */}

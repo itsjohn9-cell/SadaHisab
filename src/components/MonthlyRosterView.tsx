@@ -1,62 +1,62 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  RosterItem, 
-  RosterBatchDraftItem, 
-  Account, 
-  Currency 
-} from '../types';
+  CalendarCheck2, 
+  Layers, 
+  Send, 
+  PlusCircle, 
+  Trash2, 
+  CheckSquare, 
+  Square, 
+  ChevronLeft, 
+  ChevronRight,
+  DollarSign,
+  AlertCircle,
+  CheckCircle2,
+  Users,
+  Repeat,
+  ShieldCheck,
+  Sparkles,
+  ArrowRightLeft
+} from 'lucide-react';
+import { RosterBatchDraftItem, Account, Currency } from '../types';
 import { 
   generateMonthlyRosterDraft, 
   executeRosterCommit, 
   addNewRosterItem, 
   deleteRosterItem 
 } from '../services/rosterEngine';
-import { db } from '../db/db';
-import { formatCurrency } from '../utils/formatters';
-import { 
-  CheckSquare, 
-  Square, 
-  Calendar, 
-  Send, 
-  CheckCircle2, 
-  Sparkles, 
-  PlusCircle, 
-  Trash2, 
-  Edit3, 
-  Layers, 
-  DollarSign, 
-  Clock, 
-  ChevronLeft, 
-  ChevronRight,
-  Info
-} from 'lucide-react';
 
 interface MonthlyRosterViewProps {
   accounts: Account[];
   onRefreshData: () => void;
+  onNavigateToCoordinators?: () => void;
 }
 
 export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
   accounts,
-  onRefreshData
+  onRefreshData,
+  onNavigateToCoordinators
 }) => {
-  // Format current year and month: YYYY-MM
-  const initialYearMonth = new Date().toISOString().slice(0, 7); // e.g. "2026-11"
-  const [selectedMonth, setSelectedMonth] = useState<string>(initialYearMonth);
+  // Current month in YYYY-MM format
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return now.toISOString().slice(0, 7);
+  });
+
   const [draftItems, setDraftItems] = useState<RosterBatchDraftItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isCommitting, setIsCommitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
   const [commitSuccessMsg, setCommitSuccessMsg] = useState<string | null>(null);
 
-  // New Roster Item Modal state
-  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  // New Template Modal state
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState('School');
-  const [newItemAmount, setNewItemAmount] = useState<number>(5000);
+  const [newItemCategory, setNewItemCategory] = useState('Donation');
+  const [newItemAmount, setNewItemAmount] = useState('5000');
   const [newItemCurrency, setNewItemCurrency] = useState<Currency>('PKR');
   const [newItemAccountId, setNewItemAccountId] = useState('al-habib-pkr');
-  const [newItemDay, setNewItemDay] = useState<number>(5);
-  const [newItemNotes, setNewItemNotes] = useState('');
+  const [newItemDay, setNewItemDay] = useState('1');
+  const [newItemPhone, setNewItemPhone] = useState('');
 
   // Load draft items whenever selectedMonth changes
   const loadRosterDraft = async (monthStr: string) => {
@@ -92,7 +92,17 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
 
   // Select All / Deselect All
   const handleToggleAll = (selectState: boolean) => {
-    const updated = draftItems.map(item => ({ ...item, selected: selectState }));
+    const updated = draftItems.map(item => ({ 
+      ...item, 
+      selected: item.isPrepaidSkipped ? false : selectState 
+    }));
+    setDraftItems(updated);
+  };
+
+  // Months Covered selector (1, 2, 3 months)
+  const handleMonthsCoveredChange = (index: number, months: number) => {
+    const updated = [...draftItems];
+    updated[index].monthsCovered = months;
     setDraftItems(updated);
   };
 
@@ -107,6 +117,24 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
   const handleNoteChange = (index: number, note: string) => {
     const updated = [...draftItems];
     updated[index].adjustmentNote = note;
+    setDraftItems(updated);
+  };
+
+  // Toggle Wife Dual Currency (350 AED in UAE vs 18,000 PKR in PK)
+  const handleToggleWifeCurrency = (index: number) => {
+    const updated = [...draftItems];
+    const item = updated[index];
+    if (item.currency === 'AED') {
+      item.currency = 'PKR';
+      item.adjustedAmount = 18000;
+      item.sourceAccountId = 'al-habib-pkr';
+      item.adjustmentNote = 'Pakistan Mode: 18,000 PKR';
+    } else {
+      item.currency = 'AED';
+      item.adjustedAmount = 350;
+      item.sourceAccountId = 'adcb-aed';
+      item.adjustmentNote = 'UAE Living Mode: 350 AED';
+    }
     setDraftItems(updated);
   };
 
@@ -138,73 +166,79 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
       currency: newItemCurrency,
       sourceAccountId: newItemAccountId,
       defaultDay: Number(newItemDay) || 1,
+      beneficiaryPhone: newItemPhone.trim() || undefined,
       isActive: true,
-      notes: newItemNotes.trim() || undefined
+      isBillReminder: true
     });
 
     setShowAddModal(false);
     setNewItemName('');
-    setNewItemAmount(5000);
-    setNewItemNotes('');
+    setNewItemAmount('5000');
+    setNewItemPhone('');
+
     await loadRosterDraft(selectedMonth);
+    onRefreshData();
   };
 
-  // Delete template
   const handleDeleteTemplate = async (id: string) => {
-    if (confirm('Delete this recurring roster template?')) {
-      await deleteRosterItem(id);
-      await loadRosterDraft(selectedMonth);
-    }
+    if (!confirm('Are you sure you want to delete this recurring roster template?')) return;
+    await deleteRosterItem(id);
+    await loadRosterDraft(selectedMonth);
+    onRefreshData();
   };
 
-  // Calculated batch totals
-  const totals = useMemo(() => {
-    let totalPKR = 0;
-    let selectedCount = 0;
+  // Format currency helpers
+  const formatCurrency = (val: number, cur: string) => {
+    return `${cur === 'PKR' ? '₨' : cur === 'AED' ? 'AED' : cur} ${val.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
-    draftItems.forEach(item => {
-      if (item.selected) {
-        selectedCount++;
-        // Rough converted preview
-        if (item.currency === 'AED') totalPKR += item.adjustedAmount * 74.31;
-        else if (item.currency === 'USD') totalPKR += item.adjustedAmount * 275.53;
-        else totalPKR += item.adjustedAmount;
+  // Calculate totals
+  const totals = draftItems.reduce((acc, curr) => {
+    if (curr.selected) {
+      acc.selectedCount++;
+      const months = curr.monthsCovered || 1;
+      const effectiveAmount = curr.adjustedAmount * months;
+      if (curr.currency === 'PKR') {
+        acc.totalPKR += effectiveAmount;
+        acc.totalAED += effectiveAmount / 75.31;
+      } else if (curr.currency === 'AED') {
+        acc.totalAED += effectiveAmount;
+        acc.totalPKR += effectiveAmount * 75.31;
+      } else if (curr.currency === 'USD') {
+        acc.totalPKR += effectiveAmount * 276.53;
+        acc.totalAED += (effectiveAmount * 276.53) / 75.31;
       }
-    });
-
-    return {
-      totalPKR,
-      totalAED: totalPKR / 74.31,
-      selectedCount,
-      totalCount: draftItems.length
-    };
-  }, [draftItems]);
+    }
+    acc.totalCount++;
+    return acc;
+  }, { selectedCount: 0, totalCount: 0, totalPKR: 0, totalAED: 0 });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
       
       {/* Top Banner & Month Selector */}
-      <div className="bg-gradient-to-r from-cyan-950/50 via-slate-900 to-slate-900 border border-cyan-800/40 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-start space-x-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-              <Calendar className="h-6 w-6" />
+      <div className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-950 border border-cyan-800/40 rounded-2xl p-6 shadow-2xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                <CalendarCheck2 className="h-5 w-5" />
+              </span>
+              <h2 className="text-xl font-black text-white tracking-tight">
+                Monthly Recurring Roster Engine
+              </h2>
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-xl font-bold text-white tracking-tight">1-Click Monthly Recurring Roster</h3>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                  Automation Engine
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                Batch post ~25 monthly student fees (Mustafa, Fatima FBIS), Maulana wazeefas, school van transport, broadband and bills in 1 click.
-              </p>
-            </div>
+            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+              1-Click batch commit for recurring student sponsorships, charities, family allowances, and fixed utilities.
+              Features automatic multi-month advance tracking and prepaid protection.
+            </p>
           </div>
 
           {/* Month Selector Carousel */}
-          <div className="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start lg:self-center">
+          <div className="flex items-center space-x-3 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner self-start md:self-auto">
             <button
               onClick={handlePrevMonth}
               className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
@@ -212,9 +246,11 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="px-3 py-1 font-mono font-bold text-sm text-cyan-300">
-              {selectedMonth}
-            </span>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-slate-950 rounded-xl border border-slate-800/80">
+              <span className="text-xs font-mono font-bold text-cyan-400">
+                {selectedMonth}
+              </span>
+            </div>
             <button
               onClick={handleNextMonth}
               className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
@@ -318,16 +354,23 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
         <div className="divide-y divide-slate-800/60">
           {draftItems.map((item, idx) => {
             const isCommittedThisMonth = item.lastCommittedMonth === selectedMonth;
+            const monthsCovered = item.monthsCovered || 1;
+            const isKemati = item.subCategory?.toLowerCase() === 'kemati' || item.name.toLowerCase().includes('kemati');
+            const isWife = item.isWifeDualCurrency || item.name.toLowerCase().includes('wife');
 
             return (
               <div 
                 key={item.id}
-                className={`p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition hover:bg-slate-800/30 ${
-                  item.selected ? 'bg-slate-900/40' : 'opacity-60 bg-slate-950/40'
+                className={`p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 transition hover:bg-slate-800/30 ${
+                  item.isPrepaidSkipped 
+                    ? 'bg-emerald-950/20 border-l-4 border-l-emerald-500' 
+                    : item.selected 
+                    ? 'bg-slate-900/40' 
+                    : 'opacity-60 bg-slate-950/40'
                 }`}
               >
                 {/* Left: Checkbox & Name */}
-                <div className="flex items-start space-x-3 max-w-md">
+                <div className="flex items-start space-x-3 max-w-lg">
                   <button
                     type="button"
                     onClick={() => handleToggleSelect(idx)}
@@ -341,20 +384,33 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
                   </button>
 
                   <div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                       <span className="text-[10px] font-semibold uppercase px-2 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
                         {item.category}
                       </span>
-                      {isCommittedThisMonth && (
+                      {item.isPrepaidSkipped && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Prepaid in Prior Month ✅ (Auto-Skipped)
+                        </span>
+                      )}
+                      {isCommittedThisMonth && !item.isPrepaidSkipped && (
                         <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
                           Already Committed
                         </span>
                       )}
+                      {isKemati && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                          Locked Savings Asset (Khums Included)
+                        </span>
+                      )}
                     </div>
+
                     <h5 className="text-sm font-bold text-white mt-0.5">
                       {item.name}
                     </h5>
-                    <div className="text-[11px] text-slate-400 flex items-center space-x-2 mt-0.5">
+
+                    <div className="text-[11px] text-slate-400 flex items-center space-x-2 mt-0.5 flex-wrap">
                       <span>Day: {item.defaultDay}th</span>
                       <span>&bull;</span>
                       <span>Account: {accounts.find(a => a.id === item.sourceAccountId)?.name || item.sourceAccountId}</span>
@@ -364,28 +420,62 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
                           <span className="text-emerald-400 font-mono">{item.beneficiaryPhone}</span>
                         </>
                       )}
+                      {monthsCovered > 1 && (
+                        <>
+                          <span>&bull;</span>
+                          <span className="text-amber-300 font-bold">Advance: {monthsCovered} Months</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Right: Amount & Adjustment Note */}
-                <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                {/* Right: Months Covered, Dual Currency, Amount & Actions */}
+                <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full lg:w-auto">
                   
-                  {/* One-Time Adjustment Note */}
+                  {/* Wife Dual Currency Switcher */}
+                  {isWife && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleWifeCurrency(idx)}
+                      className="px-2 py-1 bg-slate-950 hover:bg-slate-800 text-[10px] font-bold text-teal-300 border border-teal-700/60 rounded-lg flex items-center gap-1"
+                      title="Switch between UAE (350 AED) and Pakistan (18,000 PKR)"
+                    >
+                      <ArrowRightLeft className="w-3 h-3" />
+                      {item.currency === 'AED' ? 'Switch to PK (18k PKR)' : 'Switch to UAE (350 AED)'}
+                    </button>
+                  )}
+
+                  {/* Multi-Month Advance Covered Selector */}
+                  <div className="flex items-center space-x-1">
+                    <span className="text-[10px] text-slate-500 font-semibold hidden sm:inline">Cover:</span>
+                    <select
+                      value={monthsCovered}
+                      onChange={(e) => handleMonthsCoveredChange(idx, Number(e.target.value))}
+                      className="px-2 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-cyan-500 font-semibold"
+                      title="Months covered in this payment (auto-skips subsequent months)"
+                    >
+                      <option value={1}>1 Month</option>
+                      <option value={2}>2 Months (Advance)</option>
+                      <option value={3}>3 Months (Advance)</option>
+                    </select>
+                  </div>
+
+                  {/* Adjustment Note */}
                   <input
                     type="text"
-                    placeholder="Adjustment note (e.g. +650 winter charges)"
+                    placeholder="Adjustment note"
                     value={item.adjustmentNote || ''}
                     onChange={(e) => handleNoteChange(idx, e.target.value)}
-                    className="w-full sm:w-48 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full sm:w-44 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
                   />
 
                   {/* Amount Input */}
                   <div className="flex items-center space-x-1.5">
                     <input
                       type="number"
-                      value={item.adjustedAmount}
-                      onChange={(e) => handleAmountChange(idx, parseFloat(e.target.value) || 0)}
+                      value={item.adjustedAmount * monthsCovered}
+                      onChange={(e) => handleAmountChange(idx, (parseFloat(e.target.value) || 0) / monthsCovered)}
                       className="w-24 px-2 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-bold text-white text-right focus:outline-none focus:border-cyan-500"
                     />
                     <span className="text-xs text-slate-400 font-mono">{item.currency}</span>
@@ -408,106 +498,120 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
 
       {/* Add Roster Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-white">Add Recurring Roster Template</h3>
-            <form onSubmit={handleCreateTemplate} className="space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-4 flex items-center space-x-2">
+              <PlusCircle className="h-5 w-5 text-cyan-400" />
+              <span>Create Recurring Roster Template</span>
+            </h3>
+
+            <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
               <div>
-                <label className="text-xs text-slate-400">Template / Beneficiary Name</label>
+                <label className="block text-slate-400 mb-1 font-semibold">Beneficiary or Bill Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Green Island School Fees"
+                  placeholder="e.g. Maulana Qalbe Ali (Students)"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-400">Category</label>
-                  <input
-                    type="text"
-                    required
+                  <label className="block text-slate-400 mb-1 font-semibold">Category</label>
+                  <select
                     value={newItemCategory}
                     onChange={(e) => setNewItemCategory(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
-                  />
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white"
+                  >
+                    <option value="Donation">Donation</option>
+                    <option value="School">School</option>
+                    <option value="Van">Van</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Bill Payment">Bill Payment</option>
+                    <option value="Family Allowance">Family Allowance</option>
+                    <option value="Wife">Wife</option>
+                    <option value="Rohia">Rohia</option>
+                    <option value="Jhone">Jhone</option>
+                  </select>
                 </div>
+
                 <div>
-                  <label className="text-xs text-slate-400">Default Amount</label>
+                  <label className="block text-slate-400 mb-1 font-semibold">Expected Day of Month</label>
                   <input
                     type="number"
-                    required
-                    value={newItemAmount}
-                    onChange={(e) => setNewItemAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white font-mono"
+                    min="1"
+                    max="31"
+                    value={newItemDay}
+                    onChange={(e) => setNewItemDay(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-400">Currency</label>
+                  <label className="block text-slate-400 mb-1 font-semibold">Default Amount *</label>
+                  <input
+                    type="number"
+                    required
+                    value={newItemAmount}
+                    onChange={(e) => setNewItemAmount(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Currency</label>
                   <select
                     value={newItemCurrency}
-                    onChange={(e) => setNewItemCurrency(e.target.value as any)}
-                    className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
+                    onChange={(e) => setNewItemCurrency(e.target.value as Currency)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white"
                   >
                     <option value="PKR">PKR (Rs)</option>
                     <option value="AED">AED (Dh)</option>
                     <option value="USD">USD ($)</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs text-slate-400">Due Day of Month</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={newItemDay}
-                    onChange={(e) => setNewItemDay(parseInt(e.target.value) || 1)}
-                    className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
-                  />
-                </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400">Default Source Account</label>
+                <label className="block text-slate-400 mb-1 font-semibold">Default Deduction Account</label>
                 <select
                   value={newItemAccountId}
                   onChange={(e) => setNewItemAccountId(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white"
                 >
                   {accounts.map(a => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
+                    <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400">Notes</label>
+                <label className="block text-slate-400 mb-1 font-semibold">Beneficiary Phone / Contact</label>
                 <input
                   type="text"
-                  placeholder="Optional notes..."
-                  value={newItemNotes}
-                  onChange={(e) => setNewItemNotes(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
+                  placeholder="e.g. 03120976573"
+                  value={newItemPhone}
+                  onChange={(e) => setNewItemPhone(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold shadow-md"
+                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold shadow-md shadow-cyan-950/50"
                 >
                   Save Template
                 </button>
@@ -520,4 +624,3 @@ export const MonthlyRosterView: React.FC<MonthlyRosterViewProps> = ({
     </div>
   );
 };
-

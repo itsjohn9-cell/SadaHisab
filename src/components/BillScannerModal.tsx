@@ -34,6 +34,7 @@ import {
   Account, 
   Currency, 
   Transaction, 
+  TransactionType,
   ExtractedBillData, 
   StatementRowDraft, 
   PotentialDuplicateMatch 
@@ -121,8 +122,12 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
       setTargetAccount(defAcc?.id || 'al-habib-pkr');
 
       // Check Tier 1 & Tier 2 Anti-Duplication
-      if (extractedData.totalAmount > 0) {
-        const fuzzyMatch = await checkFuzzyDuplicate(extractedData.date, extractedData.totalAmount, extractedData.currency);
+      if ((extractedData.totalAmount || 0) > 0) {
+        const fuzzyMatch = await checkFuzzyDuplicate(
+          extractedData.date || new Date().toISOString().split('T')[0],
+          extractedData.totalAmount || 0,
+          extractedData.currency || 'PKR'
+        );
         if (fuzzyMatch) {
           setDuplicateCollision(fuzzyMatch);
         }
@@ -193,29 +198,33 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
 
   // Commit Single Bill to Ledger
   const handleCommitSingleBill = async () => {
-    if (!extractedBill || extractedBill.totalAmount <= 0) return;
+    if (!extractedBill || !extractedBill.totalAmount || extractedBill.totalAmount <= 0) return;
+
+    const billDate = extractedBill.date || new Date().toISOString().split('T')[0];
+    const billAmount = extractedBill.totalAmount;
+    const billCurrency = extractedBill.currency || 'PKR';
 
     const dedupeHash = await computeTransactionDedupeHash(
-      extractedBill.date,
-      extractedBill.totalAmount,
-      extractedBill.currency,
+      billDate,
+      billAmount,
+      billCurrency,
       targetAccount,
-      extractedBill.merchant
+      extractedBill.merchant || 'Merchant'
     );
 
-    const converted = await convertToPKR(extractedBill.totalAmount, extractedBill.currency);
+    const converted = await convertToPKR(billAmount, billCurrency);
 
     const tx: Transaction = {
       id: `bill-${Date.now()}`,
-      date: extractedBill.date,
+      date: billDate,
       type: 'EXPENSE',
-      amount: extractedBill.totalAmount,
-      currency: extractedBill.currency,
+      amount: billAmount,
+      currency: billCurrency,
       convertedAmountPKR: converted.amountPKR,
       fxRateUsed: converted.fxRate,
-      category: extractedBill.category,
+      category: extractedBill.category || 'General Expense',
       subCategory: extractedBill.subCategory,
-      merchantOrRecipient: extractedBill.merchant,
+      merchantOrRecipient: extractedBill.merchant || 'Vendor',
       sourceAccountId: targetAccount,
       description: extractedBill.billReferenceNumber ? `Invoice Ref: ${extractedBill.billReferenceNumber}` : 'Scanned receipt entry',
       status: 'CONFIRMED',
@@ -233,7 +242,9 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
   // Merge with Existing Duplicate Transaction
   const handleMergeDuplicate = async () => {
     if (!duplicateCollision) return;
-    await mergeWithExistingTransaction(duplicateCollision.existingTransaction.id, {
+    const existingId = duplicateCollision.existingTransaction?.id || duplicateCollision.existingTx?.id;
+    if (!existingId) return;
+    await mergeWithExistingTransaction(existingId, {
       receiptThumbnail: thumbnailUrl || undefined,
       extraNote: `Scanned ${extractedBill?.merchant || 'Bill'} receipt verified & merged on ${new Date().toLocaleDateString()}`
     });
@@ -249,21 +260,25 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
 
     for (let i = 0; i < selected.length; i++) {
       const row = selected[i];
+      const rowType: TransactionType = row.direction || row.type || 'EXPENSE';
+      const rowCategory = row.inferredCategory || row.category || 'General';
+      const rowAccountId = row.inferredAccountId || row.sourceAccountId || 'adcb-aed';
+
       const converted = await convertToPKR(row.amount, row.currency);
-      const dedupeHash = await computeTransactionDedupeHash(row.date, row.amount, row.currency, row.inferredAccountId, row.description);
+      const dedupeHash = await computeTransactionDedupeHash(row.date, row.amount, row.currency, rowAccountId, row.description);
 
       const tx: Transaction = {
         id: `stmt-tx-${Date.now()}-${i}`,
         date: row.date,
-        type: row.direction,
+        type: rowType,
         amount: row.amount,
         currency: row.currency,
         convertedAmountPKR: converted.amountPKR,
         fxRateUsed: converted.fxRate,
-        category: row.inferredCategory,
+        category: rowCategory,
         merchantOrRecipient: row.description,
-        sourceAccountId: row.direction !== 'INCOME' ? row.inferredAccountId : undefined,
-        destinationAccountId: row.direction === 'INCOME' ? row.inferredAccountId : undefined,
+        sourceAccountId: rowType !== 'INCOME' ? rowAccountId : undefined,
+        destinationAccountId: rowType === 'INCOME' ? rowAccountId : undefined,
         description: `Imported from PDF Statement: ${row.description}`,
         status: 'CONFIRMED',
         sourceChannel: 'STATEMENT',
@@ -405,8 +420,15 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
             <div className="bg-slate-950 p-3 rounded-xl grid grid-cols-2 gap-2 text-xs text-slate-300 font-mono">
               <div>
                 <span className="text-slate-500">Existing Transaction:</span>
-                <div className="text-white font-bold">{duplicateCollision.existingTransaction.merchantOrRecipient}</div>
-                <div>{formatCurrency(duplicateCollision.existingTransaction.amount, duplicateCollision.existingTransaction.currency)} on {duplicateCollision.existingTransaction.date}</div>
+                <div className="text-white font-bold">
+                  {duplicateCollision.existingTransaction?.merchantOrRecipient || duplicateCollision.existingTx?.merchantOrRecipient || 'Existing Tx'}
+                </div>
+                <div>
+                  {formatCurrency(
+                    duplicateCollision.existingTransaction?.amount || duplicateCollision.existingTx?.amount || 0,
+                    duplicateCollision.existingTransaction?.currency || duplicateCollision.existingTx?.currency || 'PKR'
+                  )} on {duplicateCollision.existingTransaction?.date || duplicateCollision.existingTx?.date}
+                </div>
               </div>
               <div>
                 <span className="text-slate-500">Incoming Scanned Bill:</span>
@@ -445,9 +467,9 @@ export const BillScannerModal: React.FC<BillScannerModalProps> = ({
               </div>
               <div className="text-right">
                 <div className="text-2xl font-black text-white font-mono">
-                  {formatCurrency(extractedBill.totalAmount, extractedBill.currency)}
+                  {formatCurrency(extractedBill.totalAmount || 0, extractedBill.currency || 'PKR')}
                 </div>
-                <span className="text-xs text-slate-400 font-mono">{extractedBill.currency}</span>
+                <span className="text-xs text-slate-400 font-mono">{extractedBill.currency || 'PKR'}</span>
               </div>
             </div>
 

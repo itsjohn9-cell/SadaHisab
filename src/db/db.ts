@@ -8,7 +8,9 @@ import {
   MerchantRule, 
   RosterItem, 
   RosterBatchDraftItem,
-  LoanRecord 
+  LoanRecord,
+  CoordinatorGroup,
+  KematiRecord
 } from '../types';
 import { 
   DEFAULT_ACCOUNTS, 
@@ -17,7 +19,9 @@ import {
   DEFAULT_SPONSORSHIPS,
   DEFAULT_MERCHANT_RULES,
   DEFAULT_ROSTER_ITEMS,
-  DEFAULT_LOANS
+  DEFAULT_LOANS,
+  DEFAULT_COORDINATOR_GROUPS,
+  DEFAULT_KEMATI
 } from './defaultData';
 import { convertToPKR } from '../services/fxService';
 
@@ -44,20 +48,24 @@ export class SadaHisabDatabase extends Dexie {
   loans!: Table<LoanRecord, string>;
   receipt_blobs!: Table<ReceiptBlobRecord, string>;
   app_settings!: Table<AppSetting, string>;
+  coordinator_groups!: Table<CoordinatorGroup, string>;
+  kemati_records!: Table<KematiRecord, string>;
 
   constructor() {
     super('SadaHisabDB');
-    this.version(3).stores({
+    this.version(4).stores({
       accounts: 'id, name, type, currency, isCustodial, isKhumsExempt, country, isSampleData',
-      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth, dedupeHash',
+      transactions: 'id, date, type, currency, category, status, isSampleData, sourceAccountId, destinationAccountId, rosterBatchMonth, dedupeHash, billingMonth, subBeneficiary, parentTransferId',
       fx_rates: 'currency, baseCurrency',
       khums_snapshots: 'year, cutoffDate, isLocked, isSampleData',
       sponsorships: 'id, category, active, dueDay',
       merchant_rules: 'id, keyword, category, defaultAccountId',
-      roster_items: 'id, name, category, defaultDay, isActive, isBillReminder',
+      roster_items: 'id, name, category, defaultDay, isActive, isBillReminder, coordinatorGroupId',
       loans: 'id, type, counterpartyName, isRecoverable',
       receipt_blobs: 'id',
-      app_settings: 'key'
+      app_settings: 'key',
+      coordinator_groups: 'id, coordinatorName, phone, defaultAccountId',
+      kemati_records: 'id, name, isPayoutReceived, includeInKhums'
     });
   }
 }
@@ -69,6 +77,14 @@ export async function initializeDatabase() {
   const accountCount = await db.accounts.count();
   if (accountCount === 0) {
     await db.accounts.bulkAdd(DEFAULT_ACCOUNTS);
+  } else {
+    // Add any newly configured accounts that are missing
+    for (const acc of DEFAULT_ACCOUNTS) {
+      const exists = await db.accounts.get(acc.id);
+      if (!exists) {
+        await db.accounts.add(acc);
+      }
+    }
   }
 
   const fxCount = await db.fx_rates.count();
@@ -94,11 +110,29 @@ export async function initializeDatabase() {
   const rosterCount = await db.roster_items.count();
   if (rosterCount === 0) {
     await db.roster_items.bulkAdd(DEFAULT_ROSTER_ITEMS);
+  } else {
+    // Merge new roster items if missing
+    for (const item of DEFAULT_ROSTER_ITEMS) {
+      const exists = await db.roster_items.get(item.id);
+      if (!exists) {
+        await db.roster_items.add(item);
+      }
+    }
   }
 
   const loansCount = await db.loans.count();
   if (loansCount === 0) {
     await db.loans.bulkAdd(DEFAULT_LOANS);
+  }
+
+  const coordCount = await db.coordinator_groups.count();
+  if (coordCount === 0) {
+    await db.coordinator_groups.bulkAdd(DEFAULT_COORDINATOR_GROUPS);
+  }
+
+  const kematiCount = await db.kemati_records.count();
+  if (kematiCount === 0) {
+    await db.kemati_records.bulkAdd(DEFAULT_KEMATI);
   }
 
   // Initialize blocked OTP counter & settings

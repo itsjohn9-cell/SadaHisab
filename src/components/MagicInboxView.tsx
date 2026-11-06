@@ -7,7 +7,8 @@ import {
   ParsedSMSResult, 
   Account, 
   Transaction, 
-  MerchantRule 
+  MerchantRule,
+  CoordinatorGroup
 } from '../types';
 import { 
   db, 
@@ -52,8 +53,9 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
   const [isParsing, setIsParsing] = useState(false);
   const [showAndroidModal, setShowAndroidModal] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [coordinatorGroups, setCoordinatorGroups] = useState<CoordinatorGroup[]>([]);
 
-  // Load blocked OTP counter from DB
+  // Load blocked OTP counter and coordinator groups from DB
   const loadBlockedCount = async () => {
     const count = await getBlockedOTPCounter();
     setBlockedCount(count);
@@ -61,7 +63,87 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
 
   useEffect(() => {
     loadBlockedCount();
+    db.coordinator_groups.toArray().then(groups => setCoordinatorGroups(groups));
   }, []);
+
+  // Check if a parsed SMS item matches a known Coordinator Group
+  const getMatchingCoordinator = (result: ParsedSMSResult): CoordinatorGroup | undefined => {
+    const rawLower = `${result.rawText} ${result.merchantOrRecipient}`.toLowerCase();
+    return coordinatorGroups.find(g => {
+      const nameMatch = rawLower.includes(g.coordinatorName.toLowerCase());
+      const phoneMatch = g.phone && (result.beneficiaryPhone === g.phone || rawLower.includes(g.phone.replace(/[^0-9]/g, '')));
+      const amountMatch = result.currency === 'PKR' && Math.abs(result.amount - g.totalMonthlyCommitment) < 5;
+      return nameMatch || phoneMatch || amountMatch;
+    });
+  };
+
+  // 1-Click Auto-Split Coordinator Transfer into Student Rows & Copy WhatsApp
+  const handleAutoSplitCoordinator = async (result: ParsedSMSResult, group: CoordinatorGroup, idx: number) => {
+    const parentTransferId = `coord-split-sms-${Date.now()}`;
+    const todayISO = result.date || new Date().toISOString().split('T')[0];
+    const billingMonth = todayISO.substring(0, 7);
+    const sourceAccId = result.inferredAccountId || group.defaultAccountId || 'al-habib-pkr';
+
+    const childTransactions: Transaction[] = [];
+
+    for (const sub of group.subItems) {
+      childTransactions.push({
+        id: `tx-split-${sub.id}-${Date.now()}`,
+        date: todayISO,
+        type: 'EXPENSE',
+        amount: sub.defaultAmount,
+        currency: 'PKR',
+        convertedAmountPKR: sub.defaultAmount,
+        fxRateUsed: 1.0,
+        category: 'Donation',
+        subCategory: sub.subCategory || 'School Fees',
+        merchantOrRecipient: `${group.coordinatorName} -> ${sub.studentName}`,
+        subBeneficiary: sub.studentName,
+        sourceAccountId: sourceAccId,
+        parentTransferId,
+        beneficiaryPhone: group.phone,
+        paymentChannel: group.paymentChannel,
+        description: `Magic Inbox Coordinator Split: ${group.coordinatorName} for ${sub.studentName} [${billingMonth}]`,
+        billingMonth,
+        status: 'CONFIRMED'
+      });
+    }
+
+    await db.transactions.bulkAdd(childTransactions);
+
+    // Format WhatsApp message & copy to clipboard
+    const [year, monthNum] = billingMonth.split('-');
+    const dateObj = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    const monthName = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    let lines = [
+      `Salam ${group.coordinatorName},`,
+      `Alhamdulillah, transferred Rs. ${group.totalMonthlyCommitment.toLocaleString()} for ${monthName} via ${group.paymentChannel}.`,
+      '',
+      `📋 *Breakdown:*`
+    ];
+    group.subItems.forEach(item => {
+      lines.push(`• ${item.studentName}: Rs. ${item.defaultAmount.toLocaleString()} (${item.subCategory})`);
+    });
+    lines.push('');
+    lines.push(`*Total Transferred:* Rs. ${group.totalMonthlyCommitment.toLocaleString()}`);
+    lines.push(`Jazakallah Khair.`);
+    lines.push(`— Sada Hisab`);
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+    } catch (e) {
+      console.warn('Clipboard write failed', e);
+    }
+
+    await recalculateAllAccountBalances();
+
+    // Remove from parsedResults
+    setParsedResults(prev => prev.filter((_, i) => i !== idx));
+    setSuccessToast(`⚡ Auto-split into ${group.subItems.length} students & copied WhatsApp message to clipboard! 📋`);
+    setTimeout(() => setSuccessToast(null), 4500);
+    onRefreshData();
+  };
 
   // Parse whenever initialPastedText changes
   useEffect(() => {
@@ -95,7 +177,7 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
         sample = `SCB Alert: Rs. 12,500.00 spent on Card ending 7890 at PSO Petrol Station on 02/11/2026 for 45.20 Litres @ 276.50/L.`;
         break;
       case 'EASYPAISA':
-        sample = `Rs. 15,000 sent to 03009876543 (Maulana Qalbe Ali) from Easypaisa account on 04-11-2026. Trans ID 88392102. Fee Rs 0.00.`;
+        sample = `Rs. 36,950 sent to 03165777490 (Maulana Qalbe Ali) from Easypaisa account on 04-11-2026. Trans ID 88392102. Fee Rs 0.00.`;
         break;
       case 'OTP_ATTEMPT':
         sample = `Your ADCB OTP verification code is 492018 for transaction of AED 365.87. Valid for 5 mins. Do not share this code with anyone.`;
@@ -378,6 +460,8 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
                 );
               }
 
+              const matchedGroup = getMatchingCoordinator(result);
+
               return (
                 <div 
                   key={idx}
@@ -407,6 +491,14 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
                       <span className="text-[10px] text-slate-500 font-mono">{result.currency}</span>
                     </div>
                   </div>
+
+                  {/* Coordinator Auto-Split Detected Badge */}
+                  {matchedGroup && (
+                    <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-700/60 text-purple-200 text-xs font-medium">
+                      <Sparkles className="h-3.5 w-3.5 text-yellow-300 shrink-0" />
+                      <span><strong>Coordinator Match:</strong> {matchedGroup.coordinatorName} ({matchedGroup.subItems.length} Students • Rs {matchedGroup.totalMonthlyCommitment.toLocaleString()})</span>
+                    </div>
+                  )}
 
                   {/* Metadata Grid */}
                   <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
@@ -460,7 +552,7 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
                   )}
 
                   {/* Actions Footer */}
-                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={() => handleLearnRule(result)}
@@ -471,14 +563,28 @@ export const MagicInboxView: React.FC<MagicInboxViewProps> = ({
                       <span>Always map this</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleCommitSingle(result, idx)}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-sm transition"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Approve & Post</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      {matchedGroup && (
+                        <button
+                          type="button"
+                          onClick={() => handleAutoSplitCoordinator(result, matchedGroup, idx)}
+                          className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-950/50 transition animate-pulse"
+                          title="Auto-split into individual students and copy WhatsApp breakdown message"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
+                          <span>Split {matchedGroup.subItems.length} Students & Copy WA</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleCommitSingle(result, idx)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Approve & Post</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

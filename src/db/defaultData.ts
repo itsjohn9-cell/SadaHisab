@@ -1,4 +1,14 @@
-import { Account, FXRate, KhumsSnapshot, Sponsorship, MerchantRule, RosterItem, LoanRecord } from '../types';
+import { 
+  Account, 
+  FXRate, 
+  KhumsSnapshot, 
+  Sponsorship, 
+  MerchantRule, 
+  RosterItem, 
+  LoanRecord,
+  CoordinatorGroup,
+  KematiRecord
+} from '../types';
 
 export const DEFAULT_ACCOUNTS: Account[] = [
   // Pakistan Banks
@@ -12,7 +22,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     isCustodial: false,
     isKhumsExempt: false,
     country: 'PK',
-    notes: 'Primary PKR operational account for salary & local transfers'
+    notes: 'Primary PKR operational account for salary, student fees & local transfers'
   },
   {
     id: 'al-habib-usd',
@@ -63,7 +73,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     notes: 'Standard Chartered Pakistan'
   },
 
-  // UAE Bank
+  // UAE Bank & Cards
   {
     id: 'adcb-aed',
     name: 'ADCB (AED)',
@@ -76,6 +86,18 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     country: 'AE',
     notes: 'Abu Dhabi Commercial Bank UAE savings & living account'
   },
+  {
+    id: 'mashreq-card-aed',
+    name: 'Mashreq Card (AED)',
+    type: 'CREDIT_CARD',
+    currency: 'AED',
+    initialBalance: 0,
+    currentBalance: 0,
+    isCustodial: false,
+    isKhumsExempt: true,
+    country: 'AE',
+    notes: 'Mashreq UAE credit & debit card'
+  },
 
   // Digital Wallets (International)
   {
@@ -83,12 +105,13 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     name: 'Wise (USD)',
     type: 'DIGITAL_WALLET',
     currency: 'USD',
-    initialBalance: 3200,
-    currentBalance: 3200,
+    initialBalance: 7416.60,
+    currentBalance: 7416.60,
     isCustodial: false,
     isKhumsExempt: false,
     country: 'INTL',
-    notes: 'Wise Multi-Currency wallet'
+    notes: 'Wise Multi-Currency wallet',
+    reconciliationNotes: 'Reconciled with Foreign tab tracker (7,416.60 USD recorded vs 6,716.33 USD net)'
   },
   {
     id: 'paypal-usd',
@@ -203,6 +226,18 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     notes: 'Physical pocket cash'
   },
   {
+    id: 'wallet-mix-cash',
+    name: 'Currency in Wallet (Mix / USD / AED / SAR)',
+    type: 'CASH',
+    currency: 'PKR',
+    initialBalance: 45000,
+    currentBalance: 45000,
+    isCustodial: false,
+    isKhumsExempt: false,
+    country: 'PK',
+    notes: 'Physical travel pocket wallet containing mixed small notes'
+  },
+  {
     id: 'petty-cash-pkr',
     name: 'Petty Cash (PKR)',
     type: 'CASH',
@@ -228,6 +263,18 @@ export const DEFAULT_ACCOUNTS: Account[] = [
   },
 
   // Custodial (Excluded from Khums)
+  {
+    id: 'with-abu-usd',
+    name: 'With Abu (USD)',
+    type: 'CUSTODIAL',
+    currency: 'USD',
+    initialBalance: 5000,
+    currentBalance: 5000,
+    isCustodial: true,
+    isKhumsExempt: true,
+    country: 'INTL',
+    notes: 'Custodial family deposit held with Abu - EXCLUDED from Khums'
+  },
   {
     id: 'cupboard-children-galla',
     name: 'Cupboard - Children Galla (PKR)',
@@ -278,7 +325,8 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     isCustodial: false,
     isKhumsExempt: false,
     country: 'PK',
-    notes: 'Physical USD notes in drawer'
+    notes: 'Physical USD notes in drawer (travel reserve)',
+    travelNotes: 'Physical cash notes in home vault'
   },
   {
     id: 'home-cash-gbp',
@@ -314,7 +362,8 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     isCustodial: false,
     isKhumsExempt: false,
     country: 'PK',
-    notes: 'Dirhams cash in home locker'
+    notes: 'Dirhams cash in home locker',
+    travelNotes: 'Carried during Dubai trips; remainder preserved at home'
   },
   {
     id: 'home-cash-myr',
@@ -349,6 +398,7 @@ export const DEFAULT_FX_RATES: FXRate[] = [
     liveRate: 1.0,
     spreadAdjustment: 0,
     effectiveRate: 1.0,
+    snapshotRate: 1.0,
     updatedAt: new Date().toISOString()
   },
   {
@@ -357,6 +407,7 @@ export const DEFAULT_FX_RATES: FXRate[] = [
     liveRate: 276.53,
     spreadAdjustment: -1.0,
     effectiveRate: 275.53,
+    snapshotRate: 278.0,
     updatedAt: new Date().toISOString()
   },
   {
@@ -365,6 +416,7 @@ export const DEFAULT_FX_RATES: FXRate[] = [
     liveRate: 75.31,
     spreadAdjustment: -1.0,
     effectiveRate: 74.31,
+    snapshotRate: 75.5,
     updatedAt: new Date().toISOString()
   },
   {
@@ -373,172 +425,578 @@ export const DEFAULT_FX_RATES: FXRate[] = [
     liveRate: 73.68,
     spreadAdjustment: -1.0,
     effectiveRate: 72.68,
+    snapshotRate: 74.0,
     updatedAt: new Date().toISOString()
   },
   {
     currency: 'GBP',
     baseCurrency: 'PKR',
-    liveRate: 372.13,
+    liveRate: 351.20,
     spreadAdjustment: -1.0,
-    effectiveRate: 371.13,
+    effectiveRate: 350.20,
+    snapshotRate: 350.0,
     updatedAt: new Date().toISOString()
   },
   {
     currency: 'MYR',
     baseCurrency: 'PKR',
-    liveRate: 68.35,
+    liveRate: 58.45,
     spreadAdjustment: -1.0,
-    effectiveRate: 67.35,
+    effectiveRate: 57.45,
+    snapshotRate: 58.0,
     updatedAt: new Date().toISOString()
   },
   {
     currency: 'IQD',
     baseCurrency: 'PKR',
     liveRate: 0.21,
-    spreadAdjustment: 0.0,
-    effectiveRate: 0.21,
+    spreadAdjustment: -0.01,
+    effectiveRate: 0.20,
+    snapshotRate: 0.20,
     updatedAt: new Date().toISOString()
   }
 ];
 
-export const HISTORICAL_KHUMS_SNAPSHOTS: KhumsSnapshot[] = [
-  {
-    year: 2016,
-    cutoffDate: '2016-11-30',
-    totalSavingsPKR: 1250000,
-    unusedConsumables20PctPKR: 18000,
-    newUnusedItems25PctPKR: 12000,
-    loansGivenReceivablesPKR: 0,
-    wifeAndCustodialSubtractPKR: 120000,
-    pendingLiabilitiesCCSubtractPKR: 45000,
-    priorYearKhumsedCapitalPKR: 0,
-    netKhumsableAmountPKR: 1115000,
-    khumsCalculated20PctPKR: 223000,
-    extraVoluntaryPKR: 2000,
-    khumsPaidPKR: 225000,
-    notes: 'First audited annual Khums calculation on Nov 30 2016',
-    isLocked: true
-  },
-  {
-    year: 2018,
-    cutoffDate: '2018-11-30',
-    totalSavingsPKR: 1850000,
-    unusedConsumables20PctPKR: 25000,
-    newUnusedItems25PctPKR: 18000,
-    loansGivenReceivablesPKR: 50000,
-    wifeAndCustodialSubtractPKR: 180000,
-    pendingLiabilitiesCCSubtractPKR: 62000,
-    priorYearKhumsedCapitalPKR: 1115000,
-    netKhumsableAmountPKR: 586000,
-    khumsCalculated20PctPKR: 117200,
-    extraVoluntaryPKR: 2800,
-    khumsPaidPKR: 120000,
-    notes: 'Nov 30 2018 audit. Net increase over 2016 capital.',
-    isLocked: true
-  },
-  {
-    year: 2020,
-    cutoffDate: '2020-11-30',
-    totalSavingsPKR: 2980000,
-    unusedConsumables20PctPKR: 35000,
-    newUnusedItems25PctPKR: 28000,
-    loansGivenReceivablesPKR: 120000,
-    wifeAndCustodialSubtractPKR: 260000,
-    pendingLiabilitiesCCSubtractPKR: 85000,
-    priorYearKhumsedCapitalPKR: 1701000,
-    netKhumsableAmountPKR: 1117000,
-    khumsCalculated20PctPKR: 223400,
-    extraVoluntaryPKR: 6600,
-    khumsPaidPKR: 230000,
-    notes: 'Nov 30 2020: UAE and PKR savings combined',
-    isLocked: true
-  },
-  {
-    year: 2021,
-    cutoffDate: '2021-11-30',
-    totalSavingsPKR: 4200000,
-    unusedConsumables20PctPKR: 45000,
-    newUnusedItems25PctPKR: 35000,
-    loansGivenReceivablesPKR: 180000,
-    wifeAndCustodialSubtractPKR: 320000,
-    pendingLiabilitiesCCSubtractPKR: 110000,
-    priorYearKhumsedCapitalPKR: 2818000,
-    netKhumsableAmountPKR: 1212000,
-    khumsCalculated20PctPKR: 242400,
-    extraVoluntaryPKR: 7600,
-    khumsPaidPKR: 250000,
-    notes: 'Nov 30 2021: Paid to representative of Marja',
-    isLocked: true
-  },
-  {
-    year: 2022,
-    cutoffDate: '2022-11-30',
-    totalSavingsPKR: 5850000,
-    unusedConsumables20PctPKR: 52000,
-    newUnusedItems25PctPKR: 40000,
-    loansGivenReceivablesPKR: 240000,
-    wifeAndCustodialSubtractPKR: 380000,
-    pendingLiabilitiesCCSubtractPKR: 140000,
-    priorYearKhumsedCapitalPKR: 4030000,
-    netKhumsableAmountPKR: 1632000,
-    khumsCalculated20PctPKR: 326400,
-    extraVoluntaryPKR: 3600,
-    khumsPaidPKR: 330000,
-    notes: 'Nov 30 2022: Included foreign currency holdings converted at conservative rates',
-    isLocked: true
-  },
-  {
-    year: 2023,
-    cutoffDate: '2023-11-30',
-    totalSavingsPKR: 7420000,
-    unusedConsumables20PctPKR: 68000,
-    newUnusedItems25PctPKR: 48000,
-    loansGivenReceivablesPKR: 328369,
-    wifeAndCustodialSubtractPKR: 420000,
-    pendingLiabilitiesCCSubtractPKR: 215000,
-    priorYearKhumsedCapitalPKR: 5662000,
-    netKhumsableAmountPKR: 1569369,
-    khumsCalculated20PctPKR: 313873.8,
-    extraVoluntaryPKR: 6126.2,
-    khumsPaidPKR: 320000,
-    notes: 'Nov 30 2023: 328,369 PKR family loan receivable included in khumsable assets',
-    isLocked: true
-  },
+export const DEFAULT_KHUMS_BENCHMARKS: KhumsSnapshot[] = [
   {
     year: 2024,
     cutoffDate: '2024-11-30',
-    totalSavingsPKR: 9150000,
-    unusedConsumables20PctPKR: 75000,
-    newUnusedItems25PctPKR: 55000,
+    totalSavingsPKR: 14250000,
+    unusedConsumables20PctPKR: 280000,
+    newUnusedItems25PctPKR: 350000,
     loansGivenReceivablesPKR: 328369,
-    wifeAndCustodialSubtractPKR: 490000,
-    pendingLiabilitiesCCSubtractPKR: 285000,
-    priorYearKhumsedCapitalPKR: 7231369,
-    netKhumsableAmountPKR: 1593369,
-    khumsCalculated20PctPKR: 318673.8,
-    extraVoluntaryPKR: 6326.2,
-    khumsPaidPKR: 325000,
-    notes: 'Nov 30 2024: Official certified snapshot',
-    isLocked: true
-  },
-  {
-    year: 2025,
-    cutoffDate: '2025-11-30',
-    totalSavingsPKR: 10850000,
-    unusedConsumables20PctPKR: 82000,
-    newUnusedItems25PctPKR: 62000,
-    loansGivenReceivablesPKR: 328369,
-    wifeAndCustodialSubtractPKR: 545000,
-    pendingLiabilitiesCCSubtractPKR: 335000,
-    priorYearKhumsedCapitalPKR: 8824738,
-    netKhumsableAmountPKR: 1612631,
-    khumsCalculated20PctPKR: 322526.2,
-    extraVoluntaryPKR: 7473.8,
-    khumsPaidPKR: 330000,
-    notes: 'Nov 30 2025: Matching Excel workbook benchmark',
-    isLocked: true
+    kematiLockedEquityPKR: 500000,
+    wifeAndCustodialSubtractPKR: 305000,
+    pendingLiabilitiesCCSubtractPKR: 340000,
+    priorYearKhumsedCapitalPKR: 12100000,
+    netKhumsableAmountPKR: 3263369,
+    khumsCalculated20PctPKR: 652673.8,
+    extraVoluntaryPKR: 0,
+    khumsPaidPKR: 652673.8,
+    totalLiquidAssetsPKR: 14250000,
+    consumablesValuePKR: 280000,
+    newGoodsValuePKR: 350000,
+    loanReceivablesPKR: 328369,
+    custodialDeductionsPKR: 305000,
+    creditCardLiabilitiesPKR: 340000,
+    previousPurifiedCapitalPKR: 12100000,
+    khumsPayablePKR: 652673.8,
+    sahmImamPKR: 326336.9,
+    sahmSadatPKR: 326336.9,
+    isLocked: true,
+    isSampleData: false,
+    notes: '2024 Verified Annual Khums Calculation'
   }
 ];
+
+export const DEFAULT_MERCHANT_RULES: MerchantRule[] = [
+  { id: 'rule-stromfiber', keyword: 'stromfiber', category: 'Bill Payment', subCategory: 'Internet', defaultAccountId: 'nayapay-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-imtiaz', keyword: 'imtiaz', category: 'Grocery', subCategory: 'Supermarket', defaultAccountId: 'al-habib-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-pso', keyword: 'pso', category: 'Petrol', subCategory: 'Fuel', defaultAccountId: 'al-habib-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-green-island', keyword: 'green island', category: 'School', subCategory: 'Tuition Fee', defaultAccountId: 'al-habib-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-asghar-van', keyword: 'asghar bhai', category: 'Van', subCategory: 'School Transport', defaultAccountId: 'cash-wallet-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-muhammadi', keyword: 'muhammadi welfare', category: 'Donation', subCategory: 'Trust', defaultAccountId: 'al-habib-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-qalbe-ali', keyword: 'qalbe ali', category: 'Donation', subCategory: 'Student Sponsorship', defaultAccountId: 'al-habib-pkr', defaultCurrency: 'PKR' },
+  { id: 'rule-adcb-cc', keyword: 'adcb cr.card', category: 'Credit Card Expense', subCategory: 'Swipe', defaultAccountId: 'credit-card-aed', defaultCurrency: 'AED' },
+  { id: 'rule-dewa', keyword: 'dewa', category: 'Bill Payment', subCategory: 'Utilities', defaultAccountId: 'adcb-aed', defaultCurrency: 'AED' },
+  { id: 'rule-etisalat', keyword: 'etisalat', category: 'Bill Payment', subCategory: 'Telecom', defaultAccountId: 'adcb-aed', defaultCurrency: 'AED' },
+  { id: 'rule-salik', keyword: 'salik', category: 'Transport', subCategory: 'Toll', defaultAccountId: 'adcb-aed', defaultCurrency: 'AED' }
+];
+
+// Pre-seeded Coordinator / Aggregator Groups
+export const DEFAULT_COORDINATOR_GROUPS: CoordinatorGroup[] = [
+  {
+    id: 'coord-qalbe-ali',
+    coordinatorName: 'Maulana Qalbe Ali',
+    phone: '03165777490',
+    defaultAccountId: 'al-habib-pkr',
+    paymentChannel: 'Al Habib - Rs (IBFT)',
+    totalMonthlyCommitment: 36950,
+    notes: 'Monthly student tuition fees distributed across 10 students via Maulana Qalbe Ali',
+    subItems: [
+      { id: 'qa-maulana', studentName: "Maulana's", defaultAmount: 10000, subCategory: "Maulana's", notes: 'Clergy Monthly Stipend' },
+      { id: 'qa-bais-ali', studentName: 'Bais Ali', defaultAmount: 2700, subCategory: 'School Fees' },
+      { id: 'qa-saiqa', studentName: 'Saiqa', defaultAmount: 4500, subCategory: 'School Fees' },
+      { id: 'qa-shaneela', studentName: 'Shaneela', defaultAmount: 3500, subCategory: 'School Fees' },
+      { id: 'qa-hussain-mehdi', studentName: 'Hussain Mehdi', defaultAmount: 2700, subCategory: 'School Fees' },
+      { id: 'qa-amir-hussain', studentName: 'Amir Hussain s/o Nasir Hussain', defaultAmount: 2950, subCategory: 'School Fees' },
+      { id: 'qa-shoaib', studentName: 'Muhammad Shoaib s/o Ali Madad', defaultAmount: 2800, subCategory: 'School Fees' },
+      { id: 'qa-raees', studentName: 'Raees Hassan s/o Sarfaraz Ali', defaultAmount: 2100, subCategory: 'School Fees' },
+      { id: 'qa-sanullah', studentName: 'Sanullah s/o Asghar Ali', defaultAmount: 2850, subCategory: 'School Fees' },
+      { id: 'qa-kumail', studentName: 'Kumail Abbas s/o Rustam Ali', defaultAmount: 2850, subCategory: 'School Fees' }
+    ]
+  },
+  {
+    id: 'coord-khatoon',
+    coordinatorName: 'Khatoon Khatoon',
+    phone: '03120976573',
+    defaultAccountId: 'al-habib-pkr',
+    paymentChannel: 'Al Habib - Rs (IBFT)',
+    totalMonthlyCommitment: 11200,
+    notes: 'Student tuition fees for Talib Shah family',
+    subItems: [
+      { id: 'kk-rashmia', studentName: 'Rashmia Talib Shah', defaultAmount: 4500, subCategory: 'School Fees', notes: 'Frequently 9,000 for 2 months advance' },
+      { id: 'kk-hasnain', studentName: 'Hasnain Talib Shah', defaultAmount: 2700, subCategory: 'School Fees', notes: 'Frequently 5,400 for 2 months advance' },
+      { id: 'kk-saqib', studentName: 'Saqib Ali Talib Shah', defaultAmount: 4000, subCategory: 'School Fees', notes: 'Frequently 8,000 for 2 months advance' }
+    ]
+  },
+  {
+    id: 'coord-zaibun-nisa',
+    coordinatorName: 'Zaibun Nisa - Hidayat Ali',
+    phone: '03185262577',
+    defaultAccountId: 'al-habib-pkr',
+    paymentChannel: 'Al Habib - Rs / M.S. Mobile 03541009129839',
+    totalMonthlyCommitment: 11550,
+    notes: 'Batool sisters education support',
+    subItems: [
+      { id: 'zn-zehra', studentName: 'Zehra Batool', defaultAmount: 3750, subCategory: 'School Fees' },
+      { id: 'zn-azra', studentName: 'Azra Batool', defaultAmount: 2800, subCategory: 'School Fees' },
+      { id: 'zn-seema', studentName: 'Seema Batool', defaultAmount: 2500, subCategory: 'School Fees' },
+      { id: 'zn-hina', studentName: 'Hina', defaultAmount: 2500, subCategory: 'School Fees' }
+    ]
+  },
+  {
+    id: 'coord-shokat-ali',
+    coordinatorName: 'Shokat Ali',
+    phone: '03118816993',
+    defaultAccountId: 'easypaisa-pkr',
+    paymentChannel: 'Easypaisa',
+    totalMonthlyCommitment: 3500,
+    notes: 'Lubna & Aiza school education',
+    subItems: [
+      { id: 'sa-lubna', studentName: 'Lubna d/o Shokat Ali', defaultAmount: 2000, subCategory: 'School Fees' },
+      { id: 'sa-aiza', studentName: 'Aiza d/o Shokat Ali', defaultAmount: 1500, subCategory: 'School Fees' }
+    ]
+  },
+  {
+    id: 'coord-taha-uddin',
+    coordinatorName: 'Syed Taha-ud-din',
+    phone: '03180802871',
+    defaultAccountId: 'easypaisa-pkr',
+    paymentChannel: 'Easypaisa',
+    totalMonthlyCommitment: 7150,
+    notes: 'Syed Bahar-ud-din family children education',
+    subItems: [
+      { id: 'tu-zain', studentName: 'Syed Zain-ud-din s/o Syed Bahar-ud-din', defaultAmount: 3400, subCategory: 'School Fees' },
+      { id: 'tu-ali-waris', studentName: 'Syed Ali Waris s/o Syed Bahar-ud-din', defaultAmount: 3750, subCategory: 'School Fees' }
+    ]
+  },
+  {
+    id: 'coord-muhammad-syed',
+    coordinatorName: 'Muhammad Syed',
+    phone: '03105599042',
+    defaultAccountId: 'jazzcash-pkr',
+    paymentChannel: 'JazzCash',
+    totalMonthlyCommitment: 8000,
+    notes: 'Muhammad Ali family tuition fees',
+    subItems: [
+      { id: 'ms-erum', studentName: 'Erum Zehra Mohammad Ali', defaultAmount: 4500, subCategory: 'School Fees' },
+      { id: 'ms-ali-shinawar', studentName: 'Ali Shinawar Muhammad Ali', defaultAmount: 3500, subCategory: 'School Fees' }
+    ]
+  }
+];
+
+// Pre-seeded Kemati / Committee Records
+export const DEFAULT_KEMATI: KematiRecord[] = [
+  {
+    id: 'kemati-jhone-50k',
+    name: 'Kemati 50k (Jhone)',
+    monthlyAmount: 50000,
+    currency: 'PKR',
+    startDate: '2025-01-01',
+    durationMonths: 20,
+    monthsPaid: 10,
+    payoutAmount: 1000000,
+    expectedPayoutMonth: '2026-10',
+    isPayoutReceived: false,
+    includeInKhums: true,
+    notes: 'Monthly 50k committee - Transfer to Locked Savings (Asset). Equity included in Nov 30 Khums calculation.'
+  }
+];
+
+// Pre-seeded Recurring Monthly Roster Items
+export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
+  // 1. Direct Trusts & Clergy
+  {
+    id: 'roster-muhammadi-welfare',
+    name: 'Muhammadi Welfare Trust - Noor Ali',
+    category: 'Donation',
+    subCategory: 'Welfare Trust',
+    defaultAmount: 30000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Monthly core welfare contribution'
+  },
+  {
+    id: 'roster-maulana-lutf',
+    name: 'Maulana Lutf Latif',
+    category: 'Donation',
+    subCategory: "Maulana's",
+    defaultAmount: 9000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Clergy Monthly Stipend'
+  },
+  {
+    id: 'roster-saima-naim',
+    name: 'Saima - Naim Uncle',
+    category: 'Donation',
+    subCategory: 'Family Support',
+    defaultAmount: 9000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Family assistance'
+  },
+  {
+    id: 'roster-aga-ali-hasanain',
+    name: 'Aga Ali Hasanain Noorani - Basit Bojani',
+    category: 'Donation',
+    subCategory: 'Religious / Community',
+    defaultAmount: 12000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Aga Ali Hasanain sponsorship'
+  },
+  {
+    id: 'roster-rohia-hafiza',
+    name: 'Rohia - Hafiza Rida Batool',
+    category: 'Rohia',
+    subCategory: 'Quran Education',
+    defaultAmount: 12000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'FAMILY_ALLOWANCE',
+    notes: 'Rohia Quran tutoring (Frequently advance for next month)'
+  },
+  {
+    id: 'roster-mehreen-quran',
+    name: 'Mehreen - Abdullah Quran Teacher',
+    category: 'Children',
+    subCategory: 'Quran Teacher',
+    defaultAmount: 7000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 2,
+    isActive: true,
+    reminderType: 'FAMILY_ALLOWANCE',
+    notes: 'Kids Quran tutoring'
+  },
+  {
+    id: 'roster-muhammad-hani',
+    name: 'Muhammad Hani Asadullah',
+    category: 'Donation',
+    subCategory: 'Education Support',
+    defaultAmount: 10500,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 2,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: 'Student tuition support'
+  },
+  {
+    id: 'roster-hussain-abbas-hamza',
+    name: 'Hussain Abbas s/o Maulana Ameer Hamza',
+    category: 'Donation',
+    subCategory: 'School Fees',
+    defaultAmount: 2500,
+    currency: 'PKR',
+    sourceAccountId: 'jazzcash-pkr',
+    beneficiaryPhone: '03248241703',
+    defaultDay: 3,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: '03248241703 JazzCash'
+  },
+  {
+    id: 'roster-sharafar-hussain',
+    name: 'Sharafar Hussain',
+    category: 'Donation',
+    subCategory: 'School Fees',
+    defaultAmount: 3750,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    beneficiaryPhone: '03165576542',
+    defaultDay: 3,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    notes: '03165576542 Easypaisa'
+  },
+
+  // 2. Coordinator Group Transfers (Aggregates)
+  {
+    id: 'roster-coord-qalbe-ali',
+    name: 'Maulana Qalbe Ali - 10 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 36950,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    beneficiaryPhone: '03165777490',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-qalbe-ali',
+    notes: 'Lump-sum 36,950 PKR auto-splits to 10 child students in Maulana Qalbe Ali Group'
+  },
+  {
+    id: 'roster-coord-khatoon',
+    name: 'Khatoon Khatoon - 3 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 11200,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    beneficiaryPhone: '03120976573',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-khatoon',
+    notes: 'Lump-sum 11,200 PKR auto-splits to Rashmia (4,500), Hasnain (2,700), Saqib (4,000)'
+  },
+  {
+    id: 'roster-coord-zaibun-nisa',
+    name: 'Zaibun Nisa - 4 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 11550,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    beneficiaryPhone: '03185262577',
+    defaultDay: 2,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-zaibun-nisa',
+    notes: 'Lump-sum 11,550 PKR auto-splits to Zehra, Azra, Seema, Hina'
+  },
+  {
+    id: 'roster-coord-shokat-ali',
+    name: 'Shokat Ali - 2 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 3500,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    beneficiaryPhone: '03118816993',
+    defaultDay: 2,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-shokat-ali',
+    notes: 'Auto-splits to Lubna (2,000) and Aiza (1,500)'
+  },
+  {
+    id: 'roster-coord-taha-uddin',
+    name: 'Syed Taha-ud-din - 2 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 7150,
+    currency: 'PKR',
+    sourceAccountId: 'easypaisa-pkr',
+    beneficiaryPhone: '03180802871',
+    defaultDay: 3,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-taha-uddin',
+    notes: 'Auto-splits to Syed Zain-ud-din (3,400) and Syed Ali Waris (3,750)'
+  },
+  {
+    id: 'roster-coord-muhammad-syed',
+    name: 'Muhammad Syed - 2 Students Group',
+    category: 'Donation',
+    subCategory: 'Student Sponsorship Roster',
+    defaultAmount: 8000,
+    currency: 'PKR',
+    sourceAccountId: 'jazzcash-pkr',
+    beneficiaryPhone: '03105599042',
+    defaultDay: 3,
+    isActive: true,
+    reminderType: 'SADAQAH_ROSTER',
+    coordinatorGroupId: 'coord-muhammad-syed',
+    notes: 'Auto-splits to Erum Zehra (4,500) and Ali Shinawar (3,500)'
+  },
+
+  // 3. Family Allowances & Kemati (ROSCA)
+  {
+    id: 'roster-wife-monthly',
+    name: 'Wife Monthly Pay (Dual Currency)',
+    category: 'Wife',
+    subCategory: 'Monthly Pay',
+    defaultAmount: 350,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 1,
+    isActive: true,
+    reminderType: 'FAMILY_ALLOWANCE',
+    isWifeDualCurrency: true,
+    notes: 'Dual Currency Rule: 350 AED in UAE (ADCB) or 14,000 / 18,000 PKR in Pakistan (Al Habib)'
+  },
+  {
+    id: 'roster-kemati-50k',
+    name: 'Kemati 50k (Jhone)',
+    category: 'Jhone',
+    subCategory: 'Kemati',
+    defaultAmount: 50000,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 5,
+    isActive: true,
+    reminderType: 'FAMILY_ALLOWANCE',
+    notes: 'Monthly 50k Committee (ROSCA) - Transfer to Locked Savings (Asset). Equity included in Khums.'
+  },
+
+  // 4. Education & Van
+  {
+    id: 'roster-green-island',
+    name: 'Green Island School (Children Fees)',
+    category: 'School',
+    subCategory: 'School Fees',
+    defaultAmount: 12525,
+    currency: 'PKR',
+    sourceAccountId: 'al-habib-pkr',
+    defaultDay: 10,
+    isActive: true,
+    reminderType: 'EDUCATION',
+    notes: 'School tuition for kids'
+  },
+  {
+    id: 'roster-asghar-van',
+    name: 'Asghar Bhai Van (School Transport)',
+    category: 'Van',
+    subCategory: 'School Van',
+    defaultAmount: 3500,
+    currency: 'PKR',
+    sourceAccountId: 'cash-wallet-pkr',
+    defaultDay: 5,
+    isActive: true,
+    reminderType: 'EDUCATION',
+    notes: 'School transport fee'
+  },
+
+  // 5. Fixed Utilities (PK & UAE)
+  {
+    id: 'roster-stromfiber',
+    name: 'StromFiber Home Fiber Internet',
+    category: 'Bill Payment',
+    subCategory: 'Internet',
+    defaultAmount: 4460,
+    currency: 'PKR',
+    sourceAccountId: 'nayapay-pkr',
+    defaultDay: 5,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    lastMonthAmount: 4460,
+    notes: 'Monthly fiber internet bill'
+  },
+  {
+    id: 'roster-dewa-uae',
+    name: 'DEWA / ADDC Electricity & Water',
+    category: 'Bill Payment',
+    subCategory: 'Dewa',
+    defaultAmount: 340,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 15,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    lastMonthAmount: 340,
+    notes: 'UAE utility bill'
+  },
+  {
+    id: 'roster-etisalat-internet',
+    name: 'Etisalat Internet (Home Fiber)',
+    category: 'Bill Payment',
+    subCategory: 'Etisalat Internet',
+    defaultAmount: 389,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 20,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    lastMonthAmount: 389,
+    notes: 'UAE home broadband'
+  },
+  {
+    id: 'roster-royal-gas',
+    name: 'Royal Gas Centralized LPG',
+    category: 'Bill Payment',
+    subCategory: 'Royal Gas',
+    defaultAmount: 75,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 18,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    lastMonthAmount: 75,
+    notes: 'Centralized gas utility'
+  },
+  {
+    id: 'roster-etisalat-recharge',
+    name: 'Etisalat Mobile Recharge (Postpaid/Prepaid)',
+    category: 'Bill Payment',
+    subCategory: 'Etisalat Recharge',
+    defaultAmount: 48,
+    currency: 'AED',
+    sourceAccountId: 'adcb-aed',
+    defaultDay: 1,
+    isActive: true,
+    isBillReminder: true,
+    reminderType: 'FIXED_BILL',
+    lastMonthAmount: 48,
+    notes: 'Mobile SIM connection'
+  }
+];
+
+// Pre-seeded Default Loan Records
+export const DEFAULT_LOANS: LoanRecord[] = [
+  {
+    id: 'loan-family-328k',
+    type: 'LENT_RECEIVABLE',
+    counterpartyName: 'Family Member (Personal Loan)',
+    relationship: 'Immediate Family',
+    originalAmount: 328369,
+    remainingAmount: 328369,
+    currency: 'PKR',
+    lentDate: '2023-04-15',
+    dueDate: '2026-12-31',
+    isRecoverable: true, // Included in Khums
+    notes: 'Longstanding family loan (Rs. 328,369) active in workbook Khums audits since 2023',
+    repayments: []
+  },
+  {
+    id: 'loan-borrowed-emergency',
+    type: 'BORROWED_LIABILITY',
+    counterpartyName: 'Short-Term Community Loan Taken',
+    relationship: 'Friend',
+    originalAmount: 50000,
+    remainingAmount: 50000,
+    currency: 'PKR',
+    lentDate: '2026-09-01',
+    dueDate: '2026-11-25',
+    isRecoverable: true,
+    notes: 'Pending liability to be settled before Nov 30 (deducted from Khums savings)',
+    repayments: []
+  }
+];
+
+export const HISTORICAL_KHUMS_SNAPSHOTS: KhumsSnapshot[] = DEFAULT_KHUMS_BENCHMARKS;
 
 export const DEFAULT_SPONSORSHIPS: Sponsorship[] = [
   {
@@ -592,446 +1050,5 @@ export const DEFAULT_SPONSORSHIPS: Sponsorship[] = [
     active: true,
     notes: 'Monthly ration & medical allowance for 3 orphans',
     lastPaidDate: '2026-11-01'
-  }
-];
-
-export const DEFAULT_MERCHANT_RULES: MerchantRule[] = [
-  {
-    id: 'rule-stromfiber',
-    keyword: 'StromFiber',
-    category: 'Bill Payment',
-    subCategory: 'Internet',
-    defaultAccountId: 'nayapay-pkr',
-    notes: 'Auto-maps StromFiber broadband invoices to Nayapay / Al Habib',
-    matchCount: 14,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-imtiaz',
-    keyword: 'Imtiaz',
-    category: 'Grocery',
-    subCategory: 'Supermarket',
-    defaultAccountId: 'al-habib-pkr',
-    notes: 'Imtiaz Super Market groceries',
-    matchCount: 28,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-bread-drink',
-    keyword: 'Bread + Drink',
-    category: 'Grocery',
-    subCategory: 'Daily Essentials',
-    defaultAccountId: 'cash-wallet-pkr',
-    notes: 'Daily bakery & dairy quick cash expense',
-    matchCount: 42,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-pso',
-    keyword: 'PSO',
-    category: 'Petrol',
-    subCategory: 'Fuel',
-    defaultAccountId: 'scb-pkr',
-    notes: 'Pakistan State Oil - triggers automated liters and price/liter extraction',
-    matchCount: 35,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-shell',
-    keyword: 'Shell',
-    category: 'Petrol',
-    subCategory: 'Fuel',
-    defaultAccountId: 'scb-pkr',
-    notes: 'Shell fuel station auto extraction',
-    matchCount: 19,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-green-island',
-    keyword: 'Green Island',
-    category: 'School',
-    subCategory: 'Tuition Fee',
-    defaultAccountId: 'al-habib-pkr',
-    defaultAmount: 12525,
-    notes: 'Green Island School standard fee (12,525 PKR)',
-    matchCount: 22,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-asghar-van',
-    keyword: 'Asghar Bhai Van',
-    category: 'Van',
-    subCategory: 'School Transport',
-    defaultAccountId: 'easypaisa-pkr',
-    defaultAmount: 3500,
-    notes: 'Monthly student van pool (3,500 PKR)',
-    matchCount: 22,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-muhammadi-trust',
-    keyword: 'Muhammadi Welfare Trust',
-    category: 'Donation',
-    subCategory: 'Charity & Welfare',
-    defaultAccountId: 'easypaisa-pkr',
-    notes: 'Monthly charity disbursement',
-    matchCount: 18,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-maulana-generic',
-    keyword: 'Maulana',
-    category: 'Donation',
-    subCategory: 'Religious Honorarium',
-    defaultAccountId: 'jazzcash-pkr',
-    notes: 'Religious teaching and community honorariums',
-    matchCount: 25,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-adcb-card',
-    keyword: 'ADCB Cr.Card',
-    category: 'Living Expenses',
-    subCategory: 'Credit Card Swipe',
-    defaultAccountId: 'credit-card-aed',
-    notes: 'ADCB Credit Card daily swipes in UAE',
-    matchCount: 52,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-lulu',
-    keyword: 'Lulu',
-    category: 'Grocery',
-    subCategory: 'Supermarket',
-    defaultAccountId: 'adcb-aed',
-    notes: 'Lulu Hypermarket UAE household supplies',
-    matchCount: 30,
-    createdAt: '2026-01-01T00:00:00Z'
-  },
-  {
-    id: 'rule-carrefour',
-    keyword: 'Carrefour',
-    category: 'Grocery',
-    subCategory: 'Supermarket',
-    defaultAccountId: 'adcb-aed',
-    notes: 'Carrefour UAE grocery spending',
-    matchCount: 24,
-    createdAt: '2026-01-01T00:00:00Z'
-  }
-];
-
-export const DEFAULT_ROSTER_ITEMS: RosterItem[] = [
-  // 1. School Fees & Transport
-  {
-    id: 'roster-green-island',
-    name: 'Green Island School Fees',
-    category: 'School',
-    subCategory: 'Tuition Fee',
-    defaultAmount: 12525,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 5,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'EDUCATION',
-    notes: 'Standard monthly fee voucher'
-  },
-  {
-    id: 'roster-asghar-van',
-    name: 'Asghar Bhai Van Pool',
-    category: 'Van',
-    subCategory: 'School Transport',
-    defaultAmount: 3500,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    defaultDay: 5,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'EDUCATION',
-    notes: 'Student school transport monthly pick & drop'
-  },
-  {
-    id: 'roster-mustafa-fee',
-    name: 'Mustafa Student Fee',
-    category: 'School',
-    subCategory: 'Tuition Fee',
-    defaultAmount: 8500,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    beneficiaryPhone: '03123456789',
-    paymentChannel: 'Easypaisa',
-    defaultDay: 5,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'EDUCATION',
-    notes: 'Mustafa high school fee'
-  },
-  {
-    id: 'roster-fatima-fbis',
-    name: 'Fatima - FBIS Exam & Board Fees',
-    category: 'School',
-    subCategory: 'FBIS Exam Fees',
-    defaultAmount: 6200,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    beneficiaryPhone: '03335551212',
-    paymentChannel: 'Bank Transfer',
-    defaultDay: 10,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'EDUCATION',
-    notes: 'Federal Board intermediate registration installment'
-  },
-
-  // 2. Religious & Community Sponsorships
-  {
-    id: 'roster-qalbe-ali',
-    name: 'Student Fees via Maulana Qalbe Ali',
-    category: 'Donation',
-    subCategory: 'Student Sponsorship',
-    defaultAmount: 15000,
-    currency: 'PKR',
-    sourceAccountId: 'jazzcash-pkr',
-    beneficiaryPhone: '03009876543',
-    paymentChannel: 'JazzCash',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly educational sponsorship for deserving students'
-  },
-  {
-    id: 'roster-khatoon-khatoon',
-    name: 'Khatoon Khatoon Sponsorship',
-    category: 'Donation',
-    subCategory: 'Family Welfare',
-    defaultAmount: 6000,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly family stipend'
-  },
-  {
-    id: 'roster-zaibun-nisa',
-    name: 'Zaibun Nisa Sponsorship',
-    category: 'Donation',
-    subCategory: 'Family Welfare',
-    defaultAmount: 5000,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly widow & family support'
-  },
-  {
-    id: 'roster-muhammadi-trust',
-    name: 'Muhammadi Welfare Trust',
-    category: 'Donation',
-    subCategory: 'Charity & Welfare',
-    defaultAmount: 25000,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly ration & medical charity (25,000 PKR)'
-  },
-  {
-    id: 'roster-lutf-latif',
-    name: 'Maulana Lutf Latif Honorarium',
-    category: 'Donation',
-    subCategory: 'Religious Honorarium',
-    defaultAmount: 9000,
-    currency: 'PKR',
-    sourceAccountId: 'jazzcash-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly wazeefa for community religious services (9,000 PKR)'
-  },
-  {
-    id: 'roster-syed-orphans',
-    name: 'Syed Orphan Family Support',
-    category: 'Donation',
-    subCategory: 'Orphan Support',
-    defaultAmount: 20000,
-    currency: 'PKR',
-    sourceAccountId: 'easypaisa-pkr',
-    beneficiaryPhone: '03451122334',
-    paymentChannel: 'Easypaisa',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'SADAQAH_ROSTER',
-    notes: 'Monthly ration for 3 orphans'
-  },
-
-  // 3. Household Bills & Utilities
-  {
-    id: 'roster-stromfiber',
-    name: 'StromFiber Fiber Broadband',
-    category: 'Bill Payment',
-    subCategory: 'Internet',
-    defaultAmount: 3500,
-    currency: 'PKR',
-    sourceAccountId: 'nayapay-pkr',
-    defaultDay: 10,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Home 50Mbps unlimited broadband'
-  },
-  {
-    id: 'roster-m106-electricity',
-    name: 'M106 Electricity Utility Bill',
-    category: 'Utilities',
-    subCategory: 'Electricity',
-    defaultAmount: 5500,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 15,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Apartment electricity bill'
-  },
-  {
-    id: 'roster-m106-gas',
-    name: 'M106 Gas Utility Bill',
-    category: 'Utilities',
-    subCategory: 'Gas',
-    defaultAmount: 1800,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 15,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Apartment gas cylinder / pipeline'
-  },
-  {
-    id: 'roster-m106-water',
-    name: 'M106 Water Tanker Maintenance',
-    category: 'Utilities',
-    subCategory: 'Water',
-    defaultAmount: 1200,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 15,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Building water pump & tanker share'
-  },
-  {
-    id: 'roster-wife-monthly',
-    name: 'Wife Monthly Household & Private Pay',
-    category: 'Household',
-    subCategory: 'Amanat / Personal',
-    defaultAmount: 60000,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FAMILY_ALLOWANCE',
-    notes: 'Monthly household allowance & wife private funds (Amanat/Khums Exempt)'
-  },
-  {
-    id: 'roster-family-remittance-rohia',
-    name: 'Family Remittance (Rohia / Children)',
-    category: 'Family Support',
-    subCategory: 'Remittance',
-    defaultAmount: 35000,
-    currency: 'PKR',
-    sourceAccountId: 'al-habib-pkr',
-    defaultDay: 1,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FAMILY_ALLOWANCE',
-    notes: 'Monthly family support remittance'
-  },
-
-  // 4. UAE Recurring
-  {
-    id: 'roster-uae-mobile-48',
-    name: 'Mobile 48 AED Combo Recharge',
-    category: 'Utilities',
-    subCategory: 'Mobile Prepaid',
-    defaultAmount: 48,
-    currency: 'AED',
-    sourceAccountId: 'credit-card-aed',
-    defaultDay: 28,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Virgin/Etisalat monthly local combo plan'
-  },
-  {
-    id: 'roster-uae-addc',
-    name: 'ADDC Electricity & Water (Abu Dhabi)',
-    category: 'Utilities',
-    subCategory: 'Electricity & Water',
-    defaultAmount: 365.87,
-    currency: 'AED',
-    sourceAccountId: 'adcb-aed',
-    defaultDay: 25,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Monthly utility bill'
-  },
-  {
-    id: 'roster-uae-cc-bill',
-    name: 'ADCB Credit Card Bill Payment',
-    category: 'Liabilities',
-    subCategory: 'Credit Card Bill',
-    defaultAmount: 4500,
-    currency: 'AED',
-    sourceAccountId: 'adcb-aed',
-    defaultDay: 20,
-    isActive: true,
-    isBillReminder: true,
-    reminderType: 'FIXED_BILL',
-    notes: 'Monthly full cycle credit card payment from ADCB Bank'
-  }
-];
-
-// Pre-seeded Default Loan Records
-export const DEFAULT_LOANS: LoanRecord[] = [
-  {
-    id: 'loan-family-328k',
-    type: 'LENT_RECEIVABLE',
-    counterpartyName: 'Family Member (Personal Loan)',
-    relationship: 'Immediate Family',
-    originalAmount: 328369,
-    remainingAmount: 328369,
-    currency: 'PKR',
-    lentDate: '2023-04-15',
-    dueDate: '2026-12-31',
-    isRecoverable: true, // Included in Khums
-    notes: 'Longstanding family loan (Rs. 328,369) active in workbook Khums audits since 2023',
-    repayments: []
-  },
-  {
-    id: 'loan-borrowed-emergency',
-    type: 'BORROWED_LIABILITY',
-    counterpartyName: 'Short-Term Community Loan Taken',
-    relationship: 'Friend',
-    originalAmount: 50000,
-    remainingAmount: 50000,
-    currency: 'PKR',
-    lentDate: '2026-09-01',
-    dueDate: '2026-11-25',
-    isRecoverable: true,
-    notes: 'Pending liability to be settled before Nov 30 (deducted from Khums savings)',
-    repayments: []
   }
 ];

@@ -27,6 +27,8 @@ import {
   X,
   Shield
 } from 'lucide-react';
+import { db } from '../db/db';
+import { Transaction } from '../types';
 
 interface ImportExportViewProps {
   onRefreshData: () => void;
@@ -47,6 +49,26 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
   const [vaultPassphrase, setVaultPassphrase] = useState<string>('');
   const [confirmPassphrase, setConfirmPassphrase] = useState<string>('');
   const [pendingVaultFileContent, setPendingVaultFileContent] = useState<string | null>(null);
+
+  // Discard all cloned duplicate monthly block transactions
+  const handleDiscardAllDuplicates = async () => {
+    if (!confirm('Discard all duplicate cloned block rows (Jan 2025 rows 49–64 and Oct 2026 rows 671–705)? This prevents double-counting monthly expenses.')) {
+      return;
+    }
+    const duplicateTxs = await db.transactions.filter((t: Transaction) => Boolean(t.isSampleData)).toArray();
+    const ids = duplicateTxs.map((t: Transaction) => t.id);
+    await db.transactions.bulkDelete(ids);
+    const { recalculateAllAccountBalances } = await import('../db/db');
+    await recalculateAllAccountBalances();
+    if (healingSummary) {
+      setHealingSummary({
+        ...healingSummary,
+        duplicateBlocks: []
+      });
+    }
+    onRefreshData();
+    alert(`Discarded ${ids.length} duplicate transactions from cloned monthly blocks. Your ledger is 100% clean!`);
+  };
 
   // Handle file drop / upload
   const handleFileUpload = async (file: File) => {
@@ -340,6 +362,49 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
           </label>
         </div>
       </div>
+
+      {/* Duplicate Monthly Block Resolver Banner */}
+      {healingSummary && healingSummary.duplicateBlocks && healingSummary.duplicateBlocks.length > 0 && (
+        <div className="bg-amber-950/80 border border-amber-600/60 rounded-2xl p-5 shadow-xl space-y-4 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-800/40 pb-3">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Duplicate Monthly Block Resolver ({healingSummary.duplicateBlocks.length} Cloned Blocks Found)
+                </h4>
+                <p className="text-xs text-amber-200/80">
+                  Forensic audit detected copy-pasted blocks in your Expense sheet (specifically Jan 2025 rows 49–64 vs 31–46, and Oct 2026 rows 671–705 vs 634–668).
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleDiscardAllDuplicates}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-md transition whitespace-nowrap"
+            >
+              Discard Duplicate Blocks in 1-Click
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {healingSummary.duplicateBlocks.map((dup, dIdx) => (
+              <div key={dIdx} className="p-3 bg-slate-950/80 border border-amber-800/40 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-white block">{dup.clonedBlock.cloneReason}</span>
+                  <span className="text-[11px] text-slate-400">
+                    Block #{dup.clonedBlock.blockIndex + 1} (Rows {dup.clonedBlock.startRow}–{dup.clonedBlock.endRow}) duplicates Month {dup.originalBlock.billingMonth} ({dup.clonedBlock.rowCount} rows, ₨ {dup.clonedBlock.totalAmountPKR.toLocaleString()})
+                  </span>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-700/60">
+                  Auto-Flagged (Pending Discard)
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Row-66 Truncation Bug Fix Comparison Card */}
       {healingSummary && healingSummary.reconciliation && (

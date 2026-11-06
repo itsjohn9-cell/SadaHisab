@@ -17,15 +17,19 @@ import {
   Mic,
   Calendar,
   FileText,
-  HandCoins
+  HandCoins,
+  Users,
+  Coins
 } from 'lucide-react';
 import { PrivacyShieldBadge } from './PrivacyShieldBadge';
+import { FXValuationMode } from '../types';
 
 export type NavTabType = 
   | 'dashboard' 
   | 'ledger' 
   | 'magic-inbox' 
   | 'roster' 
+  | 'coordinators'
   | 'reminders'
   | 'reports'
   | 'loans'
@@ -51,6 +55,8 @@ interface NavbarProps {
   onOpenSecurityModal: () => void;
   primaryCurrency: 'PKR' | 'AED';
   setPrimaryCurrency: (c: 'PKR' | 'AED') => void;
+  fxValuationMode: FXValuationMode;
+  setFxValuationMode: (m: FXValuationMode) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -68,7 +74,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenVoiceLogger,
   onOpenSecurityModal,
   primaryCurrency,
-  setPrimaryCurrency
+  setPrimaryCurrency,
+  fxValuationMode,
+  setFxValuationMode
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
@@ -131,6 +139,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <CalendarCheck2 className="h-4 w-4 text-cyan-400" />
               <span>Roster</span>
+            </button>
+
+            {/* Coordinator Groups */}
+            <button
+              onClick={() => setActiveTab('coordinators')}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'coordinators'
+                  ? 'bg-slate-800 text-teal-400 border border-slate-700 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Users className="h-4 w-4 text-teal-400" />
+              <span>Coordinators</span>
             </button>
 
             {/* Planned Reminders */}
@@ -244,6 +265,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             
             {/* Live Privacy Shield Badge */}
             <PrivacyShieldBadge />
+
+            {/* Global FX Valuation Mode Switcher (Totals -1 PKR vs Live vs Snapshot) */}
+            <div className="hidden md:flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <Coins className="w-3.5 h-3.5 text-amber-400 ml-1.5 mr-1" />
+              <select
+                value={fxValuationMode}
+                onChange={(e) => setFxValuationMode(e.target.value as FXValuationMode)}
+                className="bg-transparent text-[11px] font-bold text-slate-200 focus:outline-none cursor-pointer pr-1"
+                title="Global FX Mode: Conservative (Totals tab -1 PKR spread), Live Mid-Market, or Fixed Snapshot (Income tab)"
+              >
+                <option value="CONSERVATIVE_SPREAD" className="bg-slate-900 text-white">
+                  🛡️ Conservative (-1 PKR)
+                </option>
+                <option value="LIVE_MID_MARKET" className="bg-slate-900 text-white">
+                  ⚡ Live Mid-Market
+                </option>
+                <option value="FIXED_SNAPSHOT" className="bg-slate-900 text-white">
+                  📌 Fixed Snapshot (Income Tab)
+                </option>
+              </select>
+            </div>
 
             {/* Multimodal Bill & OCR Scanner Trigger */}
             <button
@@ -364,6 +406,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <CalendarCheck2 className="h-3 w-3" />
             <span>Roster</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('coordinators')}
+            className={`px-3 py-1 rounded-md whitespace-nowrap flex items-center space-x-1 ${activeTab === 'coordinators' ? 'bg-slate-800 text-teal-400' : 'text-slate-400'}`}
+          >
+            <Users className="h-3 w-3" />
+            <span>Coordinators</span>
           </button>
           <button
             onClick={() => setActiveTab('reminders')}

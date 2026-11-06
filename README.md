@@ -47,6 +47,49 @@
 
 ---
 
+## 🧠 Deep Workbook Domain Intelligence & Zero-Touch Autopilot
+
+Built upon a forensic audit of all 731 rows of `Khums - November 30 2025 - Daily.xlsx`, the system incorporates deep domain automation:
+
+### 1. Monthly Block-Aware Excel Importer & Clone Detector
+- **Empty-Row Monthly Block Inferencing:** Partitions the `Expense` sheet into 22 chronological monthly blocks (Dec 2024 to Oct 2026), tagging transactions with `billingMonth` (`YYYY-MM`) based on the majority date in each block.
+- **Stale Date Healing:** Automatically heals stale copy-pasted utility rows (such as `2026-08-02` UAE utility rows pasted in Sept/Oct blocks in rows 627–631, 664–668, and 701–705), realigning them with their true billing month.
+- **Cloned Block Detector & 1-Click Resolver:** Detects accidental copy-paste cloned blocks (**Jan 2025 rows 31–46 vs 49–64** and **Oct 2026 rows 634–668 vs 671–705**). Surfaces a dedicated **Duplicate Monthly Block Resolver banner** in the Importer to discard duplicate blocks in 1 click and eliminate double-counting.
+- **Formula Evaluator & Multiplier Notes:** Parses and calculates Excel arithmetic formulas (e.g. `=4500*2` evaluates to 9,000 PKR with `monthsCovered = 2` and formula note `"2 months × 4,500"`).
+
+### 2. Coordinator / Aggregator Auto-Splitter & WhatsApp Dispatcher
+- **6 Pre-Configured Coordinator Groups:**
+  1. *Maulana Qalbe Ali* (10 students, 36,950 PKR commitment)
+  2. *Khatoon Khatoon* (3 students, 11,200 PKR commitment)
+  3. *Zaibun Nisa* (4 students, 11,550 PKR commitment)
+  4. *Shokat Ali* (2 students, 3,500 PKR commitment)
+  5. *Syed Taha-ud-din* (2 students, 7,150 PKR commitment)
+  6. *Muhammad Syed* (2 students, 8,000 PKR commitment)
+- **1-Tap Transfer + Auto-Split:** Ingests or logs single lump-sum transfers and automatically creates individual child transactions linked by `parentTransferId`.
+- **1-Click WhatsApp Formatted Breakdown:** Generates and copies ready-to-send Urdu/English student fee messages directly to the clipboard. Also integrated seamlessly into the **Magic Inbox** whenever an incoming SMS matches a coordinator.
+
+### 3. Prepaid & Multi-Month Advance Tracker (Auto-Skip Engine)
+- **Advance Invoicing:** Supports paying school fees, van, or rents 2 or 3 months in advance.
+- **Smart Auto-Skip in Monthly Roster:** Automatically sets `prepaidUntilMonth`. During the next month's recurring roster run, prepaid items are auto-toggled OFF with a clear `"Prepaid in [Prior Month] ✅"` indicator.
+
+### 4. "Kemati" (ROSCA / Committee) & Special Asset Accounting
+- **Monthly 50,000 PKR Committee Payments:** Treated as a transfer to locked savings / receivable equity, keeping dead consumption expenses accurate.
+- **Cash Flow Exclusion Toggle:** Allows analyzing monthly cash flows with or without Kemati savings.
+- **Khums Inclusion:** Automatically factors accumulated committee equity into the Annual Nov 30 Khums calculation.
+- **Dual-Currency Wife Allowance:** Seamlessly toggles between UAE living expenses (`350 AED`) and Pakistan home visits (`14,000 / 18,000 PKR`).
+
+### 5. Dual FX Rate Modes Switcher
+- Accessible from the top navigation bar at all times:
+  1. **Conservative Khums Mode (Live - 1 PKR Spread):** Matches the classical Totals sheet formula (`Live - 1 PKR`).
+  2. **Live Mid-Market Rate:** Direct open-market rates via `open.er-api.com`.
+  3. **Fixed Snapshot Rate:** Manual benchmark rates matching the Income tab (USD=278, AED=75.5, GBP=352).
+
+### 6. Ultra-Low-Friction Home Quick-Actions & Smart Alerts
+- **Home Screen Quick-Action Bar:** Instant triggers for `⚡ Run Monthly Roster`, `📋 Paste SMS / WhatsApp`, `🎙️ Hold to Speak`, and `📸 Scan Bill / Receipt`.
+- **Smart Utility Variance Alerts:** Flags DEWA, Etisalat, Royal Gas, or StromFiber bills when current charges surge $>15\%$ compared to the previous month's baseline.
+
+---
+
 ## 🏛️ System Architecture
 
 ```mermaid
