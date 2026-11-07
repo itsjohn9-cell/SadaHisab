@@ -29,7 +29,10 @@ import {
   AlertTriangle,
   HeartHandshake,
   Eye,
-  EyeOff
+  EyeOff,
+  Filter,
+  CheckCircle2,
+  ArrowLeftRight
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -51,11 +54,13 @@ interface DashboardViewProps {
   khumsSnapshots: KhumsSnapshot[];
   sponsorships: Sponsorship[];
   primaryCurrency: 'PKR' | 'AED' | 'USD';
+  setPrimaryCurrency?: (c: 'PKR' | 'AED' | 'USD') => void;
   onNavigateTab: (tab: any) => void;
   onOpenAddModal: () => void;
   onOpenVoiceLogger?: () => void;
   onOpenBillScanner?: () => void;
   onOpenQuickPaste?: (text?: string) => void;
+  onOpenGoogleSheetModal?: () => void;
   isPrivacyMasked?: boolean;
   onTogglePrivacyMask?: () => void;
 }
@@ -69,11 +74,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   khumsSnapshots,
   sponsorships,
   primaryCurrency,
+  setPrimaryCurrency,
   onNavigateTab,
   onOpenAddModal,
   onOpenVoiceLogger,
   onOpenBillScanner,
   onOpenQuickPaste,
+  onOpenGoogleSheetModal,
   isPrivacyMasked = false,
   onTogglePrivacyMask
 }) => {
@@ -283,6 +290,91 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
+      
+      {/* 0. Executive Global Filter, Currency & Google Sheet Control Bar */}
+      <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          
+          {/* Left: Account Group Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Accounts Filter:</span>
+            </span>
+            {(['ALL', 'PK', 'AE', 'INTL', 'CUSTODIAL'] as const).map(filter => (
+              <button
+                key={filter}
+                onClick={() => setAccountGroupFilter(filter)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  accountGroupFilter === filter
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/40 scale-105'
+                    : 'bg-slate-800/90 text-slate-300 hover:text-white hover:bg-slate-700/80 border border-slate-700/60'
+                }`}
+              >
+                {filter === 'ALL' && '🌐 All Accounts (26)'}
+                {filter === 'PK' && '🇵🇰 Pakistan (PKR)'}
+                {filter === 'AE' && '🇦🇪 UAE (AED)'}
+                {filter === 'INTL' && '🌍 USD / Global'}
+                {filter === 'CUSTODIAL' && '🛡️ Custodial Amanat'}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Currency Toggle, Google Sheet Sync & Privacy Controls */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Currency Switcher Pills */}
+            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
+              <span className="text-[11px] font-bold text-slate-400 px-2 uppercase tracking-wider hidden sm:inline">
+                Currency:
+              </span>
+              {(['PKR', 'AED', 'USD'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => setPrimaryCurrency && setPrimaryCurrency(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    primaryCurrency === c
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/50'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {c === 'PKR' && '₨ PKR'}
+                  {c === 'AED' && 'د.إ AED'}
+                  {c === 'USD' && '$ USD'}
+                </button>
+              ))}
+            </div>
+
+            {/* Google Sheet Sync Pill */}
+            {onOpenGoogleSheetModal && (
+              <button
+                onClick={onOpenGoogleSheetModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-600/40 text-emerald-300 hover:text-emerald-200 rounded-xl text-xs font-bold transition shadow-sm"
+                title="Google Sheet Live Sync & Organization Status"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                <span>Google Sheet</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              </button>
+            )}
+
+            {/* Privacy Mask Toggle */}
+            {onTogglePrivacyMask && (
+              <button
+                onClick={onTogglePrivacyMask}
+                className={`p-2 rounded-xl border transition-all ${
+                  isPrivacyMasked 
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                }`}
+                title={isPrivacyMasked ? "Reveal Balances" : "Discreet Privacy Mode (Hide Balances)"}
+              >
+                {isPrivacyMasked ? <EyeOff className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+
+        </div>
+      </div>
       
       {/* 1. Smart Utility Variance & Spike Alerts */}
       {utilityVarianceAlerts.length > 0 && (

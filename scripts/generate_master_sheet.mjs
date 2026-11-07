@@ -177,18 +177,18 @@ const wbOut = XLSX.utils.book_new();
 // ==========================================
 const overviewRows = [
   ['🌟 SADA HISAB - EXECUTIVE FINANCIAL LEDGER & KHUMS MANAGEMENT', '', '', ''],
-  ['Single Source of Truth • Multi-Currency Ledger • Islamic Purification & Student Sponsorships', '', '', ''],
-  ['Version: 2.0 (Organized & Healed) | Generated: ' + new Date().toISOString().split('T')[0], '', '', ''],
+  ['Modern Single Source of Truth • Multi-Currency Ledger • Islamic Wealth Purification & Student Sponsorships', '', '', ''],
+  ['Version: 2.0 (Modern Executive) | Generated: ' + new Date().toISOString().split('T')[0], '', '', ''],
   ['', '', '', ''],
   ['🧭 1. HOW THIS SPREADSHEET WORKS (THE 30-SECOND GUIDE)', '', '', ''],
-  ['This spreadsheet is the master financial backbone for Sada Hisab. It records every outflow, tracks bank balances, manages recurring student sponsorships, monitors interest-free loans (Qard-e-Hasana), and calculates annual Khums (wealth purification).', '', '', ''],
-  ['All calculations and totals on the Summary tab update dynamically as you add or edit records in the Expense tab.', '', '', ''],
+  ['This spreadsheet is your central financial hub. It records all daily expenses, summarizes liquid bank balances, manages recurring student welfare sponsorships, monitors interest-free loans (Qard-e-Hasana), and calculates annual Khums.', '', '', ''],
+  ['All totals and breakdowns on the Summary tab update dynamically as you add or edit rows in the Expense tab.', '', '', ''],
   ['', '', '', ''],
   ['📑 2. TAB DIRECTORY & WHAT GOES WHERE', '', '', ''],
   ['Tab Name', 'Purpose & Contents', 'Action / When to Use', 'Automation & Formulas'],
-  ['Overview', 'This guide! Complete directory, rules, instructions & color legends.', 'Reference anytime you have a question on formatting or workflows.', 'Manual Reference Guide'],
-  ['Summary', 'Executive Dashboard: Top KPI Cards, Bank Liquidity Matrix & Category Spending.', 'Check your financial health, net worth, and update actual bank balances.', 'Formula Automated (=SUMIF, =SUM)'],
-  ['Expense', 'Daily Expense & Outflows Ledger (Cleaned & Deduplicated historical records).', 'Log every daily payment, bill, student fee, or expense in the next empty row.', 'Dropdown Enabled & Auto-Filters'],
+  ['Overview', 'This guide! Complete directory, rules, instructions & color legend.', 'Reference anytime you have a question on formatting or workflows.', 'Manual Reference Guide'],
+  ['Summary', 'Executive Dashboard: Top KPI Cards, Bank Liquidity Matrix & Category Spending.', 'Check financial health, net worth, and update actual bank balances.', 'Formula Automated (=SUMIF, =SUM)'],
+  ['Expense', 'Daily Expense & Outflows Ledger (Cleaned & Deduplicated historical records).', 'Log every daily payment, bill, student fee, or expense in the next empty row.', 'Row 1 Frozen & Auto-Filters Active'],
   ['Sponsorships', 'Recurring Welfare & Student Stipends Roster (School fees, van, students).', 'Reference monthly commitments and update coordinator contact details.', 'Active Roster Reference'],
   ['Loans', 'Qard-e-Hasana (Interest-Free Loans) Receivables & Payables.', 'Track loans extended to relatives/friends, expected repayments, and status.', 'Formula Automated (=SUM)'],
   ['Khums', 'Annual Sharia Wealth Purification (Nov 30 Valuation & 20% Sahm Distribution).', 'Annual audit snapshot to determine deductible expenses and surplus Khums due.', 'Formula Automated (=20% Surplus)'],
@@ -209,7 +209,7 @@ const overviewRows = [
   ['', '', '', ''],
   ['🎨 4. VISUAL COLOR CODES & LEGEND', '', '', ''],
   ['Color Tone', 'Hex Code', 'Where Used', 'Meaning'],
-  ['Midnight Navy', '#0f172a', 'Row 3 Headers & Tab Titles', 'Protected Table Headers (Do not overwrite)'],
+  ['Midnight Navy', '#0f172a', 'Header Row 1 & Section Titles', 'Protected Table Headers (Do not overwrite)'],
   ['Emerald Green', '#10b981', 'Totals, KPI Cards & Active Status', 'Positive net balances, confirmed payments, active status'],
   ['Sky Blue', '#0284c7', 'PKR Equivalent & Category Breakdown', 'Auto-converted PKR amounts and metrics'],
   ['Amber Gold', '#d97706', 'Foreign Currencies & Advance Multipliers', 'AED/USD foreign currency transactions or multi-month advances'],
@@ -219,8 +219,8 @@ const overviewRows = [
   ['⚡ 5. SPECIAL SMART AUTOMATIONS', '', '', ''],
   ['Feature', 'How It Works', 'Why It Helps You', ''],
   ['Dynamic Auto-Add', 'Typing a new Category or Student in "Expense" automatically appends it to "DropdownLists".', 'You never get a "Value not in list" error; your dropdown grows intelligently.', ''],
-  ['Auto-Filters Active', 'Row 3 in "Expense" has active filter dropdowns.', 'Quickly filter by Category = "School" or Account = "Al Habib" in 1 click.', ''],
-  ['Row 3 Freeze', 'Header rows 1 to 3 are frozen across the ledger.', 'When scrolling down 600+ rows, your headers and totals stay visible.', ''],
+  ['Row 1 Native Filters', 'Row 1 in "Expense" has active filter dropdowns.', 'Instantly filter by Category = "School" or Account = "Al Habib" without offset bugs.', ''],
+  ['Row 1 Freeze', 'Header Row 1 is frozen across the ledger.', 'When scrolling down 600+ rows, your headers stay locked at the top.', ''],
   ['2-Way Live Sync', 'Connected to the Sada Hisab Mobile & Web App via Google Apps Script.', 'Transactions logged in the mobile app sync directly into this sheet in real-time.', '']
 ];
 
@@ -237,24 +237,25 @@ const summaryData = [
   ['', '', '', '', '', '', ''],
   ['CORE EXECUTIVE KPI METRICS', '', '', '', '', '', ''],
   ['Metric', 'Value (PKR)', 'Formula', 'Notes', '', '', ''],
-  ['Total Historical Outflows', '=SUM(Expense!I4:I)', '=SUM(Expense!I4:I)', 'Sum of all verified PKR expenses across history', '', '', ''],
-  ['Estimated Khums Liability (Nov 30)', '=Khums!B15', '=Khums!B15', 'Annual 20% Islamic wealth purification obligation', '', '', ''],
+  ['Total Historical Outflows', '=SUM(Expense!I:I)', '=SUM(Expense!I:I)', 'Sum of all verified PKR expenses across history', '', '', ''],
+  ['Total Transactions Recorded', '=COUNTA(Expense!A:A)-1', '=COUNTA(Expense!A:A)-1', 'Total verified expense rows in ledger', '', '', ''],
+  ['Estimated Khums Liability (Nov 30)', '=Khums!B12', '=Khums!B12', 'Annual 20% Islamic wealth purification obligation', '', '', ''],
   ['Active Loans Receivables (Qard-e-Hasana)', '=SUM(Loans!D4:D10)', '=SUM(Loans!D4:D10)', 'Asad Chachu marriage loan & recoverable funds', '', '', ''],
   ['Monthly Student Sponsorship Commitments', '=SUM(Sponsorships!D4:D25)', '=SUM(Sponsorships!D4:D25)', 'Monthly committed charity stipends and school fees', '', '', ''],
   ['Custodial Amanat Cash (Wife)', 545000, '545000', 'Held in trust, exempt from personal spend and Khums', '', '', ''],
   ['', '', '', '', '', '', ''],
   ['ACCOUNT BALANCES & LIQUIDITY MATRIX', '', '', '', '', '', ''],
   ['Account Name', 'Type', 'Currency', 'Actual Balance', 'PKR Equivalent', 'Custodial?', 'Status'],
-  ['Al Habib - Rs', 'Checking Account', 'PKR', 1340713.81, 1340713.81, 'NO', 'Active'],
-  ['Nayapay', 'Digital Wallet', 'PKR', 15840.50, 15840.50, 'NO', 'Active'],
-  ['SCB (Standard Chartered)', 'Checking Account', 'PKR', 214500.00, 214500.00, 'NO', 'Active'],
-  ['Cash in Wallet', 'Physical Cash', 'PKR', 42000.00, 42000.00, 'NO', 'Active'],
-  ['ADCB - AED', 'UAE Salary Account', 'AED', 115200.00, 8732160.00, 'NO', 'Active'],
-  ['Wise - USD', 'International Multi-Currency', 'USD', 7416.60, 2061814.80, 'NO', 'Active'],
-  ['HBL', 'Checking Account', 'PKR', 63426.11, 63426.11, 'NO', 'Active'],
-  ['Wife Cash (Amanat)', 'Held in Custody', 'PKR', 545000.00, 545000.00, 'YES', 'Khums-Exempt'],
+  ['Al Habib - Rs', 'Checking Account', 'PKR', 1340713.81, 1340713.81, 'NO', 'ACTIVE'],
+  ['Nayapay', 'Digital Wallet', 'PKR', 15840.50, 15840.50, 'NO', 'ACTIVE'],
+  ['SCB (Standard Chartered)', 'Checking Account', 'PKR', 214500.00, 214500.00, 'NO', 'ACTIVE'],
+  ['Cash in Wallet', 'Physical Cash', 'PKR', 42000.00, 42000.00, 'NO', 'ACTIVE'],
+  ['ADCB - AED', 'UAE Salary Account', 'AED', 115200.00, 8732160.00, 'NO', 'ACTIVE'],
+  ['Wise - USD', 'International Multi-Currency', 'USD', 7416.60, 2061814.80, 'NO', 'ACTIVE'],
+  ['HBL', 'Checking Account', 'PKR', 63426.11, 63426.11, 'NO', 'ACTIVE'],
+  ['Wife Cash (Amanat)', 'Held in Custody', 'PKR', 545000.00, 545000.00, 'YES', 'KHUMS-EXEMPT'],
   ['', '', '', '', '', '', ''],
-  ['CATEGORY EXPENSE BREAKDOWN', '', '', '', '', '', ''],
+  ['CATEGORY EXPENSE BREAKDOWN (AUTO-CALCULATED)', '', '', '', '', '', ''],
   ['Category', 'Total Spent (PKR)', 'Number of Entries', '% of Total Outflows', '', '', '']
 ];
 
@@ -264,9 +265,9 @@ for (let cIdx = 0; cIdx < sortedCategories.length; cIdx++) {
   const rowNum = 26 + cIdx;
   summaryData.push([
     cat,
-    `=SUMIF(Expense!C4:C, "${cat}", Expense!I4:I)`,
-    `=COUNTIF(Expense!C4:C, "${cat}")`,
-    `=B${rowNum}/SUM(B$26:B$${26 + sortedCategories.length - 1})`,
+    `=SUMIF(Expense!C:C, "${cat}", Expense!I:I)`,
+    `=COUNTIF(Expense!C:C, "${cat}")`,
+    `=IF(B$6>0, B${rowNum}/B$6, 0)`,
     '', '', ''
   ]);
 }
@@ -276,13 +277,9 @@ wsSummary['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 26 }, { wch: 45 }, { wch:
 XLSX.utils.book_append_sheet(wbOut, wsSummary, 'Summary');
 
 // ==========================================
-// TAB 3: 💳 Expense Ledger
+// TAB 3: 💳 Expense Ledger (Header on Row 1 for Flawless Native Filters)
 // ==========================================
-const wsExpense = XLSX.utils.json_to_sheet(healedExpenses, { origin: 'A3' });
-XLSX.utils.sheet_add_aoa(wsExpense, [
-  ['EXPENSE & DISBURSEMENT LEDGER (CLEANED & DEDUPLICATED)', '', '', '', '', '', '=SUM(G4:G)', '', '=SUM(I4:I)', '', '', '', '', ''],
-  ['Total Entries:', `=COUNTA(A4:A)`, '', '', '', 'Total Outflows:', '', 'PKR Outflows:', '', '', '', '', '', '']
-], { origin: 'A1' });
+const wsExpense = XLSX.utils.json_to_sheet(healedExpenses, { origin: 'A1' });
 
 wsExpense['!cols'] = [
   { wch: 13 }, // Date
@@ -361,7 +358,7 @@ const khumsData = [
   ['SHARIA KHUMS PURIFICATION AUDIT & SURPLUS CALCULATION', '', '', ''],
   ['Annual wealth purification as of November 30 (Sistani/Khamenei Fiqh Standards)', '', '', ''],
   ['', '', '', ''],
-  ['Line Item', 'Valuation (PKR)', 'Category', 'Notes / Fiqh Rule'],
+  ['Line Item Description', 'Valuation (PKR)', 'Classification', 'Notes / Sharia Fiqh Basis'],
   ['Gross Liquid Bank & Cash Balances', 10850000, 'Asset', 'Al Habib, SCB, Nayapay, ADCB AED, Wise USD'],
   ['Less: Wife Cash Amanat (Custodial)', -545000, 'Deduction', 'Not owner property; strictly Khums exempt'],
   ['Less: Unrecovered Qard-e-Hasana Loans', -328369, 'Deduction', 'Asad Chachu loan; taxable only upon receipt'],

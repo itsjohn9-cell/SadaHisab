@@ -353,6 +353,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Lock className="h-4 w-4" />
             </button>
 
+            {/* Clear Sample data indicator if loaded */}
+            {sampleDataCount > 0 && (
+              <button
+                onClick={onClearSample}
+                className="flex items-center space-x-1 px-2 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 rounded-lg text-xs font-medium transition shadow-sm shrink-0"
+                title="Remove sample transactions"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">Clear</span>
+              </button>
+            )}
+
             {/* Sada Suite Cross-App Ecosystem Switcher */}
             <SadaAppSwitcher currentAppId="sadahisaab" />
 
@@ -381,7 +393,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             {/* Currency Toggle (PKR / AED / USD) */}
-            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-semibold">
+            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-semibold shrink-0">
               <button
                 onClick={() => setPrimaryCurrency('PKR')}
                 className={`px-1.5 sm:px-2 py-1 rounded transition-colors ${
@@ -417,31 +429,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
 
-            {/* Demo Sandbox Mode Buttons */}
-            {sampleDataCount > 0 ? (
-              <button
-                onClick={onClearSample}
-                className="flex items-center space-x-1 px-2 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/80 rounded-lg text-xs font-medium transition shadow-sm"
-                title="Remove sample transactions"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">Clear</span>
-              </button>
-            ) : (
-              <button
-                onClick={onLoadSample}
-                className="flex items-center space-x-1 px-2 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 rounded-lg text-xs font-medium transition shadow-sm"
-                title="Load sample data"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-                <span className="hidden lg:inline">Sample</span>
-              </button>
-            )}
-
             {/* Quick Add Transaction Button */}
             <button
               onClick={onOpenAddModal}
-              className="flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-md transition"
+              className="flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-md transition shrink-0"
             >
               <PlusCircle className="h-4 w-4" />
               <span>+ Record</span>

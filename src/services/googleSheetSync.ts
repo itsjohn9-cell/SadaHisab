@@ -236,7 +236,8 @@ function buildModernSummaryTab(ss) {
     ["", "", "", "", "", "", ""],
     ["CORE EXECUTIVE KPI METRICS", "", "", "", "", "", ""],
     ["Metric", "Value (PKR)", "Formula", "Notes", "", "", ""],
-    ["Total Historical Outflows", "=SUM(Expense!I4:I)", "=SUM(Expense!I4:I)", "Sum of all verified PKR expenses across history", "", "", ""],
+    ["Total Historical Outflows", "=SUM(Expense!I:I)", "=SUM(Expense!I:I)", "Sum of all verified PKR expenses across history", "", "", ""],
+    ["Total Transactions Recorded", "=COUNTA(Expense!A:A)-1", "=COUNTA(Expense!A:A)-1", "Total verified expense rows in ledger", "", "", ""],
     ["Estimated Khums Liability (Nov 30)", "=Khums!B12", "=Khums!B12", "Annual 20% Islamic wealth purification obligation", "", "", ""],
     ["Active Loans Receivables (Qard-e-Hasana)", "=SUM(Loans!D4:D10)", "=SUM(Loans!D4:D10)", "Asad Chachu marriage loan & recoverable funds", "", "", ""],
     ["Monthly Student Sponsorship Commitments", "=SUM(Sponsorships!D4:D25)", "=SUM(Sponsorships!D4:D25)", "Monthly committed charity stipends and school fees", "", "", ""],
@@ -262,15 +263,14 @@ function buildModernSummaryTab(ss) {
     var rowNum = 26 + c;
     data.push([
       categories[c],
-      '=SUMIF(Expense!C4:C, "' + categories[c] + '", Expense!I4:I)',
-      '=COUNTIF(Expense!C4:C, "' + categories[c] + '")',
-      '=B' + rowNum + '/SUM(B$26:B$' + (26 + categories.length - 1) + ')',
+      '=SUMIF(Expense!C:C, "' + categories[c] + '", Expense!I:I)',
+      '=COUNTIF(Expense!C:C, "' + categories[c] + '")',
+      '=IF(B$6>0, B' + rowNum + '/B$6, 0)',
       "", "", ""
     ]);
   }
 
   sh.getRange(1, 1, data.length, 7).setValues(data);
-
   sh.setColumnWidth(1, 250);
   sh.setColumnWidth(2, 170);
   sh.setColumnWidth(3, 180);
@@ -279,70 +279,98 @@ function buildModernSummaryTab(ss) {
   sh.setColumnWidth(6, 120);
   sh.setColumnWidth(7, 130);
 
-  // Styling Title
   sh.getRange("A1:G1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
   sh.getRange("A2:G2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
-
-  // Headers
   sh.getRange("A4:D4").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
   sh.getRange("A5:D5").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
 
-  sh.getRange("A12:G12").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
-  sh.getRange("A13:G13").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+  sh.getRange("A13:G13").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.getRange("A14:G14").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
 
-  sh.getRange("A23:D23").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
-  sh.getRange("A24:D24").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+  sh.getRange("A24:D24").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.getRange("A25:D25").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
 
-  // Formats
-  sh.getRange("B6:B10").setNumberFormat('#,##0.00').setFontWeight("bold");
-  sh.getRange("D14:E21").setNumberFormat('#,##0.00');
+  sh.getRange("B6:B11").setNumberFormat('#,##0.00').setFontWeight("bold");
+  sh.getRange("D15:E22").setNumberFormat('#,##0.00');
   sh.getRange("B26:B38").setNumberFormat('#,##0.00');
   sh.getRange("D26:D38").setNumberFormat('0.0%');
 }
 
 /**
- * Tab 3: Modern Expense Ledger
+ * Tab 3: Modern Expense Ledger (Header on Row 1 for Flawless Native Filters)
  */
 function modernizeExpenseLedger(ss) {
   var sheet = ss.getSheetByName('Expense');
   if (!sheet) return;
   var lastRow = sheet.getLastRow();
-  if (lastRow < 3) return;
+  if (lastRow < 2) return;
 
-  var colWidths = [110, 115, 145, 130, 210, 240, 115, 85, 130, 145, 155, 115, 180, 220];
+  // If old title/banner rows exist on rows 1 and 2, remove them so true Header is on Row 1
+  var r1Val = String(sheet.getRange(1, 1).getValue() || '').trim().toLowerCase();
+  var r2Val = String(sheet.getRange(2, 1).getValue() || '').trim().toLowerCase();
+  var r3Val = String(sheet.getRange(3, 1).getValue() || '').trim().toLowerCase();
+
+  if (r3Val === 'date' && (r1Val.includes('ledger') || r1Val.includes('expense') || r2Val.includes('total'))) {
+    sheet.deleteRows(1, 2);
+    lastRow = sheet.getLastRow();
+  } else if (r2Val === 'date' && (r1Val.includes('ledger') || r1Val.includes('expense'))) {
+    sheet.deleteRow(1);
+    lastRow = sheet.getLastRow();
+  }
+
+  // Row 1 Header definition
+  var headers = [
+    ["Date", "Billing Month", "Category", "Sub-Category", "Sub-Beneficiary (Student)", "Spent At / Merchant", "Amount", "Currency", "PKR Equivalent", "Account", "Payment Channel", "Phone", "Multiplier Note", "Notes"]
+  ];
+  sheet.getRange(1, 1, 1, 14).setValues(headers);
+
+  // Set Optimal Column Widths
+  var colWidths = [115, 120, 145, 130, 220, 240, 125, 90, 135, 150, 160, 120, 180, 220];
   for (var c = 0; c < colWidths.length; c++) {
     sheet.setColumnWidth(c + 1, colWidths[c]);
   }
 
-  // Row 1 & 2 Badges
-  sheet.getRange(1, 1, 1, 14).setBackground("#0f172a").setFontColor("#38bdf8").setFontWeight("bold");
-  sheet.getRange(2, 1, 1, 14).setBackground("#1e293b").setFontColor("#94a3b8").setFontSize(9);
-
-  // Header Row 3 (Midnight Navy)
-  sheet.getRange(3, 1, 1, 14)
+  // Header Row 1 (Midnight Navy)
+  sheet.getRange(1, 1, 1, 14)
     .setBackground('#0f172a')
     .setFontColor('#ffffff')
     .setFontWeight('bold')
     .setFontSize(10);
-  sheet.setRowHeight(3, 32);
+  sheet.setRowHeight(1, 34);
 
-  // Data Formatting
-  sheet.getRange(4, 7, lastRow - 3, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
-  sheet.getRange(4, 9, lastRow - 3, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+  // Freeze Header Row 1
+  sheet.setFrozenRows(1);
 
-  sheet.getRange(4, 1, lastRow - 3, 1).setHorizontalAlignment('center');
-  sheet.getRange(4, 2, lastRow - 3, 1).setHorizontalAlignment('center');
-  sheet.getRange(4, 8, lastRow - 3, 1).setHorizontalAlignment('center');
-  sheet.getRange(4, 12, lastRow - 3, 1).setHorizontalAlignment('center');
-
-  sheet.setRowHeights(4, lastRow - 3, 24);
+  // Reset filter directly on Row 1
+  try {
+    var oldFilter = sheet.getFilter();
+    if (oldFilter) oldFilter.remove();
+  } catch(e) {}
 
   try {
-    var bandings = sheet.getRange(4, 1, lastRow - 3, 14).getBandings();
-    if (bandings.length === 0) {
-      sheet.getRange(4, 1, lastRow - 3, 14).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
-    }
+    sheet.getRange(1, 1, Math.max(lastRow, 2), 14).createFilter();
   } catch(e) {}
+
+  // Data Formatting on Rows 2 to lastRow
+  if (lastRow >= 2) {
+    sheet.getRange(2, 7, lastRow - 1, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+    sheet.getRange(2, 9, lastRow - 1, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+
+    sheet.getRange(2, 1, lastRow - 1, 1).setHorizontalAlignment('center');
+    sheet.getRange(2, 2, lastRow - 1, 1).setHorizontalAlignment('center');
+    sheet.getRange(2, 8, lastRow - 1, 1).setHorizontalAlignment('center');
+    sheet.getRange(2, 12, lastRow - 1, 1).setHorizontalAlignment('center');
+
+    sheet.setRowHeights(2, lastRow - 1, 25);
+
+    try {
+      var bandings = sheet.getRange(2, 1, lastRow - 1, 14).getBandings();
+      for (var b = 0; b < bandings.length; b++) {
+        bandings[b].remove();
+      }
+      sheet.getRange(2, 1, lastRow - 1, 14).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+    } catch(e) {}
+  }
 }
 
 /**
@@ -558,30 +586,30 @@ function setupDropdownsAndFilters() {
   var lastRow = Math.max(expenseSheet.getLastRow(), 700);
 
   // Category -> Col C
-  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(
+  expenseSheet.getRange(2, 3, lastRow - 1, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("A2:A")).setAllowInvalid(true).build()
   );
   // Student -> Col E
-  expenseSheet.getRange(4, 5, lastRow - 3, 1).setDataValidation(
+  expenseSheet.getRange(2, 5, lastRow - 1, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("D2:D")).setAllowInvalid(true).build()
   );
   // Currency -> Col H
-  expenseSheet.getRange(4, 8, lastRow - 3, 1).setDataValidation(
+  expenseSheet.getRange(2, 8, lastRow - 1, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("C2:C")).setAllowInvalid(true).build()
   );
   // Account -> Col J
-  expenseSheet.getRange(4, 10, lastRow - 3, 1).setDataValidation(
+  expenseSheet.getRange(2, 10, lastRow - 1, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("B2:B")).setAllowInvalid(true).build()
   );
   // Payment Channel -> Col K
-  expenseSheet.getRange(4, 11, lastRow - 3, 1).setDataValidation(
+  expenseSheet.getRange(2, 11, lastRow - 1, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("E2:E")).setAllowInvalid(true).build()
   );
 
-  expenseSheet.setFrozenRows(3);
+  expenseSheet.setFrozenRows(1);
   try {
     if (!expenseSheet.getFilter()) {
-      expenseSheet.getRange(3, 1, lastRow - 2, 14).createFilter();
+      expenseSheet.getRange(1, 1, lastRow, 14).createFilter();
     }
   } catch(e) {}
 }
@@ -597,7 +625,7 @@ function onEdit(e) {
 
   var col = range.getColumn();
   var val = String(e.value || '').trim();
-  if (!val || range.getRow() <= 3) return;
+  if (!val || range.getRow() <= 1) return;
 
   var ss = e.source || SpreadsheetApp.getActiveSpreadsheet();
   var listSheet = ss.getSheetByName('DropdownLists');
@@ -731,7 +759,7 @@ export async function pullFromGoogleSheet(sheetName: string = 'Expense'): Promis
 }
 
 /**
- * Process parsed Google Sheet rows and insert into IndexedDB with deduplication
+ * Process parsed Google Sheet rows with intelligent dynamic header detection and insert into IndexedDB
  */
 async function processGoogleSheetRows(rows: any[][]): Promise<{
   success: boolean;
@@ -750,55 +778,155 @@ async function processGoogleSheetRows(rows: any[][]): Promise<{
     };
   }
 
+  // Scan first 6 rows to locate true header row
+  let headerRowIdx = -1;
+  const colMap = {
+    date: -1,
+    billingMonth: -1,
+    category: -1,
+    subCategory: -1,
+    subBeneficiary: -1,
+    merchant: -1,
+    amount: -1,
+    currency: -1,
+    pkrAmount: -1,
+    account: -1,
+    channel: -1,
+    phone: -1,
+    multiplierNote: -1,
+    notes: -1
+  };
+
+  for (let r = 0; r < Math.min(cleanRows.length, 6); r++) {
+    const row = cleanRows[r].map(c => String(c || '').trim().toLowerCase());
+    const dateIdx = row.findIndex(c => c === 'date' || c === 'last updated' || c.includes('date'));
+    const amtIdx = row.findIndex(c => c === 'amount' || c === 'amount (conv)');
+    const catIdx = row.findIndex(c => c === 'category');
+
+    if (dateIdx !== -1 && (amtIdx !== -1 || catIdx !== -1)) {
+      headerRowIdx = r;
+      colMap.date = dateIdx;
+      colMap.billingMonth = row.findIndex(c => c === 'billing month' || c === 'month');
+      colMap.category = catIdx;
+      colMap.subCategory = row.findIndex(c => c === 'sub-category');
+      colMap.subBeneficiary = row.findIndex(c => c.includes('beneficiary') || c.includes('student'));
+      colMap.merchant = row.findIndex(c => c.includes('spent at') || c.includes('merchant') || c === 'desc.' || c.includes('description'));
+      colMap.amount = amtIdx !== -1 ? amtIdx : 6;
+      colMap.currency = row.findIndex(c => c === 'currency');
+      colMap.pkrAmount = row.findIndex(c => c.includes('pkr') || c.includes('conv'));
+      colMap.account = row.findIndex(c => c.includes('account') || c.includes('income source') || c.includes('source'));
+      colMap.channel = row.findIndex(c => c.includes('channel') || c.includes('payment'));
+      colMap.phone = row.findIndex(c => c.includes('phone') || c.includes('mobile'));
+      colMap.multiplierNote = row.findIndex(c => c.includes('multiplier'));
+      colMap.notes = row.findIndex(c => c.includes('note') || c.includes('comment') || c.includes('desc'));
+      break;
+    }
+  }
+
+  // Fallback defaults for standard 14-column ledger
+  if (headerRowIdx === -1) {
+    headerRowIdx = 0;
+    colMap.date = 0;
+    colMap.billingMonth = 1;
+    colMap.category = 2;
+    colMap.subCategory = 3;
+    colMap.subBeneficiary = 4;
+    colMap.merchant = 5;
+    colMap.amount = 6;
+    colMap.currency = 7;
+    colMap.pkrAmount = 8;
+    colMap.account = 9;
+    colMap.channel = 10;
+    colMap.phone = 11;
+    colMap.multiplierNote = 12;
+    colMap.notes = 13;
+  }
+
   const existingTx = await db.transactions.toArray();
+  const accounts = await db.accounts.toArray();
   let importedCount = 0;
   let duplicateCount = 0;
 
-  // Assume standard columns: Date, Amount, Description/Merchant, Category, Currency, Account
-  for (let i = 1; i < cleanRows.length; i++) {
+  for (let i = headerRowIdx + 1; i < cleanRows.length; i++) {
     const row = cleanRows[i];
-    if (!row || row.length === 0 || !row[0]) continue;
+    if (!row || row.length === 0) continue;
 
-    const rawDate = String(row[0]).trim();
-    if (rawDate === '' || rawDate === '-' || rawDate === '?') continue;
+    const rawDateStr = colMap.date !== -1 && row[colMap.date] !== undefined ? String(row[colMap.date]).trim() : '';
+    if (!rawDateStr || rawDateStr === '-' || rawDateStr === '?' || rawDateStr.toLowerCase().includes('total') || rawDateStr.toLowerCase().includes('ledger')) {
+      continue;
+    }
 
-    const rawAmount = parseFloat(String(row[1]).replace(/[^0-9.-]/g, ''));
-    if (isNaN(rawAmount) || rawAmount === 0) continue;
+    // Clean date
+    let date = rawDateStr;
+    if (date.includes('T')) date = date.split('T')[0];
 
-    const description = String(row[2] || '').trim();
-    const category = String(row[3] || 'Expense').trim();
-    const currency = (String(row[4] || 'PKR').trim().toUpperCase() as Currency) || 'PKR';
-    const accountId = String(row[5] || 'al-habib-pkr').trim();
+    // Clean amount
+    const rawAmtVal = colMap.amount !== -1 && row[colMap.amount] !== undefined ? row[colMap.amount] : 0;
+    let amount = 0;
+    if (typeof rawAmtVal === 'number') {
+      amount = Math.abs(rawAmtVal);
+    } else {
+      const parsedNum = parseFloat(String(rawAmtVal).replace(/[^0-9.-]/g, ''));
+      amount = isNaN(parsedNum) ? 0 : Math.abs(parsedNum);
+    }
 
-    // Check for duplicates
-    const exactMatch = await checkExactDuplicate(rawDate, rawAmount, currency, accountId, description);
+    if (amount === 0) continue;
+
+    // Currency
+    let currency: Currency = 'PKR';
+    if (colMap.currency !== -1 && row[colMap.currency]) {
+      const cStr = String(row[colMap.currency]).trim().toUpperCase();
+      if (cStr.includes('AED')) currency = 'AED';
+      else if (cStr.includes('USD')) currency = 'USD';
+      else if (cStr.includes('GBP')) currency = 'GBP';
+    }
+
+    // Category & Merchant
+    const category = colMap.category !== -1 && row[colMap.category] ? String(row[colMap.category]).trim() : 'Misc';
+    const subBeneficiary = colMap.subBeneficiary !== -1 && row[colMap.subBeneficiary] ? String(row[colMap.subBeneficiary]).trim() : '';
+    const merchant = colMap.merchant !== -1 && row[colMap.merchant] ? String(row[colMap.merchant]).trim() : (subBeneficiary || category);
+    const billingMonth = colMap.billingMonth !== -1 && row[colMap.billingMonth] ? String(row[colMap.billingMonth]).trim() : date.substring(0, 7);
+    const paymentChannel = colMap.channel !== -1 && row[colMap.channel] ? String(row[colMap.channel]).trim() : 'Direct Bank Transfer';
+    const phone = colMap.phone !== -1 && row[colMap.phone] ? String(row[colMap.phone]).trim() : '';
+    const notes = colMap.notes !== -1 && row[colMap.notes] ? String(row[colMap.notes]).trim() : '';
+    const rawAccountName = colMap.account !== -1 && row[colMap.account] ? String(row[colMap.account]).trim() : 'Al Habib - Rs';
+
+    const accountId = mapAccountNameToId(rawAccountName, accounts, currency);
+
+    // Deduplication check
+    const exactMatch = await checkExactDuplicate(date, amount, currency, accountId, merchant);
     if (exactMatch) {
       duplicateCount++;
       continue;
     }
 
-    const fuzzyMatch = await checkFuzzyDuplicate(rawDate, rawAmount, currency);
+    const fuzzyMatch = await checkFuzzyDuplicate(date, amount, currency);
     if (fuzzyMatch) {
       duplicateCount++;
       continue;
     }
 
-    const converted = await convertToPKR(rawAmount, currency);
+    const converted = await convertToPKR(amount, currency);
 
     const tx: Transaction = {
-      id: `gsheet-${Date.now()}-${i}`,
-      date: rawDate,
-      type: rawAmount < 0 ? 'EXPENSE' : 'EXPENSE',
-      amount: Math.abs(rawAmount),
+      id: `gsheet-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+      date,
+      billingMonth,
+      type: 'EXPENSE',
+      amount,
       currency,
       convertedAmountPKR: converted.amountPKR,
       fxRateUsed: converted.fxRate,
       category,
-      merchantOrRecipient: description,
+      subCategory: subBeneficiary,
+      subBeneficiary,
+      merchantOrRecipient: merchant,
       sourceAccountId: accountId,
-      description: `Synced from Google Sheet (${description})`,
-      status: 'CONFIRMED',
-      sourceChannel: 'EXCEL'
+      sourceChannel: 'EXCEL',
+      paymentChannel,
+      beneficiaryPhone: phone,
+      description: notes || `Synced from Google Sheet (${merchant})`,
+      status: 'CONFIRMED'
     };
 
     await db.transactions.add(tx);
@@ -820,6 +948,23 @@ async function processGoogleSheetRows(rows: any[][]): Promise<{
     duplicateCount,
     message: `Successfully synced with Google Sheet: ${importedCount} imported, ${duplicateCount} duplicates protected.`
   };
+}
+
+function mapAccountNameToId(name: string, accounts: Account[], currency: Currency): string {
+  const norm = name.toLowerCase();
+  if (norm.includes('habib')) return 'al-habib-pkr';
+  if (norm.includes('nayapay')) return 'nayapay-pkr';
+  if (norm.includes('scb') || norm.includes('standard chartered')) return 'scb-pkr';
+  if (norm.includes('wallet') || norm.includes('cash')) return 'cash-pkr';
+  if (norm.includes('adcb')) return 'adcb-aed';
+  if (norm.includes('wise')) return 'wise-usd';
+  if (norm.includes('hbl')) return 'hbl-pkr';
+
+  const match = accounts.find(a => a.name.toLowerCase() === norm || a.id.toLowerCase() === norm);
+  if (match) return match.id;
+
+  const curMatch = accounts.find(a => a.currency === currency);
+  return curMatch ? curMatch.id : 'al-habib-pkr';
 }
 
 /**

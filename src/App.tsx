@@ -449,6 +449,7 @@ export const App: React.FC = () => {
             khumsSnapshots={khumsSnapshots}
             sponsorships={sponsorships}
             primaryCurrency={primaryCurrency}
+            setPrimaryCurrency={setPrimaryCurrency}
             onNavigateTab={setActiveTab}
             onOpenAddModal={() => setIsAddModalOpen(true)}
             onOpenVoiceLogger={() => setIsVoiceLoggerOpen(true)}
@@ -457,6 +458,7 @@ export const App: React.FC = () => {
               setPastedClipboardText(text || '');
               setIsQuickPasteOpen(true);
             }}
+            onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
             isPrivacyMasked={isPrivacyMasked}
             onTogglePrivacyMask={handleTogglePrivacyMask}
           />
