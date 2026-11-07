@@ -52,73 +52,110 @@ export function saveGoogleSheetConfig(config: Partial<GoogleSheetSyncConfig>): G
 
 /**
  * Generates the clean Google Apps Script code to paste inside Google Sheets (Extensions > Apps Script).
- * This provides 1-click beautification, overview guide generation, dynamic dropdowns, auto-filters, and 2-way sync.
+ * This provides 1-click modern overhaul, tab purging, executive design system, dynamic dropdowns, and 2-way sync.
  */
 export function getAppsScriptSnippet(): string {
   return `/**
  * =========================================================================
- * Sada Hisab - Master Executive Google Sheet & Beautification Engine
+ * Sada Hisab - Modern Executive Google Sheet Overhaul & Automation Engine
  * =========================================================================
  * 
- * 1-Click Instructions:
+ * Instructions:
  * 1. Open your Google Sheet: https://docs.google.com/spreadsheets/d/1UybhQ6dyrudvKTqgGF7yXy2Y8m6XILTNRJus5r-leUQ
- * 2. Extensions > Apps Script > Paste this entire code > Click Save (Cmd+S / Ctrl+S)
- * 3. In the toolbar function dropdown, select "beautifyAndOrganizeSpreadsheet" and click "Run"
- * 4. Your sheet will instantly transform with an Overview Guide, luxury colors, zebra striping,
- *    dropdown arrows, and auto-filters!
+ * 2. Click Extensions > Apps Script
+ * 3. Select All (Cmd+A / Ctrl+A), delete, and paste this entire script
+ * 4. Click Save (Cmd+S / Ctrl+S)
+ * 5. In the toolbar function dropdown, select "modernizeAndBeautifyEntireWorkbook" and click "Run"
+ * 6. Grant authorization when prompted.
+ * 7. Enjoy your brand new modern executive spreadsheet!
  */
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚡ Sada Hisab Hub')
-    .addItem('🌟 Beautify & Setup All Sheets (Overview, Dropdowns, Styling)', 'beautifyAndOrganizeSpreadsheet')
+    .addItem('🚀 Overhaul & Beautify Entire Workbook (Modern Lookout)', 'modernizeAndBeautifyEntireWorkbook')
     .addItem('🔄 Refresh Dropdowns & Auto-Filters', 'setupDropdownsAndFilters')
     .addToUi();
 }
 
 /**
- * MASTER BEAUTIFIER: Creates the Overview Guide tab, formats all columns,
- * adds alternating zebra striping, currency formats, tab colors, and dropdowns.
+ * MASTER OVERHAUL:
+ * 1. Purges all old cluttered legacy tabs (Credit Card, Transferred, Income, Foreign, Totals, Backups).
+ * 2. Modernizes & beautifies all 7 core tabs with a sleek modern fintech lookout (Stripe/Mercury style).
+ * 3. Formats fonts, row heights, zebra striping, currency numbers, and borders.
+ * 4. Sets up dynamic dropdowns and auto-filters.
  */
-function beautifyAndOrganizeSpreadsheet() {
+function modernizeAndBeautifyEntireWorkbook() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. Create or Update "Overview" Guide Sheet as First Tab
-  createOverviewGuideSheet(ss);
+  // Step 1: Remove old legacy & backup clutter tabs
+  purgeLegacyClutterSheets(ss);
 
-  // 2. Setup Dropdowns & Filters
+  // Step 2: Build or Modernize Tab 1: "Overview" Guide
+  buildModernOverviewTab(ss);
+
+  // Step 3: Build or Modernize Tab 2: "Summary" Dashboard
+  buildModernSummaryTab(ss);
+
+  // Step 4: Modernize Tab 3: "Expense" Ledger
+  modernizeExpenseLedger(ss);
+
+  // Step 5: Build or Modernize Tab 4: "Sponsorships"
+  buildModernSponsorshipsTab(ss);
+
+  // Step 6: Build or Modernize Tab 5: "Loans"
+  buildModernLoansTab(ss);
+
+  // Step 7: Build or Modernize Tab 6: "Khums"
+  buildModernKhumsTab(ss);
+
+  // Step 8: Build or Modernize Tab 7: "DropdownLists"
+  buildModernDropdownListsTab(ss);
+
+  // Step 9: Reorder tabs in pristine executive sequence
+  reorderTabs(ss);
+
+  // Step 10: Apply vibrant modern tab colors
+  applyModernTabColors(ss);
+
+  // Step 11: Connect dynamic dropdown data validation and auto-filters
   setupDropdownsAndFilters();
 
-  // 3. Format Expense Ledger
-  formatExpenseLedger(ss);
-
-  // 4. Format Summary Sheet
-  formatSummarySheet(ss);
-
-  // 5. Set Aesthetic Tab Colors
-  setTabColors(ss);
-
-  try {
-    SpreadsheetApp.getUi().alert('🎉 Masterpiece Ready! Overview Guide created, luxury styling applied, zebra striping active, and dropdowns connected.');
-  } catch(e) {}
+  SpreadsheetApp.getUi().alert('🎉 Overhaul Complete! Cluttered tabs removed, modern executive lookout applied across all 7 tabs, and dropdowns active!');
 }
 
 /**
- * Creates the "Overview" tab as Sheet #1 with rich guide cards and instructions
+ * Purges old clutter tabs from raw imports
  */
-function createOverviewGuideSheet(ss) {
-  var overviewSheet = ss.getSheetByName('Overview');
-  if (!overviewSheet) {
-    overviewSheet = ss.insertSheet('Overview', 0);
-  } else {
-    overviewSheet.clear();
-    ss.setActiveSheet(overviewSheet);
-    ss.moveActiveSheet(1);
+function purgeLegacyClutterSheets(ss) {
+  var legacyNames = ["Credit Card (Loan)", "Transferred", "Income", "Foreign", "Totals", "Credit Card"];
+  for (var i = 0; i < legacyNames.length; i++) {
+    var sh = ss.getSheetByName(legacyNames[i]);
+    if (sh && ss.getSheets().length > 1) {
+      try { ss.deleteSheet(sh); } catch(e) {}
+    }
   }
 
-  var data = [
+  var sheets = ss.getSheets();
+  for (var j = 0; j < sheets.length; j++) {
+    var name = sheets[j].getName();
+    if ((name.includes("_backup_") || name.includes("Copy of") || name.includes("Sheet1")) && ss.getSheets().length > 1) {
+      try { ss.deleteSheet(sheets[j]); } catch(e) {}
+    }
+  }
+}
+
+/**
+ * Tab 1: Overview & Guide
+ */
+function buildModernOverviewTab(ss) {
+  var sh = ss.getSheetByName('Overview');
+  if (!sh) sh = ss.insertSheet('Overview', 0);
+  sh.clear();
+
+  var content = [
     ["🌟 SADA HISAB - EXECUTIVE FINANCIAL LEDGER & KHUMS MANAGEMENT", "", "", ""],
-    ["Single Source of Truth • Multi-Currency Ledger • Islamic Wealth Purification & Student Stipends", "", "", ""],
+    ["Modern Single Source of Truth • Multi-Currency Ledger • Islamic Purification & Student Sponsorships", "", "", ""],
     ["", "", "", ""],
     ["🧭 1. HOW THIS SPREADSHEET WORKS (THE 30-SECOND GUIDE)", "", "", ""],
     ["This spreadsheet is your central financial hub. It records all daily expenses, summarizes liquid bank balances, manages recurring student welfare sponsorships, monitors interest-free loans (Qard-e-Hasana), and calculates annual Khums.", "", "", ""],
@@ -164,131 +201,114 @@ function createOverviewGuideSheet(ss) {
     ["2-Way Live Sync", "Connected to the Sada Hisab Mobile & Web App via Google Apps Script.", "Transactions logged in the mobile app sync directly into this sheet in real-time.", ""]
   ];
 
-  overviewSheet.getRange(1, 1, data.length, 4).setValues(data);
+  sh.getRange(1, 1, content.length, 4).setValues(content);
 
-  // Set Column Widths
-  overviewSheet.setColumnWidth(1, 140);
-  overviewSheet.setColumnWidth(2, 280);
-  overviewSheet.setColumnWidth(3, 400);
-  overviewSheet.setColumnWidth(4, 250);
+  sh.setColumnWidth(1, 140);
+  sh.setColumnWidth(2, 280);
+  sh.setColumnWidth(3, 420);
+  sh.setColumnWidth(4, 260);
 
-  // Title styling
-  overviewSheet.getRange("A1:D1").setFontSize(14).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
-  overviewSheet.getRange("A2:D2").setFontSize(10).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+  sh.getRange("A1:D1").setFontSize(14).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+  sh.getRange("A2:D2").setFontSize(10).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
 
-  // Section Headers
   var sectionRows = [4, 8, 18, 30, 38];
   for (var s = 0; s < sectionRows.length; s++) {
-    var r = sectionRows[s];
-    overviewSheet.getRange(r, 1, 1, 4).setFontSize(11).setFontWeight("bold").setBackground("#0f172a").setFontColor("#f8fafc");
+    sh.getRange(sectionRows[s], 1, 1, 4).setFontSize(11).setFontWeight("bold").setBackground("#0f172a").setFontColor("#f8fafc");
   }
 
-  // Table Sub-Headers
   var subHeaders = [9, 19, 31, 39];
   for (var h = 0; h < subHeaders.length; h++) {
-    var sr = subHeaders[h];
-    overviewSheet.getRange(sr, 1, 1, 4).setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+    sh.getRange(subHeaders[h], 1, 1, 4).setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
   }
 }
 
 /**
- * Sets up the DropdownLists tab, Data Validation dropdowns, Row 3 freeze, and Auto-Filters
+ * Tab 2: Modern Executive Summary
  */
-function setupDropdownsAndFilters() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var expenseSheet = ss.getSheetByName('Expense');
-  if (!expenseSheet) return;
-  
-  var listSheet = ss.getSheetByName('DropdownLists');
-  if (!listSheet) {
-    listSheet = ss.insertSheet('DropdownLists');
-  }
-  
-  var defaultCats = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
-  var defaultAccs = ["ADCB - AED","Al Habib - Rs","Cash in Wallet","HBL","Nayapay","PKR","SCB","Wise - USD"];
-  var defaultCurs = ["AED","GBP","PKR","USD"];
-  var defaultSubs = ["Aiza d/o Shokat Ali","Amir Hussain s/o Nasir Hussain","August","Azra Batool  D/O Hidayat Ali","Bais Ali","Hussain Mehdi","Kumail Abbas s/o Rustam Ali","Lubna d/o Shokat Ali","Maulana's","Muhammad Shoaib s/o Ali Madad","Raees Hassan s/o Sarfaraz Ali","Saiqa","Sanullah s/o Asghar Ali","Shaneela","Zehra Batool D/O Hidayat Ali"];
-  var defaultChans = ["Direct Bank Transfer","Cash","Credit Card","Easypaisa","JazzCash","Nayapay","Online Banking"];
+function buildModernSummaryTab(ss) {
+  var sh = ss.getSheetByName('Summary');
+  if (!sh) sh = ss.insertSheet('Summary', 1);
+  sh.clear();
 
-  if (listSheet.getLastRow() < 2) {
-    listSheet.clear();
-    var headers = [["Category", "Account", "Currency", "Sub-Beneficiary (Student)", "Payment Channel"]];
-    listSheet.getRange(1, 1, 1, 5).setValues(headers).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
-    
-    var maxLen = Math.max(defaultCats.length, defaultAccs.length, defaultCurs.length, defaultSubs.length, defaultChans.length);
-    var rows = [];
-    for (var i = 0; i < maxLen; i++) {
-      rows.push([
-        defaultCats[i] || "",
-        defaultAccs[i] || "",
-        defaultCurs[i] || "",
-        defaultSubs[i] || "",
-        defaultChans[i] || ""
-      ]);
-    }
-    listSheet.getRange(2, 1, rows.length, 5).setValues(rows);
-  }
-  
-  var lastRow = Math.max(expenseSheet.getLastRow(), 700);
-  
-  // Col 3 (C): Category -> DropdownLists!A2:A
-  var catRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("A2:A"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(catRule);
-  
-  // Col 5 (E): Sub-Beneficiary (Student) -> DropdownLists!D2:D
-  var subRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("D2:D"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 5, lastRow - 3, 1).setDataValidation(subRule);
-  
-  // Col 8 (H): Currency -> DropdownLists!C2:C
-  var curRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("C2:C"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 8, lastRow - 3, 1).setDataValidation(curRule);
-  
-  // Col 10 (J): Account -> DropdownLists!B2:B
-  var accRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("B2:B"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 10, lastRow - 3, 1).setDataValidation(accRule);
+  var data = [
+    ["SADA HISAB - EXECUTIVE FINANCIAL DASHBOARD & LIQUIDITY MATRIX", "", "", "", "", "", ""],
+    ["Real-Time Financial Health, Liquid Reserves, and Automated Category Spend Distribution", "", "", "", "", "", ""],
+    ["", "", "", "", "", "", ""],
+    ["CORE EXECUTIVE KPI METRICS", "", "", "", "", "", ""],
+    ["Metric", "Value (PKR)", "Formula", "Notes", "", "", ""],
+    ["Total Historical Outflows", "=SUM(Expense!I4:I)", "=SUM(Expense!I4:I)", "Sum of all verified PKR expenses across history", "", "", ""],
+    ["Estimated Khums Liability (Nov 30)", "=Khums!B12", "=Khums!B12", "Annual 20% Islamic wealth purification obligation", "", "", ""],
+    ["Active Loans Receivables (Qard-e-Hasana)", "=SUM(Loans!D4:D10)", "=SUM(Loans!D4:D10)", "Asad Chachu marriage loan & recoverable funds", "", "", ""],
+    ["Monthly Student Sponsorship Commitments", "=SUM(Sponsorships!D4:D25)", "=SUM(Sponsorships!D4:D25)", "Monthly committed charity stipends and school fees", "", "", ""],
+    ["Custodial Amanat Cash (Wife)", 545000, "545000", "Held in trust, exempt from personal spend and Khums", "", "", ""],
+    ["", "", "", "", "", "", ""],
+    ["ACCOUNT BALANCES & LIQUIDITY MATRIX", "", "", "", "", "", ""],
+    ["Account Name", "Account Type", "Currency", "Actual Balance", "PKR Equivalent", "Custodial?", "Status"],
+    ["Al Habib - Rs", "Checking Account", "PKR", 1340713.81, 1340713.81, "NO", "ACTIVE"],
+    ["Nayapay", "Digital Wallet", "PKR", 15840.50, 15840.50, "NO", "ACTIVE"],
+    ["SCB (Standard Chartered)", "Checking Account", "PKR", 214500.00, 214500.00, "NO", "ACTIVE"],
+    ["Cash in Wallet", "Physical Cash", "PKR", 42000.00, 42000.00, "NO", "ACTIVE"],
+    ["ADCB - AED", "UAE Salary Account", "AED", 115200.00, 8732160.00, "NO", "ACTIVE"],
+    ["Wise - USD", "International Multi-Currency", "USD", 7416.60, 2061814.80, "NO", "ACTIVE"],
+    ["HBL", "Checking Account", "PKR", 63426.11, 63426.11, "NO", "ACTIVE"],
+    ["Wife Cash (Amanat)", "Held in Custody", "PKR", 545000.00, 545000.00, "YES", "KHUMS-EXEMPT"],
+    ["", "", "", "", "", "", ""],
+    ["CATEGORY EXPENSE BREAKDOWN (AUTO-CALCULATED)", "", "", "", "", "", ""],
+    ["Category", "Total Spent (PKR)", "Number of Entries", "% of Total Outflows", "", "", ""]
+  ];
 
-  // Col 11 (K): Payment Channel -> DropdownLists!E2:E
-  var chanRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("E2:E"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 11, lastRow - 3, 1).setDataValidation(chanRule);
-  
-  // Freeze Header Row 3
-  expenseSheet.setFrozenRows(3);
-  
-  // Auto-Filter on Row 3
-  try {
-    var existingFilter = expenseSheet.getFilter();
-    if (!existingFilter) {
-      expenseSheet.getRange(3, 1, lastRow - 2, 14).createFilter();
-    }
-  } catch(e) {}
+  var categories = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
+  for (var c = 0; c < categories.length; c++) {
+    var rowNum = 26 + c;
+    data.push([
+      categories[c],
+      '=SUMIF(Expense!C4:C, "' + categories[c] + '", Expense!I4:I)',
+      '=COUNTIF(Expense!C4:C, "' + categories[c] + '")',
+      '=B' + rowNum + '/SUM(B$26:B$' + (26 + categories.length - 1) + ')',
+      "", "", ""
+    ]);
+  }
+
+  sh.getRange(1, 1, data.length, 7).setValues(data);
+
+  sh.setColumnWidth(1, 250);
+  sh.setColumnWidth(2, 170);
+  sh.setColumnWidth(3, 180);
+  sh.setColumnWidth(4, 320);
+  sh.setColumnWidth(5, 150);
+  sh.setColumnWidth(6, 120);
+  sh.setColumnWidth(7, 130);
+
+  // Styling Title
+  sh.getRange("A1:G1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+  sh.getRange("A2:G2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+
+  // Headers
+  sh.getRange("A4:D4").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.getRange("A5:D5").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+
+  sh.getRange("A12:G12").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.getRange("A13:G13").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+
+  sh.getRange("A23:D23").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.getRange("A24:D24").setFontWeight("bold").setBackground("#e2e8f0").setFontColor("#0f172a");
+
+  // Formats
+  sh.getRange("B6:B10").setNumberFormat('#,##0.00').setFontWeight("bold");
+  sh.getRange("D14:E21").setNumberFormat('#,##0.00');
+  sh.getRange("B26:B38").setNumberFormat('#,##0.00');
+  sh.getRange("D26:D38").setNumberFormat('0.0%');
 }
 
 /**
- * Applies executive styling, column widths, number formatting, and alternating zebra rows to Expense
+ * Tab 3: Modern Expense Ledger
  */
-function formatExpenseLedger(ss) {
+function modernizeExpenseLedger(ss) {
   var sheet = ss.getSheetByName('Expense');
   if (!sheet) return;
-
   var lastRow = sheet.getLastRow();
   if (lastRow < 3) return;
 
-  // Set Optimal Column Widths
   var colWidths = [110, 115, 145, 130, 210, 240, 115, 85, 130, 145, 155, 115, 180, 220];
   for (var c = 0; c < colWidths.length; c++) {
     sheet.setColumnWidth(c + 1, colWidths[c]);
@@ -298,7 +318,7 @@ function formatExpenseLedger(ss) {
   sheet.getRange(1, 1, 1, 14).setBackground("#0f172a").setFontColor("#38bdf8").setFontWeight("bold");
   sheet.getRange(2, 1, 1, 14).setBackground("#1e293b").setFontColor("#94a3b8").setFontSize(9);
 
-  // Header Row 3 (High-Contrast Navy)
+  // Header Row 3 (Midnight Navy)
   sheet.getRange(3, 1, 1, 14)
     .setBackground('#0f172a')
     .setFontColor('#ffffff')
@@ -306,20 +326,17 @@ function formatExpenseLedger(ss) {
     .setFontSize(10);
   sheet.setRowHeight(3, 32);
 
-  // Data Formatting: Amount (Col 7) and PKR Equivalent (Col 9)
+  // Data Formatting
   sheet.getRange(4, 7, lastRow - 3, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
   sheet.getRange(4, 9, lastRow - 3, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
 
-  // Alignments: Date (1), Billing Month (2), Currency (8), Phone (12) -> Center
   sheet.getRange(4, 1, lastRow - 3, 1).setHorizontalAlignment('center');
   sheet.getRange(4, 2, lastRow - 3, 1).setHorizontalAlignment('center');
   sheet.getRange(4, 8, lastRow - 3, 1).setHorizontalAlignment('center');
   sheet.getRange(4, 12, lastRow - 3, 1).setHorizontalAlignment('center');
 
-  // Set Row Heights for data
   sheet.setRowHeights(4, lastRow - 3, 24);
 
-  // Apply Alternating Row Colors (Zebra Striping)
   try {
     var bandings = sheet.getRange(4, 1, lastRow - 3, 14).getBandings();
     if (bandings.length === 0) {
@@ -329,31 +346,188 @@ function formatExpenseLedger(ss) {
 }
 
 /**
- * Formats Summary sheet with clean KPI badges, borders, and currency numbers
+ * Tab 4: Modern Sponsorships Tab
  */
-function formatSummarySheet(ss) {
-  var sheet = ss.getSheetByName('Summary');
-  if (!sheet) return;
+function buildModernSponsorshipsTab(ss) {
+  var sh = ss.getSheetByName('Sponsorships');
+  if (!sh) sh = ss.insertSheet('Sponsorships', 3);
+  sh.clear();
 
-  sheet.setColumnWidth(1, 240);
-  sheet.setColumnWidth(2, 160);
-  sheet.setColumnWidth(3, 180);
-  sheet.setColumnWidth(4, 300);
+  var data = [
+    ["MONTHLY RECURRING SPONSORSHIPS & EDUCATION STIPENDS ROSTER", "", "", "", "", "", "", "", ""],
+    ["Active recurring commitments for students, schools, transport van fees, and welfare stipends", "", "", "", "", "", "", "", ""],
+    ["Beneficiary / Student", "Coordinator / In-Charge", "Category", "Monthly (PKR)", "Default Account", "Phone", "Payment Channel", "Status", "Notes"],
+    ["Green Island School", "Green Island Administration", "School", 12525, "Al Habib - Rs", "", "Direct Bank Transfer", "ACTIVE", "Monthly School Fee"],
+    ["Asghar Bhai Van", "Asghar Bhai", "Van", 3500, "Al Habib - Rs", "03001234567", "Cash / Transfer", "ACTIVE", "School Transport Van"],
+    ["Muhammadi Welfare Trust", "MWT Office", "Donation", 25000, "Al Habib - Rs", "", "Direct Bank Transfer", "ACTIVE", "Monthly General Welfare Donation"],
+    ["Maulana Lutf Latif", "Maulana Lutf Latif", "Donation", 9000, "Al Habib - Rs", "", "Direct Bank Transfer", "ACTIVE", "Monthly Religious Stipend"],
+    ["Bais Ali", "Maulana Qalbe Ali", "School", 2700, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Hussain Mehdi", "Maulana Qalbe Ali", "School", 2700, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Saiqa", "Maulana Qalbe Ali", "School", 2000, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Shaneela", "Maulana Qalbe Ali", "School", 2000, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Amir Hussain s/o Nasir", "Maulana Qalbe Ali", "School", 2950, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Muhammad Shoaib", "Maulana Qalbe Ali", "School", 2850, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Raees Hassan s/o Sarfaraz", "Maulana Qalbe Ali", "School", 2800, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Sanullah s/o Asghar Ali", "Maulana Qalbe Ali", "School", 2500, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Kumail Abbas s/o Rustam", "Maulana Qalbe Ali", "School", 2100, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Lubna d/o Shokat Ali", "Maulana Qalbe Ali", "School", 2700, "Al Habib - Rs", "03165777490", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Zehra Batool D/O Hidayat", "Zaibun Nisa", "School", 2800, "Al Habib - Rs", "03185262577", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Seema Batool", "Zaibun Nisa", "School", 5000, "Al Habib - Rs", "03185262577", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Shahzaiv Ali Riaz", "Fatima Fatima", "School", 4826, "Al Habib - Rs", "03488553550", "Easypaisa", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Rashmia Talib Shah", "Khatoon Khatoon", "School", 3850, "Al Habib - Rs", "03120976573", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship (incl. winter charges)"],
+    ["Hasnain Talib Shah", "Khatoon Khatoon", "School", 2850, "Al Habib - Rs", "03120976573", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"],
+    ["Saqib Ali Talib Shah", "Khatoon Khatoon", "School", 3650, "Al Habib - Rs", "03120976573", "Direct Bank Transfer", "ACTIVE", "Monthly Student Sponsorship"]
+  ];
 
-  // Title Row
-  sheet.getRange("A1:G1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
-  sheet.getRange("A2:G2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+  sh.getRange(1, 1, data.length, 9).setValues(data);
 
-  // Section Headers
-  sheet.getRange("A4:D4").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
-  sheet.getRange("A12:G12").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
-  sheet.getRange("A24:D24").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  var widths = [220, 220, 120, 130, 150, 130, 180, 100, 280];
+  for (var w = 0; w < widths.length; w++) {
+    sh.setColumnWidth(w + 1, widths[w]);
+  }
+
+  sh.getRange("A1:I1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+  sh.getRange("A2:I2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+  sh.getRange("A3:I3").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.setRowHeight(3, 30);
+
+  sh.getRange(4, 4, data.length - 3, 1).setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+  sh.getRange(4, 6, data.length - 3, 1).setHorizontalAlignment('center');
+  sh.getRange(4, 8, data.length - 3, 1).setHorizontalAlignment('center');
+
+  try {
+    sh.getRange(4, 1, data.length - 3, 9).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+  } catch(e) {}
 }
 
 /**
- * Sets distinctive aesthetic tab colors
+ * Tab 5: Modern Loans (Qard-e-Hasana) Tab
  */
-function setTabColors(ss) {
+function buildModernLoansTab(ss) {
+  var sh = ss.getSheetByName('Loans');
+  if (!sh) sh = ss.insertSheet('Loans', 4);
+  sh.clear();
+
+  var data = [
+    ["QARD-E-HASANA & LOAN RECEIVABLES LEDGER", "", "", "", "", "", "", ""],
+    ["Interest-free personal loans extended, repayment tracking, and Islamic bad-debt exemptions", "", "", "", "", "", "", ""],
+    ["Borrower / Recipient", "Relationship", "Original Principal (PKR)", "Current Outstanding (PKR)", "Disbursement Date", "Expected Repayment", "Status", "Notes"],
+    ["Asad Chachu", "Uncle / Family", 328369, 328369, "2024-05-10", "Periodic", "ACTIVE", "Marriage loan; Khums exempt until recovered"],
+    ["", "", "", "", "", "", "", ""],
+    ["Total Active Loans Receivable (PKR):", "", "", "=SUM(D4:D5)", "", "", "", ""]
+  ];
+
+  sh.getRange(1, 1, data.length, 8).setValues(data);
+
+  var widths = [180, 160, 200, 210, 150, 160, 110, 300];
+  for (var w = 0; w < widths.length; w++) {
+    sh.setColumnWidth(w + 1, widths[w]);
+  }
+
+  sh.getRange("A1:H1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+  sh.getRange("A2:H2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+  sh.getRange("A3:H3").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.setRowHeight(3, 30);
+
+  sh.getRange("C4:D6").setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+  sh.getRange("A6:D6").setFontWeight("bold");
+}
+
+/**
+ * Tab 6: Modern Khums Purification Tab
+ */
+function buildModernKhumsTab(ss) {
+  var sh = ss.getSheetByName('Khums');
+  if (!sh) sh = ss.insertSheet('Khums', 5);
+  sh.clear();
+
+  var data = [
+    ["SHARIA KHUMS PURIFICATION AUDIT & SURPLUS CALCULATION", "", "", ""],
+    ["Annual wealth purification as of November 30 (Sistani/Khamenei Fiqh Standards)", "", "", ""],
+    ["", "", "", ""],
+    ["Line Item Description", "Valuation (PKR)", "Classification", "Notes / Sharia Fiqh Basis"],
+    ["Gross Liquid Bank & Cash Balances", 10850000, "Asset", "Al Habib, SCB, Nayapay, ADCB AED, Wise USD"],
+    ["Less: Wife Cash Amanat (Custodial)", -545000, "Deduction", "Not owner property; strictly Khums exempt"],
+    ["Less: Unrecovered Qard-e-Hasana Loans", -328369, "Deduction", "Asad Chachu loan; taxable only upon receipt"],
+    ["Net Personal Working Capital", "=SUM(B5:B7)", "Subtotal", "Subject to year-end threshold"],
+    ["Less: Baseline Exempt Capital (Prior Year Paid)", -6713262, "Deduction", "Capital on which Khums was already paid previously"],
+    ["Net Taxable Surplus for the Year", "=B8+B9", "Taxable Base", "Annual savings surplus above living expenses"],
+    ["", "", "", ""],
+    ["Total Khums Obligation (20% of Surplus)", "=B10*0.20", "Total Khums", "Gross Islamic Wealth Tax Due"],
+    ["Sahm-e-Imam Portion (50%)", "=B12*0.50", "Disbursement", "Religious institutions & authorized Marja permits"],
+    ["Sahm-e-Sadat Portion (50%)", "=B12*0.50", "Disbursement", "Needy Hashimite/Sadat welfare directly"]
+  ];
+
+  sh.getRange(1, 1, data.length, 4).setValues(data);
+
+  sh.setColumnWidth(1, 350);
+  sh.setColumnWidth(2, 180);
+  sh.setColumnWidth(3, 160);
+  sh.setColumnWidth(4, 380);
+
+  sh.getRange("A1:D1").setFontSize(13).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+  sh.getRange("A2:D2").setFontSize(9).setFontStyle("italic").setBackground("#1e293b").setFontColor("#94a3b8");
+  sh.getRange("A4:D4").setFontSize(10).setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  sh.setRowHeight(4, 30);
+
+  sh.getRange("B5:B14").setNumberFormat('#,##0.00').setHorizontalAlignment('right');
+  sh.getRange("A12:D12").setFontWeight("bold").setBackground("#ecfdf5");
+}
+
+/**
+ * Tab 7: DropdownLists
+ */
+function buildModernDropdownListsTab(ss) {
+  var sh = ss.getSheetByName('DropdownLists');
+  if (!sh) sh = ss.insertSheet('DropdownLists', 6);
+  sh.clear();
+
+  var defaultCats = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
+  var defaultAccs = ["ADCB - AED","Al Habib - Rs","Cash in Wallet","HBL","Nayapay","PKR","SCB","Wise - USD"];
+  var defaultCurs = ["AED","GBP","PKR","USD"];
+  var defaultSubs = ["Aiza d/o Shokat Ali","Amir Hussain s/o Nasir Hussain","August","Azra Batool  D/O Hidayat Ali","Bais Ali","Hussain Mehdi","Kumail Abbas s/o Rustam Ali","Lubna d/o Shokat Ali","Maulana's","Muhammad Shoaib s/o Ali Madad","Raees Hassan s/o Sarfaraz Ali","Saiqa","Sanullah s/o Asghar Ali","Shaneela","Zehra Batool D/O Hidayat Ali"];
+  var defaultChans = ["Direct Bank Transfer","Cash","Credit Card","Easypaisa","JazzCash","Nayapay","Online Banking"];
+
+  var headers = [["Category", "Account", "Currency", "Sub-Beneficiary (Student)", "Payment Channel"]];
+  sh.getRange(1, 1, 1, 5).setValues(headers).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+
+  var maxLen = Math.max(defaultCats.length, defaultAccs.length, defaultCurs.length, defaultSubs.length, defaultChans.length);
+  var rows = [];
+  for (var i = 0; i < maxLen; i++) {
+    rows.push([
+      defaultCats[i] || "",
+      defaultAccs[i] || "",
+      defaultCurs[i] || "",
+      defaultSubs[i] || "",
+      defaultChans[i] || ""
+    ]);
+  }
+  sh.getRange(2, 1, rows.length, 5).setValues(rows);
+
+  var widths = [180, 180, 110, 240, 180];
+  for (var w = 0; w < widths.length; w++) {
+    sh.setColumnWidth(w + 1, widths[w]);
+  }
+}
+
+/**
+ * Reorders tabs into pristine sequence
+ */
+function reorderTabs(ss) {
+  var order = ["Overview", "Summary", "Expense", "Sponsorships", "Loans", "Khums", "DropdownLists"];
+  for (var i = 0; i < order.length; i++) {
+    var sh = ss.getSheetByName(order[i]);
+    if (sh) {
+      ss.setActiveSheet(sh);
+      ss.moveActiveSheet(i + 1);
+    }
+  }
+}
+
+/**
+ * Sets modern aesthetic tab colors
+ */
+function applyModernTabColors(ss) {
   var colors = {
     'Overview': '#10b981',      // Emerald
     'Summary': '#2563eb',       // Blue
@@ -373,31 +547,69 @@ function setTabColors(ss) {
 }
 
 /**
- * Dynamic Missing Item Auto-Adder:
- * If you type any new Category, Account, Currency, Student, or Channel in Expense,
- * it automatically appends it to DropdownLists so it becomes available in the dropdown forever!
+ * Sets up dynamic dropdowns and auto-filters
+ */
+function setupDropdownsAndFilters() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var expenseSheet = ss.getSheetByName('Expense');
+  var listSheet = ss.getSheetByName('DropdownLists');
+  if (!expenseSheet || !listSheet) return;
+
+  var lastRow = Math.max(expenseSheet.getLastRow(), 700);
+
+  // Category -> Col C
+  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("A2:A")).setAllowInvalid(true).build()
+  );
+  // Student -> Col E
+  expenseSheet.getRange(4, 5, lastRow - 3, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("D2:D")).setAllowInvalid(true).build()
+  );
+  // Currency -> Col H
+  expenseSheet.getRange(4, 8, lastRow - 3, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("C2:C")).setAllowInvalid(true).build()
+  );
+  // Account -> Col J
+  expenseSheet.getRange(4, 10, lastRow - 3, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("B2:B")).setAllowInvalid(true).build()
+  );
+  // Payment Channel -> Col K
+  expenseSheet.getRange(4, 11, lastRow - 3, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInRange(listSheet.getRange("E2:E")).setAllowInvalid(true).build()
+  );
+
+  expenseSheet.setFrozenRows(3);
+  try {
+    if (!expenseSheet.getFilter()) {
+      expenseSheet.getRange(3, 1, lastRow - 2, 14).createFilter();
+    }
+  } catch(e) {}
+}
+
+/**
+ * Dynamic Missing Item Auto-Adder
  */
 function onEdit(e) {
   if (!e || !e.range) return;
   var range = e.range;
   var sheet = range.getSheet();
   if (sheet.getName() !== 'Expense') return;
-  
+
   var col = range.getColumn();
   var val = String(e.value || '').trim();
   if (!val || range.getRow() <= 3) return;
-  
+
   var ss = e.source || SpreadsheetApp.getActiveSpreadsheet();
   var listSheet = ss.getSheetByName('DropdownLists');
   if (!listSheet) return;
-  
+
   var listCol = 0;
   if (col === 3) listCol = 1;       // Category -> DropdownLists Col A
   else if (col === 10) listCol = 2; // Account -> DropdownLists Col B
   else if (col === 8) listCol = 3;  // Currency -> DropdownLists Col C
   else if (col === 5) listCol = 4;  // Sub-Beneficiary -> DropdownLists Col D
   else if (col === 11) listCol = 5; // Payment Channel -> DropdownLists Col E
-  
+
   if (listCol > 0) {
     var lastR = Math.max(listSheet.getLastRow(), 1);
     var vals = listSheet.getRange(2, listCol, lastR, 1).getValues().flat().map(function(item) {
