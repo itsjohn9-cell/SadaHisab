@@ -6,11 +6,11 @@
 
 import { db, recalculateAllAccountBalances } from '../db/db';
 import { Transaction, Currency } from '../types';
-import { pullPackets, ackPackets, decryptPayload, bridgeDb, SadaPacket } from './sada-bridge';
+import { pullPackets, ackPackets, decryptPayload, bridgeDb, SadaPacket, getActivePassportSession } from './sada-bridge';
 
 let activeSyncInterval: any = null;
 
-export async function processBridgePacket(packet: SadaPacket, masterKey?: Uint8Array): Promise<boolean> {
+export async function processBridgePacket(packet: SadaPacket, masterKey: Uint8Array): Promise<boolean> {
   try {
     const payload = await decryptPayload(packet.encrypted_payload, packet.iv, masterKey);
     const today = new Date().toISOString().split('T')[0];
@@ -51,17 +51,20 @@ export async function processBridgePacket(packet: SadaPacket, masterKey?: Uint8A
 
 export async function syncOnce(sada_uid_hash?: string, masterKey?: Uint8Array): Promise<number> {
   try {
-    // If no credentials passed, check cached identity in bridgeDb, otherwise default to suite_global_sync
     let uidHash = sada_uid_hash;
     let key = masterKey;
 
-    if (!uidHash) {
-      const identities = await bridgeDb.identities.toArray();
-      if (identities.length > 0) {
-        uidHash = identities[0].sada_uid_hash;
-      } else {
-        uidHash = 'suite_global_sync';
+    if (!uidHash || !key) {
+      const session = getActivePassportSession();
+      if (session) {
+        uidHash = session.sada_uid_hash;
+        key = session.master_key_raw;
       }
+    }
+
+    // Strict security check: NEVER pull without a verified per-user identity and master key
+    if (!uidHash || !key || uidHash === 'suite_global_sync') {
+      return 0;
     }
 
     const packets = await pullPackets(uidHash, 'sadahisaab');
@@ -89,11 +92,27 @@ export async function syncOnce(sada_uid_hash?: string, masterKey?: Uint8Array): 
 export function startLiveBridgeListener(sada_uid_hash?: string, masterKey?: Uint8Array, intervalMs = 15000): () => void {
   if (activeSyncInterval) clearInterval(activeSyncInterval);
 
+  let uidHash = sada_uid_hash;
+  let key = masterKey;
+
+  if (!uidHash || !key) {
+    const session = getActivePassportSession();
+    if (session) {
+      uidHash = session.sada_uid_hash;
+      key = session.master_key_raw;
+    }
+  }
+
+  if (!uidHash || !key || uidHash === 'suite_global_sync') {
+    // Session not authenticated yet; listener will be triggered once SSO or login completes
+    return () => {};
+  }
+
   // Immediate pull
-  syncOnce(sada_uid_hash, masterKey);
+  syncOnce(uidHash, key);
 
   activeSyncInterval = setInterval(() => {
-    syncOnce(sada_uid_hash, masterKey);
+    syncOnce(uidHash, key);
   }, intervalMs);
 
   return () => {

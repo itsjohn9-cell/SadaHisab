@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Grid, ExternalLink, ShieldCheck } from 'lucide-react';
-import { createSsoUrl, SadaPassportSession } from '../services/sada-bridge';
+import { 
+  createSsoUrl, 
+  deriveDeterministicMasterKey, 
+  sha256Hex, 
+  getActivePassportSession, 
+  SadaPassportSession 
+} from '../services/sada-bridge';
 import bundledRegistry from '../sada-registry.json';
 
 export interface AppRegistryItem {
@@ -63,32 +69,25 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
       .catch(() => {});
   }, []);
 
-  const handleLaunch = (app: AppRegistryItem) => {
+  const handleLaunch = async (app: AppRegistryItem) => {
     let target = app.prodUrl;
-    let ssoSession = session;
+    let ssoSession = session || getActivePassportSession();
     if (!ssoSession && typeof window !== 'undefined') {
-      const savedMasterKey = localStorage.getItem('sada_master_key');
       const savedUid = localStorage.getItem('sada_uid') || 'sadahisaab_user';
-      if (savedMasterKey || savedUid) {
-        ssoSession = {
-          sada_uid: savedUid,
-          sada_uid_hash: savedUid,
-          identifier: localStorage.getItem('sada_identifier') || 'Ledger User',
-          identifier_type: 'phone',
-          master_key_raw: new Uint8Array(32),
-          unlocked_at: Date.now(),
-        };
-      }
+      const identifier = localStorage.getItem('sada_identifier') || savedUid;
+      const masterKey = await deriveDeterministicMasterKey(identifier);
+      const uidHash = await sha256Hex(identifier);
+      ssoSession = {
+        sada_uid: savedUid,
+        sada_uid_hash: uidHash,
+        identifier,
+        identifier_type: 'phone',
+        master_key_raw: masterKey,
+        unlocked_at: Date.now(),
+      };
     }
     if (ssoSession) {
-      const ssoBlob = {
-        sada_uid: ssoSession.sada_uid,
-        sada_uid_hash: ssoSession.sada_uid_hash,
-        identifier: ssoSession.identifier,
-        identifier_type: ssoSession.identifier_type,
-        ts: Date.now(),
-      };
-      target = createSsoUrl(app.prodUrl, ssoBlob);
+      target = createSsoUrl(app.prodUrl, ssoSession);
     }
     window.open(target, '_blank', 'noopener,noreferrer');
     setIsOpen(false);

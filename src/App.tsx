@@ -26,6 +26,7 @@ import {
 } from './services/cryptoSecurity';
 import { Navbar, NavTabType } from './components/Navbar';
 import { startLiveBridgeListener } from './services/liveBridgeSync';
+import { parseSsoHashOnBoot, getActivePassportSession } from './services/sada-bridge';
 import { DashboardView } from './components/DashboardView';
 import { LedgerView } from './components/LedgerView';
 import { HealerQueueView } from './components/HealerQueueView';
@@ -137,8 +138,16 @@ export const App: React.FC = () => {
 
     platformBridge.schedulePersistentReminders();
 
-    // Start Sada Suite Live Relay Listener
-    const stopBridge = startLiveBridgeListener();
+    // Boot: Parse SSO hash first and restore session BEFORE starting bridge listener
+    let stopBridge: (() => void) | null = null;
+    (async () => {
+      const sso = await parseSsoHashOnBoot();
+      const session = sso || getActivePassportSession();
+      if (session && session.sada_uid_hash && session.master_key_raw) {
+        stopBridge = startLiveBridgeListener(session.sada_uid_hash, session.master_key_raw);
+        showToast('Connected to Sada Suite Ecosystem');
+      }
+    })();
 
     const handleShortcutAction = (e: any) => {
       const act = e.detail?.action;
@@ -149,7 +158,7 @@ export const App: React.FC = () => {
     };
     window.addEventListener('sadacash-shortcut-action', handleShortcutAction);
     return () => {
-      stopBridge();
+      if (stopBridge) stopBridge();
       window.removeEventListener('sadacash-shortcut-action', handleShortcutAction);
     };
   }, []);

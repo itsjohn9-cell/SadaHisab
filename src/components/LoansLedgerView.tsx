@@ -20,7 +20,15 @@ import {
   X,
   Share2,
 } from 'lucide-react';
-import { pushPacket, generateUUID, bytesToBase64, SadaPacket } from '../services/sada-bridge';
+import { 
+  pushPacket, 
+  generateUUID, 
+  encryptPayload, 
+  sha256Hex, 
+  deriveDeterministicMasterKey, 
+  getActivePassportSession, 
+  SadaPacket 
+} from '../services/sada-bridge';
 import {
   requestGDriveToken,
   uploadBackupToGDrive,
@@ -42,24 +50,27 @@ export const LoansLedgerView: React.FC = () => {
   const handleRemindViaSadaLink = async (loan: LoanRecord) => {
     try {
       const text = `Assalamu Alaikum ${loan.counterpartyName}, gentle reminder regarding outstanding balance of ${loan.remainingAmount.toLocaleString()} ${loan.currency}. (Logged in Sada Hisaab)`;
+      const session = getActivePassportSession();
+      const identifier = session?.identifier || loan.counterpartyName || 'sadahisaab_user';
+      const uidHash = session?.sada_uid_hash || await sha256Hex(identifier);
+      const masterKey = session?.master_key_raw || await deriveDeterministicMasterKey(identifier);
+
+      const { ciphertext, iv } = await encryptPayload({
+        text,
+        borrower: loan.counterpartyName,
+        amount: loan.remainingAmount,
+        currency: loan.currency,
+      }, masterKey);
+
       const pkt: SadaPacket = {
         packet_id: generateUUID(),
         idempotency_key: `hisaab_udhaar_${loan.id}_${Date.now()}`,
-        sada_uid_hash: 'suite_global_sync',
+        sada_uid_hash: uidHash,
         source_app: 'sadahisaab',
         target_app: 'sadalink',
         action: 'SHARE_CHAT',
-        encrypted_payload: bytesToBase64(
-          new TextEncoder().encode(
-            JSON.stringify({
-              text,
-              borrower: loan.counterpartyName,
-              amount: loan.remainingAmount,
-              currency: loan.currency,
-            })
-          )
-        ),
-        iv: bytesToBase64(crypto.getRandomValues(new Uint8Array(12))),
+        encrypted_payload: ciphertext,
+        iv,
         created_at: Date.now(),
       };
       await pushPacket(pkt);

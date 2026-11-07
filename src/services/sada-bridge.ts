@@ -208,20 +208,45 @@ export async function encryptPayload(data: any, masterKey: Uint8Array): Promise<
   };
 }
 
+export async function deriveDeterministicMasterKey(identifier: string, salt = 'sada_suite_v1'): Promise<Uint8Array> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(identifier.trim().toLowerCase()),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: enc.encode(salt),
+      iterations: 50000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    256
+  );
+  return new Uint8Array(bits);
+}
+
 export async function decryptPayload<T = any>(ciphertextBase64: string, ivBase64: string, masterKey?: Uint8Array): Promise<T> {
+  const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
   const dec = new TextDecoder();
   const ciphertext = base64ToBytes(ciphertextBase64);
 
-  // Fallback: If payload was sent as plaintext JSON encoded in base64
-  try {
-    const raw = dec.decode(ciphertext);
-    if (raw.startsWith('{') && raw.endsWith('}')) {
-      return JSON.parse(raw);
-    }
-  } catch {}
+  // Fallback: strictly restricted to localhost unit testing runner
+  if (isTest) {
+    try {
+      const raw = dec.decode(ciphertext);
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        return JSON.parse(raw);
+      }
+    } catch {}
+  }
 
-  if (!masterKey) {
-    throw new Error('Master key required to decrypt ciphertext');
+  if (!masterKey || masterKey.length !== 32) {
+    throw new Error('Valid 256-bit AES master key required to decrypt ciphertext');
   }
 
   const iv = base64ToBytes(ivBase64);
@@ -249,6 +274,11 @@ export async function decryptPayload<T = any>(ciphertextBase64: string, ivBase64
 export const SADA_RELAY_URL = 'https://35.209.1.82.nip.io';
 
 export async function pushPacket(packet: SadaPacket): Promise<{ success: boolean; inserted: boolean }> {
+  if (!packet.sada_uid_hash || packet.sada_uid_hash === 'suite_global_sync') {
+    console.error('[sada-bridge] Security Violation: Refusing to push packet without valid per-user sada_uid_hash');
+    return { success: false, inserted: false };
+  }
+
   try {
     const res = await fetch(`${SADA_RELAY_URL}/api/sada-bridge/push`, {
       method: 'POST',
@@ -290,6 +320,10 @@ export async function drainOutbox(): Promise<number> {
 }
 
 export async function pullPackets(sada_uid_hash: string, target_app: string): Promise<SadaPacket[]> {
+  if (!sada_uid_hash || sada_uid_hash === 'suite_global_sync') {
+    return [];
+  }
+
   try {
     const res = await fetch(
       `${SADA_RELAY_URL}/api/sada-bridge/pull?uid_hash=${encodeURIComponent(sada_uid_hash)}&target_app=${encodeURIComponent(target_app)}`
@@ -320,10 +354,108 @@ export async function ackPackets(packet_ids: string[]): Promise<boolean> {
 // 1-Tap Cross-Domain SSO & Scheme Handoff
 // ----------------------------------------------------------------------------
 
+let activePassportSession: SadaPassportSession | null = null;
+
+export function setActivePassportSession(session: SadaPassportSession | null): void {
+  activePassportSession = session;
+  if (typeof sessionStorage !== 'undefined') {
+    if (session) {
+      sessionStorage.setItem('sada_passport_session', JSON.stringify({
+        sada_uid: session.sada_uid,
+        sada_uid_hash: session.sada_uid_hash,
+        identifier: session.identifier,
+        identifier_type: session.identifier_type,
+        master_key_b64: bytesToBase64(session.master_key_raw),
+        unlocked_at: session.unlocked_at,
+      }));
+    } else {
+      sessionStorage.removeItem('sada_passport_session');
+    }
+  }
+}
+
+export function getActivePassportSession(): SadaPassportSession | null {
+  if (activePassportSession) return activePassportSession;
+  if (typeof sessionStorage !== 'undefined') {
+    const raw = sessionStorage.getItem('sada_passport_session');
+    if (raw) {
+      try {
+        const p = JSON.parse(raw);
+        activePassportSession = {
+          sada_uid: p.sada_uid,
+          sada_uid_hash: p.sada_uid_hash,
+          identifier: p.identifier,
+          identifier_type: p.identifier_type,
+          master_key_raw: base64ToBytes(p.master_key_b64),
+          unlocked_at: p.unlocked_at,
+        };
+        return activePassportSession;
+      } catch {}
+    }
+  }
+  return null;
+}
+
 export function createSsoUrl(targetUrl: string, sessionBlob: any): string {
-  const encoded = encodeURIComponent(bytesToBase64(new TextEncoder().encode(JSON.stringify(sessionBlob))));
+  const blob: any = {
+    sada_uid: sessionBlob.sada_uid,
+    sada_uid_hash: sessionBlob.sada_uid_hash,
+    identifier: sessionBlob.identifier,
+    identifier_type: sessionBlob.identifier_type,
+    ts: Date.now(),
+  };
+
+  if (sessionBlob.master_key_raw instanceof Uint8Array) {
+    blob.master_key_b64 = bytesToBase64(sessionBlob.master_key_raw);
+  } else if (sessionBlob.master_key_b64) {
+    blob.master_key_b64 = sessionBlob.master_key_b64;
+  }
+
+  const encoded = encodeURIComponent(bytesToBase64(new TextEncoder().encode(JSON.stringify(blob))));
   const base = targetUrl.replace(/#.*$/, '');
   return `${base}#sada_sso=${encoded}`;
+}
+
+export async function parseSsoHashOnBoot(): Promise<SadaPassportSession | null> {
+  if (typeof window === 'undefined') return null;
+  const hash = window.location.hash;
+  if (!hash.includes('sada_sso=')) {
+    return getActivePassportSession();
+  }
+
+  try {
+    const raw = hash.split('sada_sso=')[1]?.split('&')[0];
+    if (raw) {
+      const jsonStr = new TextDecoder().decode(base64ToBytes(decodeURIComponent(raw)));
+      const parsed = JSON.parse(jsonStr);
+
+      if (parsed.sada_uid && parsed.sada_uid_hash) {
+        let masterKey: Uint8Array;
+        if (parsed.master_key_b64) {
+          masterKey = base64ToBytes(parsed.master_key_b64);
+        } else {
+          masterKey = await deriveDeterministicMasterKey(parsed.identifier || parsed.sada_uid);
+        }
+
+        const session: SadaPassportSession = {
+          sada_uid: parsed.sada_uid,
+          sada_uid_hash: parsed.sada_uid_hash,
+          identifier: parsed.identifier || parsed.sada_uid,
+          identifier_type: parsed.identifier_type || 'phone',
+          master_key_raw: masterKey,
+          unlocked_at: Date.now(),
+        };
+
+        setActivePassportSession(session);
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        return session;
+      }
+    }
+  } catch (err) {
+    console.warn('[sada-bridge] Failed to parse SSO hash:', err);
+  }
+
+  return getActivePassportSession();
 }
 
 export function consumeSsoUrl(): any | null {
