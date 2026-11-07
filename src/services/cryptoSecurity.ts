@@ -70,11 +70,23 @@ export async function verifyPin(inputPin: string, storedHash: string, storedSalt
   return result.hash === storedHash;
 }
 
-// WebAuthn Biometrics: Check availability
+// WebAuthn Biometrics: Synchronous check for API existence
 export function isBiometricsAvailable(): boolean {
   return typeof window !== 'undefined' && 
-         window.PublicKeyCredential !== undefined &&
+         typeof window.PublicKeyCredential !== 'undefined' &&
          typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
+}
+
+// WebAuthn Biometrics: Asynchronous check for actual sensor availability
+export async function checkBiometricsSupported(): Promise<boolean> {
+  if (!isBiometricsAvailable()) {
+    return false;
+  }
+  try {
+    return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
+  }
 }
 
 // Register Biometric Authenticator (TouchID / FaceID / Android Fingerprint)
@@ -84,9 +96,9 @@ export async function registerBiometricCredential(): Promise<{ success: boolean;
       return { success: false, error: 'WebAuthn platform biometrics not supported on this device/browser.' };
     }
 
-    const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    const available = await checkBiometricsSupported();
     if (!available) {
-      return { success: false, error: 'No fingerprint or biometric sensor available.' };
+      return { success: false, error: 'No fingerprint, TouchID, or biometric sensor available on this device.' };
     }
 
     const challenge = window.crypto.getRandomValues(new Uint8Array(32));
@@ -123,6 +135,9 @@ export async function registerBiometricCredential(): Promise<{ success: boolean;
       credentialId: bytesToBase64(rawIdBytes)
     };
   } catch (err: any) {
+    if (err?.name === 'NotAllowedError') {
+      return { success: false, error: 'Biometric registration prompt was cancelled or timed out.' };
+    }
     return { success: false, error: err.message || 'Failed to register biometrics.' };
   }
 }
@@ -147,6 +162,9 @@ export async function authenticateWithBiometrics(credentialIdBase64?: string): P
 
     return { success: !!assertion };
   } catch (err: any) {
+    if (err?.name === 'NotAllowedError') {
+      return { success: false, error: 'Biometric verification cancelled.' };
+    }
     return { success: false, error: err.message || 'Biometric authentication cancelled or failed.' };
   }
 }

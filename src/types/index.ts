@@ -288,6 +288,7 @@ export interface AppSecuritySettings {
   isAppLockEnabled: boolean;
   pinHash?: string;
   pinSalt?: string;
+  pinLength?: number; // 4 or 6 digits (default 4)
   hasBiometrics: boolean;
   biometricCredentialId?: string;
   autoLockTimeoutMs?: number;

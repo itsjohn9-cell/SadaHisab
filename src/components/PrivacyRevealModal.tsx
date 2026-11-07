@@ -55,12 +55,14 @@ export const PrivacyRevealModal: React.FC<PrivacyRevealModalProps> = ({
     }
   };
 
+  const targetLength = securitySettings.pinLength || 4;
+
   const handleKeyPress = (num: string) => {
-    if (pinInput.length < 6) {
+    if (pinInput.length < targetLength) {
       const next = pinInput + num;
       setPinInput(next);
       setErrorMessage(null);
-      if (next.length >= 4) {
+      if (next.length === targetLength) {
         checkPin(next);
       }
     }
@@ -84,14 +86,12 @@ export const PrivacyRevealModal: React.FC<PrivacyRevealModalProps> = ({
       onSuccess();
       onClose();
     } else {
-      if (input.length === 6) {
-        setIsShaking(true);
-        setErrorMessage('Incorrect PIN. Please try again.');
-        setTimeout(() => {
-          setIsShaking(false);
-          setPinInput('');
-        }, 500);
-      }
+      setIsShaking(true);
+      setErrorMessage('Incorrect PIN. Please try again.');
+      setTimeout(() => {
+        setIsShaking(false);
+        setPinInput('');
+      }, 500);
     }
   };
 
@@ -115,13 +115,13 @@ export const PrivacyRevealModal: React.FC<PrivacyRevealModalProps> = ({
           </div>
           <h2 className="text-lg font-bold text-white tracking-tight">Security Check Required</h2>
           <p className="text-xs text-slate-400 px-2">
-            Verify your identity with TouchID / Fingerprint or Master PIN to unmask confidential balances.
+            Verify your identity with TouchID / Fingerprint or your {targetLength}-digit Master PIN to unmask confidential balances.
           </p>
         </div>
 
         {/* PIN Dots Indicator */}
         <div className="flex justify-center space-x-3 py-1">
-          {[0, 1, 2, 3, 4, 5].map((idx) => (
+          {Array.from({ length: targetLength }).map((_, idx) => (
             <div
               key={idx}
               className={`h-3 w-3 rounded-full transition-all duration-200 ${
@@ -156,9 +156,17 @@ export const PrivacyRevealModal: React.FC<PrivacyRevealModalProps> = ({
           {/* Biometrics button */}
           <button
             type="button"
-            onClick={handleBiometricAuth}
-            disabled={!securitySettings.hasBiometrics || isBiometricPrompting}
-            className="h-12 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 text-emerald-400 disabled:text-slate-600 disabled:opacity-30 flex items-center justify-center transition active:scale-95"
+            onClick={() => {
+              if (securitySettings.hasBiometrics) {
+                handleBiometricAuth();
+              } else {
+                setErrorMessage('Biometrics not configured. Enter PIN.');
+              }
+            }}
+            disabled={isBiometricPrompting}
+            className={`h-12 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 flex items-center justify-center transition active:scale-95 ${
+              securitySettings.hasBiometrics ? 'text-emerald-400' : 'text-slate-500'
+            }`}
             title="Biometric Unlock (Fingerprint / TouchID)"
           >
             <Fingerprint className="h-5 w-5" />

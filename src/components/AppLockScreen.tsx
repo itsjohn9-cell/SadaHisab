@@ -14,7 +14,8 @@ import {
   hashPin, 
   authenticateWithBiometrics, 
   registerBiometricCredential, 
-  isBiometricsAvailable 
+  isBiometricsAvailable,
+  checkBiometricsSupported
 } from '../services/cryptoSecurity';
 import { AppSecuritySettings } from '../types';
 
@@ -31,11 +32,14 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
 }) => {
   const isInitialSetup = !securitySettings.pinHash;
   const [setupStep, setSetupStep] = useState<'ENTER' | 'CONFIRM' | 'BIOMETRICS'>('ENTER');
+  const [pinLength, setPinLength] = useState<number>(securitySettings.pinLength || 4);
   const [firstPin, setFirstPin] = useState<string>('');
   const [pinInput, setPinInput] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBiometricPrompting, setIsBiometricPrompting] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
+
+  const targetLength = isInitialSetup ? pinLength : (securitySettings.pinLength || 4);
 
   // Auto trigger biometrics on lock screen mount if configured
   useEffect(() => {
@@ -57,11 +61,11 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
   };
 
   const handleKeyPress = (num: string) => {
-    if (pinInput.length < 6) {
+    if (pinInput.length < targetLength) {
       const next = pinInput + num;
       setPinInput(next);
       setErrorMessage(null);
-      if (next.length >= 4) {
+      if (next.length === targetLength) {
         if (isInitialSetup) {
           handleSetupPinStep(next);
         } else {
@@ -73,44 +77,41 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
 
   const handleSetupPinStep = async (next: string) => {
     if (setupStep === 'ENTER') {
-      // If user typed 4 digits, give brief moment or wait for 6
-      if (next.length === 4 || next.length === 6) {
-        setFirstPin(next);
-        setSetupStep('CONFIRM');
-        setPinInput('');
-      }
+      setFirstPin(next);
+      setSetupStep('CONFIRM');
+      setPinInput('');
     } else if (setupStep === 'CONFIRM') {
-      if (next.length === firstPin.length) {
-        if (next === firstPin) {
-          // PIN confirmed! Hash and save
-          const { hash, salt } = await hashPin(next);
-          const newSettings: AppSecuritySettings = {
-            ...securitySettings,
-            isAppLockEnabled: true,
-            pinHash: hash,
-            pinSalt: salt,
-            autoLockTimeoutMs: securitySettings.autoLockTimeoutMs || 300000
-          };
+      if (next === firstPin) {
+        // PIN confirmed! Hash and save
+        const { hash, salt } = await hashPin(next);
+        const newSettings: AppSecuritySettings = {
+          ...securitySettings,
+          isAppLockEnabled: true,
+          pinHash: hash,
+          pinSalt: salt,
+          pinLength: pinLength,
+          autoLockTimeoutMs: securitySettings.autoLockTimeoutMs || 300000
+        };
 
-          if (onSaveSecuritySettings) {
-            await onSaveSecuritySettings(newSettings);
-          }
-
-          if (isBiometricsAvailable()) {
-            setSetupStep('BIOMETRICS');
-          } else {
-            onUnlock();
-          }
-        } else {
-          setIsShaking(true);
-          setErrorMessage('PIN did not match. Please re-enter.');
-          setTimeout(() => {
-            setIsShaking(false);
-            setPinInput('');
-            setSetupStep('ENTER');
-            setFirstPin('');
-          }, 600);
+        if (onSaveSecuritySettings) {
+          await onSaveSecuritySettings(newSettings);
         }
+
+        const bioSupported = await checkBiometricsSupported();
+        if (bioSupported) {
+          setSetupStep('BIOMETRICS');
+        } else {
+          onUnlock();
+        }
+      } else {
+        setIsShaking(true);
+        setErrorMessage('PIN did not match. Please re-enter.');
+        setTimeout(() => {
+          setIsShaking(false);
+          setPinInput('');
+          setSetupStep('ENTER');
+          setFirstPin('');
+        }, 600);
       }
     }
   };
@@ -122,6 +123,7 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
     if (res.success && res.credentialId && onSaveSecuritySettings) {
       await onSaveSecuritySettings({
         ...securitySettings,
+        isAppLockEnabled: true,
         hasBiometrics: true,
         biometricCredentialId: res.credentialId
       });
@@ -140,14 +142,12 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
     if (isValid) {
       onUnlock();
     } else {
-      if (input.length === 6) {
-        setIsShaking(true);
-        setErrorMessage('Incorrect PIN. Please try again.');
-        setTimeout(() => {
-          setIsShaking(false);
-          setPinInput('');
-        }, 500);
-      }
+      setIsShaking(true);
+      setErrorMessage('Incorrect PIN. Please try again.');
+      setTimeout(() => {
+        setIsShaking(false);
+        setPinInput('');
+      }, 500);
     }
   };
 
@@ -168,10 +168,10 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
             <button
               onClick={handleEnableBiometrics}
               disabled={isBiometricPrompting}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-500/20"
+              className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-500/20 active:scale-95"
             >
               <Fingerprint className="h-4 w-4" />
-              <span>Enable Fingerprint</span>
+              <span>{isBiometricPrompting ? 'Prompting Sensor...' : 'Enable Fingerprint / TouchID'}</span>
             </button>
             <button
               onClick={onUnlock}
@@ -187,7 +187,7 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-4 select-none">
-      <div className={`max-w-xs w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 text-center ${
+      <div className={`max-w-xs w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 text-center ${
         isShaking ? 'animate-bounce' : ''
       }`}>
         
@@ -203,14 +203,46 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
           </h2>
           <p className="text-xs text-slate-400">
             {isInitialSetup
-              ? (setupStep === 'CONFIRM' ? 'Re-enter your 4-6 digit PIN to confirm' : 'Set a 4-6 digit PIN to secure your ledger')
+              ? (setupStep === 'CONFIRM' 
+                  ? `Re-enter your ${pinLength}-digit PIN to confirm` 
+                  : `Set a ${pinLength}-digit PIN to secure your ledger`)
               : 'Protected by Zero-Trust PBKDF2 Encryption'}
           </p>
         </div>
 
+        {/* PIN Length Switcher (Setup Step 1 only) */}
+        {isInitialSetup && setupStep === 'ENTER' && (
+          <div className="flex justify-center pt-1">
+            <div className="inline-flex items-center p-0.5 bg-slate-950 border border-slate-800 rounded-xl text-xs space-x-1">
+              <button
+                type="button"
+                onClick={() => { setPinLength(4); setPinInput(''); }}
+                className={`px-3 py-1 rounded-lg font-semibold transition ${
+                  pinLength === 4
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                4 Digits
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPinLength(6); setPinInput(''); }}
+                className={`px-3 py-1 rounded-lg font-semibold transition ${
+                  pinLength === 6
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                6 Digits
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* PIN Dots Indicator */}
-        <div className="flex justify-center space-x-3 py-2">
-          {[0, 1, 2, 3, 4, 5].map((idx) => (
+        <div className="flex justify-center space-x-3 py-1">
+          {Array.from({ length: targetLength }).map((_, idx) => (
             <div
               key={idx}
               className={`h-3 w-3 rounded-full transition-all duration-200 ${
@@ -223,9 +255,9 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
         </div>
 
         {errorMessage && (
-          <div className="text-xs text-rose-400 font-semibold flex items-center justify-center space-x-1 animate-in fade-in">
-            <AlertCircle className="h-3.5 w-3.5" />
-            <span>{errorMessage}</span>
+          <div className="text-xs text-rose-400 font-semibold flex items-center justify-center space-x-1 animate-in fade-in px-2">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span className="leading-tight">{errorMessage}</span>
           </div>
         )}
 
@@ -246,15 +278,25 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
           {!isInitialSetup ? (
             <button
               type="button"
-              onClick={handleBiometricUnlock}
-              disabled={!securitySettings.hasBiometrics || isBiometricPrompting}
-              className="h-14 rounded-2xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 text-emerald-400 disabled:text-slate-600 disabled:opacity-40 flex items-center justify-center transition active:scale-95"
-              title="Biometric Unlock (TouchID / Fingerprint)"
+              onClick={() => {
+                if (securitySettings.hasBiometrics) {
+                  handleBiometricUnlock();
+                } else {
+                  setErrorMessage('Biometrics not enabled. Unlock with PIN, then enable in Settings (Lock icon in top bar).');
+                }
+              }}
+              disabled={isBiometricPrompting}
+              className={`h-14 rounded-2xl bg-slate-950/80 hover:bg-slate-800 border border-slate-800/80 flex items-center justify-center transition active:scale-95 ${
+                securitySettings.hasBiometrics 
+                  ? 'text-emerald-400 hover:text-emerald-300' 
+                  : 'text-slate-500 hover:text-slate-400'
+              }`}
+              title={securitySettings.hasBiometrics ? "Biometric Unlock (TouchID / Fingerprint)" : "Biometrics not configured"}
             >
               <Fingerprint className="h-6 w-6" />
             </button>
           ) : (
-            <div className="h-14 flex items-center justify-center text-xs text-slate-500">
+            <div className="h-14 flex items-center justify-center text-xs text-slate-500 font-medium">
               {setupStep === 'CONFIRM' ? 'Step 2/2' : 'Step 1/2'}
             </div>
           )}
@@ -283,11 +325,10 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
         <div className="pt-2 text-[11px] text-slate-500">
           {isInitialSetup 
             ? 'Stored 100% on-device in secure IndexedDB. Never sent to any cloud.'
-            : 'Locked automatically after 5 minutes of inactivity.'}
+            : 'Locked automatically after inactivity or app minimization.'}
         </div>
 
       </div>
     </div>
   );
 };
-
