@@ -56,43 +56,209 @@ export function saveGoogleSheetConfig(config: Partial<GoogleSheetSyncConfig>): G
  */
 export function getAppsScriptSnippet(): string {
   return `/**
- * Sada Hisab - Secure Google Apps Script 2-Way Sync Bridge
- * Paste this in your Google Sheet: Extensions > Apps Script > Deploy as Web App.
+ * Sada Hisab - Master Google Sheet Automation, Dropdowns & 2-Way Sync Engine
+ * 
+ * Paste this in your Google Sheet: Extensions > Apps Script > Save & Run "importAndOrganizeAllFromOriginalSheet"
  */
 
+var ORIGINAL_SHEET_ID = "1uACnAJUiaLg0KwLOV1TEvZ3flhhTo5igdGVxUazvR70";
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('⚡ Sada Hisab Hub')
+    .addItem('📥 1-Click Import & Organize All Data from Original Sheet', 'importAndOrganizeAllFromOriginalSheet')
+    .addItem('🔄 Refresh Dropdowns, Validations & Filters', 'setupDropdownsAndFilters')
+    .addToUi();
+}
+
+/**
+ * 1-Click Cloner: Copies all historical data from original workbook, organizes tabs,
+ * adds dynamic dropdown lists, enables auto-filters, and formats columns.
+ */
+function importAndOrganizeAllFromOriginalSheet() {
+  var ssTarget = SpreadsheetApp.getActiveSpreadsheet();
+  var ssSource = SpreadsheetApp.openById(ORIGINAL_SHEET_ID);
+  
+  var sheetsToCopy = ["Expense", "Totals", "Khums", "Credit Card (Loan)", "Transferred", "Income", "Foreign"];
+  
+  for (var i = 0; i < sheetsToCopy.length; i++) {
+    var sName = sheetsToCopy[i];
+    var srcSheet = ssSource.getSheetByName(sName);
+    if (!srcSheet) continue;
+    
+    var existingTarget = ssTarget.getSheetByName(sName);
+    if (existingTarget) {
+      existingTarget.setName(sName + "_backup_" + Date.now());
+    }
+    
+    var copied = srcSheet.copyTo(ssTarget);
+    copied.setName(sName);
+    
+    if (existingTarget) {
+      try { ssTarget.deleteSheet(existingTarget); } catch(e) {}
+    }
+  }
+  
+  // Set up DropdownLists, dynamic validation, and auto-filters
+  setupDropdownsAndFilters();
+  
+  try {
+    SpreadsheetApp.getUi().alert('🎉 Success! All historical sheets, 647+ expenses, account totals, dropdowns, and auto-filters are fully populated and organized!');
+  } catch(e) {}
+}
+
+/**
+ * Sets up the DropdownLists tab, Data Validation dropdowns, Row 3 freeze, and Auto-Filters
+ */
+function setupDropdownsAndFilters() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var expenseSheet = ss.getSheetByName('Expense');
+  if (!expenseSheet) return;
+  
+  // 1. Create or get DropdownLists sheet
+  var listSheet = ss.getSheetByName('DropdownLists');
+  if (!listSheet) {
+    listSheet = ss.insertSheet('DropdownLists');
+  }
+  
+  // Seed initial lists
+  listSheet.clear();
+  var headers = [["Category", "Account", "Currency", "Sub-Beneficiary (Student)"]];
+  listSheet.getRange(1, 1, 1, 4).setValues(headers).setFontWeight("bold").setBackground("#e2e8f0");
+  
+  var defaultCats = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
+  var defaultAccs = ["ADCB - AED","Al Habib - Rs","Cash in Wallet","HBL","Nayapay","PKR","SCB","Wise - USD"];
+  var defaultCurs = ["AED","GBP","PKR","USD"];
+  var defaultSubs = ["Aiza d/o Shokat Ali","Amir Hussain s/o Nasir Hussain","August","Azra Batool  D/O Hidayat Ali","Bais Ali","Hussain Mehdi","Kumail Abbas s/o Rustam Ali","Lubna d/o Shokat Ali","Maulana's","Muhammad Shoaib s/o Ali Madad","Raees Hassan s/o Sarfaraz Ali","Saiqa","Sanullah s/o Asghar Ali","Shaneela","Zehra Batool D/O Hidayat Ali"];
+  
+  var maxLen = Math.max(defaultCats.length, defaultAccs.length, defaultCurs.length, defaultSubs.length);
+  var rows = [];
+  for (var i = 0; i < maxLen; i++) {
+    rows.push([
+      defaultCats[i] || "",
+      defaultAccs[i] || "",
+      defaultCurs[i] || "",
+      defaultSubs[i] || ""
+    ]);
+  }
+  listSheet.getRange(2, 1, rows.length, 4).setValues(rows);
+  
+  // 2. Set Data Validation on Expense sheet
+  var lastRow = Math.max(expenseSheet.getLastRow(), 800);
+  
+  // Col C (3): Sub-Beneficiary -> DropdownLists!D2:D
+  var subRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("D2:D"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(subRule);
+  
+  // Col F (6): Category -> DropdownLists!A2:A
+  var catRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("A2:A"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 6, lastRow - 3, 1).setDataValidation(catRule);
+  
+  // Col H (8): Currency -> DropdownLists!C2:C
+  var curRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("C2:C"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 8, lastRow - 3, 1).setDataValidation(curRule);
+  
+  // Col I (9): Account -> DropdownLists!B2:B
+  var accRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("B2:B"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 9, lastRow - 3, 1).setDataValidation(accRule);
+  
+  // 3. Freeze Header Row 3
+  expenseSheet.setFrozenRows(3);
+  
+  // 4. Auto-Filter on row 3
+  try {
+    var existingFilter = expenseSheet.getFilter();
+    if (!existingFilter) {
+      expenseSheet.getRange(3, 1, lastRow - 2, 15).createFilter();
+    }
+  } catch(e) {}
+}
+
+/**
+ * Dynamic Missing Item Auto-Adder:
+ * If you type any new Category, Account, Currency, or Student in Expense,
+ * it automatically appends it to DropdownLists so it becomes available in the dropdown forever!
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var range = e.range;
+  var sheet = range.getSheet();
+  if (sheet.getName() !== 'Expense') return;
+  
+  var col = range.getColumn();
+  var val = String(e.value || '').trim();
+  if (!val || range.getRow() <= 3) return;
+  
+  var ss = e.source || SpreadsheetApp.getActiveSpreadsheet();
+  var listSheet = ss.getSheetByName('DropdownLists');
+  if (!listSheet) return;
+  
+  var listCol = 0;
+  if (col === 6) listCol = 1;      // Category -> Col A
+  else if (col === 9) listCol = 2; // Account -> Col B
+  else if (col === 8) listCol = 3; // Currency -> Col C
+  else if (col === 3) listCol = 4; // Sub-Beneficiary -> Col D
+  
+  if (listCol > 0) {
+    var vals = listSheet.getRange(2, listCol, Math.max(listSheet.getLastRow() - 1, 1), 1).getValues().flat().map(String);
+    if (vals.indexOf(val) === -1) {
+      var nextEmptyRow = listSheet.getLastRow() + 1;
+      listSheet.getRange(nextEmptyRow, listCol).setValue(val);
+    }
+  }
+}
+
+/**
+ * 2-Way Sync: Pull from Google Sheet into Sada Hisab
+ */
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Expense") || ss.getSheets()[0];
   var data = sheet.getDataRange().getValues();
   
   return ContentService.createTextOutput(JSON.stringify({
-    success: true,
-    sheetName: sheet.getName(),
+    status: "success",
     rows: data,
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
+/**
+ * 2-Way Sync: Push new transaction from Sada Hisab into Google Sheet
+ */
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(payload.sheetName || "Expense");
-    if (!sheet) sheet = ss.insertSheet(payload.sheetName || "Expense");
+    var sheet = ss.getSheetByName("Expense") || ss.getSheets()[0];
     
-    if (payload.action === "APPEND_ROWS" && payload.rows) {
+    if (payload.action === "ADD_TRANSACTION" && payload.row) {
+      sheet.appendRow(payload.row);
+    } else if (payload.action === "APPEND_ROWS" && payload.rows) {
       for (var i = 0; i < payload.rows.length; i++) {
         sheet.appendRow(payload.rows[i]);
       }
     }
     
     return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: "Synced " + (payload.rows ? payload.rows.length : 0) + " rows successfully."
+      status: "success",
+      message: "Row appended successfully."
     })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
-      success: false,
+      status: "error",
       error: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }

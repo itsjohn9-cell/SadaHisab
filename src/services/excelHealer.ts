@@ -798,6 +798,25 @@ export async function exportToExcelWorkbook(): Promise<Blob> {
   const wsKhums = XLSX.utils.json_to_sheet(khumsData);
   XLSX.utils.book_append_sheet(wb, wsKhums, 'Khums');
 
+  // 6. DropdownLists Sheet for Google Sheet Data Validation
+  const categories = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
+  const accountNames = ["ADCB - AED","Al Habib - Rs","Cash in Wallet","HBL","Nayapay","PKR","SCB","Wise - USD"];
+  const currencies = ["AED","GBP","PKR","USD"];
+  const subBeneficiaries = ["Aiza d/o Shokat Ali","Amir Hussain s/o Nasir Hussain","August","Azra Batool  D/O Hidayat Ali","Bais Ali","Hussain Mehdi","Kumail Abbas s/o Rustam Ali","Lubna d/o Shokat Ali","Maulana's","Muhammad Shoaib s/o Ali Madad","Raees Hassan s/o Sarfaraz Ali","Saiqa","Sanullah s/o Asghar Ali","Shaneela","Zehra Batool D/O Hidayat Ali"];
+  
+  const maxLen = Math.max(categories.length, accountNames.length, currencies.length, subBeneficiaries.length);
+  const listsRows = [];
+  for (let i = 0; i < maxLen; i++) {
+    listsRows.push({
+      'Category': categories[i] || '',
+      'Account': accountNames[i] || '',
+      'Currency': currencies[i] || '',
+      'Sub-Beneficiary (Student)': subBeneficiaries[i] || ''
+    });
+  }
+  const wsLists = XLSX.utils.json_to_sheet(listsRows);
+  XLSX.utils.book_append_sheet(wb, wsLists, 'DropdownLists');
+
   const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
