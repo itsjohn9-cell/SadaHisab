@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sada Hisaab - Privacy Policy</title>
+  <style>
+    body { max-width: 800px; margin: 40px auto; padding: 0 20px; font: 16px/1.65 system-ui, -apple-system, sans-serif; color: #1e293b; background: #f8fafc; }
+    main { background: #ffffff; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    h1, h2, h3 { color: #0f172a; line-height: 1.3; }
+    h1 { border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+    a { color: #4f46e5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    .badge { display: inline-block; padding: 4px 10px; background: #e0e7ff; color: #3730a3; border-radius: 9999px; font-size: 12px; font-weight: bold; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="badge">Local-First &amp; Zero-Knowledge</div>
+    <h1>Sada Hisaab Privacy Policy</h1>
+    <p><strong>Effective Date:</strong> November 7, 2026</p>
+    <p>Sada Hisaab is a privacy-first, local-first financial ledger, cash management, debt tracking, and khums accounting tool developed by the Sada Suite team. For privacy inquiries or support, contact us at <a href="mailto:fahmatics@gmail.com">fahmatics@gmail.com</a>.</p>
+
+    <h2>1. Data Ownership &amp; Local Storage</h2>
+    <p>Sada Hisaab operates on a <strong>local-first</strong> architecture:</p>
+    <ul>
+      <li><strong>Ledger Entries &amp; Accounts:</strong> All your financial accounts, currency transactions, loans, borrowing records, and khums calculations are stored directly on your physical device using IndexedDB (Dexie).</li>
+      <li><strong>No Cloud Banking Aggregators:</strong> We do not connect to external banking APIs (such as Plaid or Yodlee) or collect your real bank login credentials.</li>
+      <li><strong>Zero Third-Party Trackers:</strong> The application does not bundle advertising trackers, commercial analytics, or third-party behavioral profiling SDKs.</li>
+    </ul>
+
+    <h2>2. Optional Cross-App Synchronization (Sada Suite)</h2>
+    <p>If you choose to synchronize notes and expenses with companion apps (SadaLink or SadaFlow):</p>
+    <ul>
+      <li><strong>Zero-Knowledge Encryption:</strong> Cross-app packets are encrypted on your device using AES-256-GCM with keys derived from your PIN and phone number via PBKDF2/HKDF before leaving your device.</li>
+      <li><strong>Relay Infrastructure:</strong> The relay server only routes client-encrypted packets and cannot read your financial transactions or plaintext account balances.</li>
+    </ul>
+
+    <h2>3. Permissions</h2>
+    <ul>
+      <li><strong>Notifications:</strong> Used solely to alert you to scheduled khums dates or debt repayment milestones that you configure locally.</li>
+      <li><strong>Camera / File Access:</strong> Used only when you choose to scan a physical receipt or upload an invoice attachment to a transaction.</li>
+    </ul>
+
+    <h2>4. Data Deletion &amp; Export</h2>
+    <p>Because your data is stored locally on your device:</p>
+    <ul>
+      <li>You can export your complete ledger history at any time as JSON, Excel (XLSX), or PDF via <strong>Settings &gt; Export Data</strong>.</li>
+      <li>Clearing the app storage or browser cache immediately and permanently purges all local financial records from your device.</li>
+    </ul>
+
+    <h2>5. Contact Us</h2>
+    <p>If you have any questions regarding this Privacy Policy or your data, please contact developer support at <a href="mailto:fahmatics@gmail.com">fahmatics@gmail.com</a>.</p>
+  </main>
+</body>
+</html>
