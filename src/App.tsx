@@ -25,6 +25,7 @@ import {
   checkBackupRecency 
 } from './services/cryptoSecurity';
 import { Navbar, NavTabType } from './components/Navbar';
+import { startLiveBridgeListener } from './services/liveBridgeSync';
 import { DashboardView } from './components/DashboardView';
 import { LedgerView } from './components/LedgerView';
 import { HealerQueueView } from './components/HealerQueueView';
@@ -136,6 +137,9 @@ export const App: React.FC = () => {
 
     platformBridge.schedulePersistentReminders();
 
+    // Start Sada Suite Live Relay Listener
+    const stopBridge = startLiveBridgeListener();
+
     const handleShortcutAction = (e: any) => {
       const act = e.detail?.action;
       if (act === 'paste') setIsQuickPasteOpen(true);
@@ -144,7 +148,10 @@ export const App: React.FC = () => {
       else if (act === 'roster') setActiveTab('roster');
     };
     window.addEventListener('sadacash-shortcut-action', handleShortcutAction);
-    return () => window.removeEventListener('sadacash-shortcut-action', handleShortcutAction);
+    return () => {
+      stopBridge();
+      window.removeEventListener('sadacash-shortcut-action', handleShortcutAction);
+    };
   }, []);
 
   const showToast = (msg: string) => {

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { PrivacyShieldBadge } from './PrivacyShieldBadge';
 import { FXValuationMode } from '../types';
+import { SadaAppSwitcher } from './SadaAppSwitcher';
 
 export type NavTabType = 
   | 'dashboard' 
@@ -351,6 +352,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Lock className="h-4 w-4" />
             </button>
+
+            {/* Sada Suite Cross-App Ecosystem Switcher */}
+            <SadaAppSwitcher currentAppId="sadahisaab" />
 
             {/* Quick Paste Floating Trigger */}
             <button

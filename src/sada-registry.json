@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-11-07T05:11:00Z",
+  "apps": [
+    {
+      "id": "sadalink",
+      "name": "SadaLink",
+      "tagline": "Real-time communication & signaling",
+      "folder": "SadaLink",
+      "canonicalClient": "@SadaLink/client/src",
+      "canonicalServer": "@SadaLink/server/src",
+      "localPort": 3001,
+      "serverPort": 4000,
+      "prodUrl": "https://35.209.1.82.nip.io",
+      "customScheme": "sadalink://",
+      "accentColor": "#00A884",
+      "theme": "wa-teal",
+      "capabilities": [
+        "chat",
+        "calling",
+        "ephemeral-media",
+        "relay-host",
+        "hisaab-bot",
+        "sada-passport"
+      ]
+    },
+    {
+      "id": "sadaflow",
+      "name": "SadaFlow",
+      "tagline": "E2EE universal clipboard & workspace",
+      "folder": "SadaFlow",
+      "canonicalClient": "@SadaFlow/client/src",
+      "canonicalServer": "@SadaFlow/server/src",
+      "localPort": 5173,
+      "serverPort": 3000,
+      "prodUrl": "https://sadaflow.onrender.com",
+      "customScheme": "sadaflow://",
+      "accentColor": "#4f46e5",
+      "theme": "indigo",
+      "capabilities": [
+        "e2ee-clipboard",
+        "notes",
+        "checklists",
+        "hisaab-slips",
+        "sada-passport"
+      ]
+    },
+    {
+      "id": "sadahisaab",
+      "name": "Sada Hisaab",
+      "tagline": "Multi-currency cash & khums ledger",
+      "folder": "SadaHisab",
+      "canonicalClient": "@SadaHisab/src",
+      "canonicalServer": null,
+      "localPort": 3000,
+      "serverPort": null,
+      "prodUrl": "https://itsjohn9-cell.github.io/SadaHisab",
+      "customScheme": "sadahisaab://",
+      "accentColor": "#16a34a",
+      "theme": "emerald",
+      "capabilities": [
+        "ledger",
+        "accounting",
+        "khums",
+        "voice-logger",
+        "bill-scanner",
+        "udhaar-reminders",
+        "budget-pin",
+        "sada-passport"
+      ]
+    }
+  ]
+}
+

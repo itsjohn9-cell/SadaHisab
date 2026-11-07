@@ -18,7 +18,9 @@ import {
   FileCheck,
   Sliders,
   X,
+  Share2,
 } from 'lucide-react';
+import { pushPacket, generateUUID, bytesToBase64, SadaPacket } from '../services/sada-bridge';
 import {
   requestGDriveToken,
   uploadBackupToGDrive,
@@ -36,6 +38,36 @@ export const LoansLedgerView: React.FC = () => {
   const [khumsCutoff, setKhumsCutoff] = useState<string>(() => {
     return localStorage.getItem('sada_khums_cutoff_date') || '11-30';
   });
+
+  const handleRemindViaSadaLink = async (loan: LoanRecord) => {
+    try {
+      const text = `Assalamu Alaikum ${loan.counterpartyName}, gentle reminder regarding outstanding balance of ${loan.remainingAmount.toLocaleString()} ${loan.currency}. (Logged in Sada Hisaab)`;
+      const pkt: SadaPacket = {
+        packet_id: generateUUID(),
+        idempotency_key: `hisaab_udhaar_${loan.id}_${Date.now()}`,
+        sada_uid_hash: 'suite_global_sync',
+        source_app: 'sadahisaab',
+        target_app: 'sadalink',
+        action: 'SHARE_CHAT',
+        encrypted_payload: bytesToBase64(
+          new TextEncoder().encode(
+            JSON.stringify({
+              text,
+              borrower: loan.counterpartyName,
+              amount: loan.remainingAmount,
+              currency: loan.currency,
+            })
+          )
+        ),
+        iv: bytesToBase64(crypto.getRandomValues(new Uint8Array(12))),
+        created_at: Date.now(),
+      };
+      await pushPacket(pkt);
+      alert(`✅ Reminder dispatched for ${loan.counterpartyName}! Delivering into SadaLink.`);
+    } catch {
+      alert('Reminder saved to outbox');
+    }
+  };
 
   // Consumables Checklist state
   const [pantryValue, setPantryValue] = useState<number>(() => {
@@ -507,6 +539,15 @@ export const LoansLedgerView: React.FC = () => {
                       </span>
                     )}
                   </div>
+
+                  <button
+                    onClick={() => handleRemindViaSadaLink(loan)}
+                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                    title="Remind via SadaLink"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Remind on SadaLink</span>
+                  </button>
 
                   <button
                     onClick={() => {
