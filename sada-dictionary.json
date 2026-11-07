@@ -1,0 +1,123 @@
+{
+  "$schema": "sada-ecosystem-v2.1",
+  "version": "2.1.0",
+  "apps": {
+    "sadalink": {
+      "name": "Sada Link",
+      "root_path": "SadaLink",
+      "core_mission": "Real-time communication, contact-based messaging, and lightweight action triggers",
+      "immutable_boundaries": [
+        "Must not become a full ledger or note organizer",
+        "Chat-first UX"
+      ],
+      "capabilities": [
+        "realtime_socket",
+        "e164_contacts",
+        "action_bot_parser",
+        "push_notifications"
+      ],
+      "consumes": [
+        "ledger_reminders",
+        "shared_notes"
+      ],
+      "produces": [
+        "expense_commands",
+        "income_commands",
+        "chat_clips"
+      ],
+      "file_index_cache": {
+        "bridge_adapter": "client/src/services/sada-bridge.ts",
+        "auth_gate": "client/src/components/auth/AuthGate.tsx",
+        "db_store": "client/src/db/localDb.ts",
+        "outbox": "client/src/services/sada-bridge.ts",
+        "theme_config": "client/tailwind.config.js"
+      }
+    },
+    "sadaflow": {
+      "name": "Sada Flow",
+      "root_path": "SadaFlow",
+      "core_mission": "Frictionless capture, E2EE clipboard, note workspaces, and scratchpad slips",
+      "immutable_boundaries": [
+        "Must not become a chat client or transactional double-entry ledger"
+      ],
+      "capabilities": [
+        "e2ee_workspace",
+        "slip_parser",
+        "dexie_outbox",
+        "fast_scratchpad"
+      ],
+      "consumes": [
+        "chat_bookmarks",
+        "budget_summaries"
+      ],
+      "produces": [
+        "parsed_hisaab_slips",
+        "shared_clips"
+      ],
+      "file_index_cache": {
+        "bridge_adapter": "client/src/services/sada-bridge.ts",
+        "auth_gate": "client/src/components/AuthGate.tsx",
+        "db_store": "client/src/services/storage.ts",
+        "outbox": "client/src/services/outbox.ts",
+        "theme_config": "client/tailwind.config.js"
+      }
+    },
+    "sadahisaab": {
+      "name": "Sada Hisaab",
+      "root_path": "SadaHisab",
+      "core_mission": "Personal & business ledger, income/expense tracking, accounts, and khums obligations",
+      "immutable_boundaries": [
+        "Must remain 100% focused on financial integrity, offline accounting, zero vanity bloat"
+      ],
+      "capabilities": [
+        "double_entry_math",
+        "local_dexie_vault",
+        "khums_calc",
+        "audit_trail"
+      ],
+      "consumes": [
+        "expense_packets",
+        "income_packets"
+      ],
+      "produces": [
+        "ledger_cards",
+        "budget_snapshots",
+        "udhaar_reminders"
+      ],
+      "file_index_cache": {
+        "bridge_adapter": "src/services/sada-bridge.ts",
+        "auth_gate": "src/components/SadaPassportLogin.tsx",
+        "db_store": "src/db/db.ts",
+        "outbox": "src/services/sada-bridge.ts",
+        "theme_config": "tailwind.config.js"
+      }
+    }
+  },
+  "reusable_blueprints": {
+    "PBKDF2/HKDF": "/Users/mohammadjhone/Projects/SadaHisab/src/services/sada-bridge.ts",
+    "Dexie_Outbox": "/Users/mohammadjhone/Projects/SadaFlow/client/src/services/outbox.ts",
+    "SadaPassportLogin": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/SadaPassportLogin.tsx",
+    "SadaAppSwitcher": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/SadaAppSwitcher.tsx",
+    "SQLite_WAL_Relay": "/Users/mohammadjhone/Projects/SadaLink/server/src/db/sqlite.ts",
+    "PWA_ShareTarget": "/Users/mohammadjhone/Projects/SadaLink/client/public/manifest.json"
+  },
+  "peer_projects": {
+    "karachi-runner": {
+      "name": "karachi-runner",
+      "path": "/Users/mohammadjhone/Projects/karachi-runner",
+      "registered_at": "2026-11-07T08:25:22.394Z",
+      "imported_blueprints": [],
+      "isolation_verified": true,
+      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
+    }
+  },
+  "capability_cache": {
+    "shared_utilities": [
+      "PBKDF2/HKDF",
+      "Dexie_Outbox",
+      "SadaPassportLogin",
+      "SadaAppSwitcher"
+    ],
+    "candidate_pool": []
+  }
+}

@@ -31,8 +31,4 @@ android/app/build
 *.aab
 build-output/
 
-# Sada Suite workspace symlinks
-.agents
-sada-dictionary.json
-
 
