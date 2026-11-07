@@ -52,59 +52,28 @@ export function saveGoogleSheetConfig(config: Partial<GoogleSheetSyncConfig>): G
 
 /**
  * Generates the clean Google Apps Script code to paste inside Google Sheets (Extensions > Apps Script).
- * This creates a 100% private zero-cloud-setup HTTP endpoint to read and write rows.
+ * This provides dynamic dropdowns, auto-filters, auto-adding missing items, and 2-way sync.
  */
 export function getAppsScriptSnippet(): string {
   return `/**
- * Sada Hisab - Master Google Sheet Automation, Dropdowns & 2-Way Sync Engine
+ * =========================================================================
+ * Sada Hisab - Master Executive Google Sheet & Automation Engine
+ * =========================================================================
  * 
- * Paste this in your Google Sheet: Extensions > Apps Script > Save & Run "importAndOrganizeAllFromOriginalSheet"
+ * Instructions:
+ * 1. Open your Google Sheet: https://docs.google.com/spreadsheets/d/1UybhQ6dyrudvKTqgGF7yXy2Y8m6XILTNRJus5r-leUQ
+ * 2. If you imported "SadaHisab-Master-Organized-Workbook.xlsx" (File > Import > Upload > "Replace spreadsheet"),
+ *    run "setupDropdownsAndFilters" to activate dynamic dropdowns and auto-filters.
+ * 3. Any new Category, Account, Currency, or Student you type in "Expense" will automatically
+ *    be remembered and added to your "DropdownLists" tab!
  */
-
-var ORIGINAL_SHEET_ID = "1uACnAJUiaLg0KwLOV1TEvZ3flhhTo5igdGVxUazvR70";
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('⚡ Sada Hisab Hub')
-    .addItem('📥 1-Click Import & Organize All Data from Original Sheet', 'importAndOrganizeAllFromOriginalSheet')
-    .addItem('🔄 Refresh Dropdowns, Validations & Filters', 'setupDropdownsAndFilters')
+    .addItem('🔄 Refresh Dropdowns, Validations & Auto-Filters', 'setupDropdownsAndFilters')
+    .addItem('✨ Clean & Format Expense Ledger', 'formatExpenseLedger')
     .addToUi();
-}
-
-/**
- * 1-Click Cloner: Copies all historical data from original workbook, organizes tabs,
- * adds dynamic dropdown lists, enables auto-filters, and formats columns.
- */
-function importAndOrganizeAllFromOriginalSheet() {
-  var ssTarget = SpreadsheetApp.getActiveSpreadsheet();
-  var ssSource = SpreadsheetApp.openById(ORIGINAL_SHEET_ID);
-  
-  var sheetsToCopy = ["Expense", "Totals", "Khums", "Credit Card (Loan)", "Transferred", "Income", "Foreign"];
-  
-  for (var i = 0; i < sheetsToCopy.length; i++) {
-    var sName = sheetsToCopy[i];
-    var srcSheet = ssSource.getSheetByName(sName);
-    if (!srcSheet) continue;
-    
-    var existingTarget = ssTarget.getSheetByName(sName);
-    if (existingTarget) {
-      existingTarget.setName(sName + "_backup_" + Date.now());
-    }
-    
-    var copied = srcSheet.copyTo(ssTarget);
-    copied.setName(sName);
-    
-    if (existingTarget) {
-      try { ssTarget.deleteSheet(existingTarget); } catch(e) {}
-    }
-  }
-  
-  // Set up DropdownLists, dynamic validation, and auto-filters
-  setupDropdownsAndFilters();
-  
-  try {
-    SpreadsheetApp.getUi().alert('🎉 Success! All historical sheets, 647+ expenses, account totals, dropdowns, and auto-filters are fully populated and organized!');
-  } catch(e) {}
 }
 
 /**
@@ -113,7 +82,12 @@ function importAndOrganizeAllFromOriginalSheet() {
 function setupDropdownsAndFilters() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var expenseSheet = ss.getSheetByName('Expense');
-  if (!expenseSheet) return;
+  if (!expenseSheet) {
+    try {
+      SpreadsheetApp.getUi().alert('Please ensure your "Expense" sheet exists first. Tip: Import "SadaHisab-Master-Organized-Workbook.xlsx" via File > Import.');
+    } catch(e) {}
+    return;
+  }
   
   // 1. Create or get DropdownLists sheet
   var listSheet = ss.getSheetByName('DropdownLists');
@@ -121,74 +95,114 @@ function setupDropdownsAndFilters() {
     listSheet = ss.insertSheet('DropdownLists');
   }
   
-  // Seed initial lists
-  listSheet.clear();
-  var headers = [["Category", "Account", "Currency", "Sub-Beneficiary (Student)"]];
-  listSheet.getRange(1, 1, 1, 4).setValues(headers).setFontWeight("bold").setBackground("#e2e8f0");
-  
+  // Master lists
   var defaultCats = ["Bill Payment","Children","Donation","Education","Grocery","Health / Medicine","Jhone","Misc","Mobile","Rohia","School","Van","Wife"];
   var defaultAccs = ["ADCB - AED","Al Habib - Rs","Cash in Wallet","HBL","Nayapay","PKR","SCB","Wise - USD"];
   var defaultCurs = ["AED","GBP","PKR","USD"];
   var defaultSubs = ["Aiza d/o Shokat Ali","Amir Hussain s/o Nasir Hussain","August","Azra Batool  D/O Hidayat Ali","Bais Ali","Hussain Mehdi","Kumail Abbas s/o Rustam Ali","Lubna d/o Shokat Ali","Maulana's","Muhammad Shoaib s/o Ali Madad","Raees Hassan s/o Sarfaraz Ali","Saiqa","Sanullah s/o Asghar Ali","Shaneela","Zehra Batool D/O Hidayat Ali"];
-  
-  var maxLen = Math.max(defaultCats.length, defaultAccs.length, defaultCurs.length, defaultSubs.length);
-  var rows = [];
-  for (var i = 0; i < maxLen; i++) {
-    rows.push([
-      defaultCats[i] || "",
-      defaultAccs[i] || "",
-      defaultCurs[i] || "",
-      defaultSubs[i] || ""
-    ]);
+  var defaultChans = ["Direct Bank Transfer","Cash","Credit Card","Easypaisa","JazzCash","Nayapay","Online Banking"];
+
+  // Read existing lists if present
+  if (listSheet.getLastRow() < 2) {
+    listSheet.clear();
+    var headers = [["Category", "Account", "Currency", "Sub-Beneficiary (Student)", "Payment Channel"]];
+    listSheet.getRange(1, 1, 1, 5).setValues(headers).setFontWeight("bold").setBackground("#0f172a").setFontColor("#38bdf8");
+    
+    var maxLen = Math.max(defaultCats.length, defaultAccs.length, defaultCurs.length, defaultSubs.length, defaultChans.length);
+    var rows = [];
+    for (var i = 0; i < maxLen; i++) {
+      rows.push([
+        defaultCats[i] || "",
+        defaultAccs[i] || "",
+        defaultCurs[i] || "",
+        defaultSubs[i] || "",
+        defaultChans[i] || ""
+      ]);
+    }
+    listSheet.getRange(2, 1, rows.length, 5).setValues(rows);
   }
-  listSheet.getRange(2, 1, rows.length, 4).setValues(rows);
   
-  // 2. Set Data Validation on Expense sheet
-  var lastRow = Math.max(expenseSheet.getLastRow(), 800);
+  var lastRow = Math.max(expenseSheet.getLastRow(), 700);
   
-  // Col C (3): Sub-Beneficiary -> DropdownLists!D2:D
-  var subRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(listSheet.getRange("D2:D"))
-    .setAllowInvalid(true)
-    .build();
-  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(subRule);
-  
-  // Col F (6): Category -> DropdownLists!A2:A
+  // In the Master 14-Column Expense sheet:
+  // Col 3 (C): Category -> DropdownLists!A2:A
   var catRule = SpreadsheetApp.newDataValidation()
     .requireValueInRange(listSheet.getRange("A2:A"))
     .setAllowInvalid(true)
     .build();
-  expenseSheet.getRange(4, 6, lastRow - 3, 1).setDataValidation(catRule);
+  expenseSheet.getRange(4, 3, lastRow - 3, 1).setDataValidation(catRule);
   
-  // Col H (8): Currency -> DropdownLists!C2:C
+  // Col 5 (E): Sub-Beneficiary (Student) -> DropdownLists!D2:D
+  var subRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("D2:D"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 5, lastRow - 3, 1).setDataValidation(subRule);
+  
+  // Col 8 (H): Currency -> DropdownLists!C2:C
   var curRule = SpreadsheetApp.newDataValidation()
     .requireValueInRange(listSheet.getRange("C2:C"))
     .setAllowInvalid(true)
     .build();
   expenseSheet.getRange(4, 8, lastRow - 3, 1).setDataValidation(curRule);
   
-  // Col I (9): Account -> DropdownLists!B2:B
+  // Col 10 (J): Account -> DropdownLists!B2:B
   var accRule = SpreadsheetApp.newDataValidation()
     .requireValueInRange(listSheet.getRange("B2:B"))
     .setAllowInvalid(true)
     .build();
-  expenseSheet.getRange(4, 9, lastRow - 3, 1).setDataValidation(accRule);
+  expenseSheet.getRange(4, 10, lastRow - 3, 1).setDataValidation(accRule);
+
+  // Col 11 (K): Payment Channel -> DropdownLists!E2:E
+  var chanRule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listSheet.getRange("E2:E"))
+    .setAllowInvalid(true)
+    .build();
+  expenseSheet.getRange(4, 11, lastRow - 3, 1).setDataValidation(chanRule);
   
-  // 3. Freeze Header Row 3
+  // Freeze Header Row 3
   expenseSheet.setFrozenRows(3);
   
-  // 4. Auto-Filter on row 3
+  // Auto-Filter on Row 3
   try {
     var existingFilter = expenseSheet.getFilter();
     if (!existingFilter) {
-      expenseSheet.getRange(3, 1, lastRow - 2, 15).createFilter();
+      expenseSheet.getRange(3, 1, lastRow - 2, 14).createFilter();
     }
+  } catch(e) {}
+
+  formatExpenseLedger();
+
+  try {
+    SpreadsheetApp.getUi().alert('🎉 Success! Master Dropdowns (Category, Account, Currency, Student, Channel) and Auto-Filters are active on Row 3!');
   } catch(e) {}
 }
 
 /**
+ * Applies executive styling to the Expense Ledger
+ */
+function formatExpenseLedger() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Expense');
+  if (!sheet) return;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return;
+
+  // Header Row 3
+  sheet.getRange(3, 1, 1, 14)
+    .setBackground('#0f172a')
+    .setFontColor('#f8fafc')
+    .setFontWeight('bold');
+
+  // Amount columns formatting: Col 7 (Amount) & Col 9 (PKR Equivalent)
+  sheet.getRange(4, 7, lastRow - 3, 1).setNumberFormat('#,##0.00');
+  sheet.getRange(4, 9, lastRow - 3, 1).setNumberFormat('#,##0.00');
+}
+
+/**
  * Dynamic Missing Item Auto-Adder:
- * If you type any new Category, Account, Currency, or Student in Expense,
+ * If you type any new Category, Account, Currency, Student, or Channel in Expense,
  * it automatically appends it to DropdownLists so it becomes available in the dropdown forever!
  */
 function onEdit(e) {
@@ -206,14 +220,18 @@ function onEdit(e) {
   if (!listSheet) return;
   
   var listCol = 0;
-  if (col === 6) listCol = 1;      // Category -> Col A
-  else if (col === 9) listCol = 2; // Account -> Col B
-  else if (col === 8) listCol = 3; // Currency -> Col C
-  else if (col === 3) listCol = 4; // Sub-Beneficiary -> Col D
+  if (col === 3) listCol = 1;       // Category -> DropdownLists Col A
+  else if (col === 10) listCol = 2; // Account -> DropdownLists Col B
+  else if (col === 8) listCol = 3;  // Currency -> DropdownLists Col C
+  else if (col === 5) listCol = 4;  // Sub-Beneficiary -> DropdownLists Col D
+  else if (col === 11) listCol = 5; // Payment Channel -> DropdownLists Col E
   
   if (listCol > 0) {
-    var vals = listSheet.getRange(2, listCol, Math.max(listSheet.getLastRow() - 1, 1), 1).getValues().flat().map(String);
-    if (vals.indexOf(val) === -1) {
+    var lastR = Math.max(listSheet.getLastRow(), 1);
+    var vals = listSheet.getRange(2, listCol, lastR, 1).getValues().flat().map(function(item) {
+      return String(item || '').trim().toLowerCase();
+    });
+    if (vals.indexOf(val.toLowerCase()) === -1) {
       var nextEmptyRow = listSheet.getLastRow() + 1;
       listSheet.getRange(nextEmptyRow, listCol).setValue(val);
     }
