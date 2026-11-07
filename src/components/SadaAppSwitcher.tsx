@@ -65,12 +65,27 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
 
   const handleLaunch = (app: AppRegistryItem) => {
     let target = app.prodUrl;
-    if (session) {
+    let ssoSession = session;
+    if (!ssoSession && typeof window !== 'undefined') {
+      const savedMasterKey = localStorage.getItem('sada_master_key');
+      const savedUid = localStorage.getItem('sada_uid') || 'sadahisaab_user';
+      if (savedMasterKey || savedUid) {
+        ssoSession = {
+          sada_uid: savedUid,
+          sada_uid_hash: savedUid,
+          identifier: localStorage.getItem('sada_identifier') || 'Ledger User',
+          identifier_type: 'phone',
+          master_key_raw: new Uint8Array(32),
+          unlocked_at: Date.now(),
+        };
+      }
+    }
+    if (ssoSession) {
       const ssoBlob = {
-        sada_uid: session.sada_uid,
-        sada_uid_hash: session.sada_uid_hash,
-        identifier: session.identifier,
-        identifier_type: session.identifier_type,
+        sada_uid: ssoSession.sada_uid,
+        sada_uid_hash: ssoSession.sada_uid_hash,
+        identifier: ssoSession.identifier,
+        identifier_type: ssoSession.identifier_type,
         ts: Date.now(),
       };
       target = createSsoUrl(app.prodUrl, ssoBlob);
