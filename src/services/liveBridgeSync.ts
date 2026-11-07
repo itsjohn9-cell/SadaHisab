@@ -10,7 +10,7 @@ import { pullPackets, ackPackets, decryptPayload, bridgeDb, SadaPacket } from '.
 
 let activeSyncInterval: any = null;
 
-export async function processBridgePacket(packet: SadaPacket, masterKey: Uint8Array): Promise<boolean> {
+export async function processBridgePacket(packet: SadaPacket, masterKey?: Uint8Array): Promise<boolean> {
   try {
     const payload = await decryptPayload(packet.encrypted_payload, packet.iv, masterKey);
     const today = new Date().toISOString().split('T')[0];
@@ -51,29 +51,27 @@ export async function processBridgePacket(packet: SadaPacket, masterKey: Uint8Ar
 
 export async function syncOnce(sada_uid_hash?: string, masterKey?: Uint8Array): Promise<number> {
   try {
-    // If no credentials passed, check cached identity in bridgeDb
+    // If no credentials passed, check cached identity in bridgeDb, otherwise default to suite_global_sync
     let uidHash = sada_uid_hash;
     let key = masterKey;
 
-    if (!uidHash || !key) {
+    if (!uidHash) {
       const identities = await bridgeDb.identities.toArray();
-      if (identities.length === 0) return 0;
-      uidHash = identities[0].sada_uid_hash;
+      if (identities.length > 0) {
+        uidHash = identities[0].sada_uid_hash;
+      } else {
+        uidHash = 'suite_global_sync';
+      }
     }
-
-    if (!uidHash) return 0;
 
     const packets = await pullPackets(uidHash, 'sadahisaab');
     if (!packets || packets.length === 0) return 0;
 
     const ackIds: string[] = [];
     for (const packet of packets) {
-      if (key) {
-        const ok = await processBridgePacket(packet, key);
-        if (ok) ackIds.push(packet.packet_id);
-      } else {
-        // Can't decrypt yet without masterKey, keep in queue
-        break;
+      const ok = await processBridgePacket(packet, key);
+      if (ok) {
+        ackIds.push(packet.packet_id);
       }
     }
 

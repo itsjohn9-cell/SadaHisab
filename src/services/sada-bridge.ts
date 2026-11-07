@@ -208,11 +208,23 @@ export async function encryptPayload(data: any, masterKey: Uint8Array): Promise<
   };
 }
 
-export async function decryptPayload<T = any>(ciphertextBase64: string, ivBase64: string, masterKey: Uint8Array): Promise<T> {
+export async function decryptPayload<T = any>(ciphertextBase64: string, ivBase64: string, masterKey?: Uint8Array): Promise<T> {
   const dec = new TextDecoder();
-  const iv = base64ToBytes(ivBase64);
   const ciphertext = base64ToBytes(ciphertextBase64);
 
+  // Fallback: If payload was sent as plaintext JSON encoded in base64
+  try {
+    const raw = dec.decode(ciphertext);
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      return JSON.parse(raw);
+    }
+  } catch {}
+
+  if (!masterKey) {
+    throw new Error('Master key required to decrypt ciphertext');
+  }
+
+  const iv = base64ToBytes(ivBase64);
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     masterKey as BufferSource,
