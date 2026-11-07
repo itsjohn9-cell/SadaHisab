@@ -1,6 +1,7 @@
 {
   "$schema": "sada-ecosystem-v2.1",
   "version": "2.1.0",
+  "cloud_brain_webhook": "https://script.google.com/macros/s/AKfycbyZLwh810biSPJ6UbKoJgE5hsm8z0Mor6pnzgTmE7UptrMEiwwhzNdW8IMk2Eewgps4/exec",
   "apps": {
     "sadalink": {
       "name": "Sada Link",

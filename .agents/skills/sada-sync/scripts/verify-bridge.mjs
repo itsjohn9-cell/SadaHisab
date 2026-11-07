@@ -19,6 +19,7 @@ console.log(`📁 Workspace root: ${workspaceRoot}\n`);
 // 0. Physical Brain Mirroring for Git Safety across all 3 app repositories
 const rootRegistryPath = path.join(workspaceRoot, 'sada-registry.json');
 const rootDictionaryPath = path.join(workspaceRoot, 'sada-dictionary.json');
+const rootCloudBrainPath = path.join(workspaceRoot, 'SADA_CLOUD_BRAIN.md');
 const rootAgentsDir = path.join(workspaceRoot, '.agents');
 
 const appRoots = [
@@ -29,6 +30,17 @@ const appRoots = [
 
 for (const appDir of appRoots) {
   if (!fs.existsSync(appDir)) continue;
+
+  // Mirror SADA_CLOUD_BRAIN.md
+  if (fs.existsSync(rootCloudBrainPath)) {
+    const dest = path.join(appDir, 'SADA_CLOUD_BRAIN.md');
+    try {
+      if (fs.existsSync(dest) && fs.lstatSync(dest).isSymbolicLink()) fs.unlinkSync(dest);
+      fs.copyFileSync(rootCloudBrainPath, dest);
+    } catch (e) {
+      console.warn(`Failed to mirror SADA_CLOUD_BRAIN.md to ${appDir}: ${e.message}`);
+    }
+  }
 
   // Mirror sada-registry.json
   if (fs.existsSync(rootRegistryPath)) {

@@ -90,7 +90,13 @@ Once the feature has passed evaluation and the user has approved the approach:
    - **Tier 2** (Bridge/Blueprint/Contract): Contract parity verification via `verify-bridge.mjs`.
    - **Tier 3** (Explicit Deploy / "Go Live"): Full Playwright headless browser E2E (`smart-verify.mjs --deploy`).
 
-4. **Build & Deploy**:
+4. **Sync Cloud Brain & Google Doc Webhook**:
+   - Whenever dictionary, registry, blueprints, or contracts are modified, synchronize physical mirrors and post markdown to the Google Doc Apps Script Webhook:
+     ```bash
+     node .agents/skills/sada-sync/scripts/sync-cloud-brain.mjs
+     ```
+
+5. **Build & Deploy**:
    - Rebuild clients and push to `origin main` across `@SadaLink`, `@SadaFlow`, and `@SadaHisab`.
 
 ---
