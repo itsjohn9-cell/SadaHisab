@@ -93,6 +93,25 @@ if (!fs.existsSync(aabPath)) {
 const fileSizeMb = (fs.statSync(aabPath).size / (1024 * 1024)).toFixed(2);
 console.log(`📊 Release AAB Size: ${fileSizeMb} MB`);
 
+// Pre-flight target SDK check for Google Play policy compliance
+const varsGradlePath = path.resolve('android/variables.gradle');
+if (fs.existsSync(varsGradlePath)) {
+  const varsContent = fs.readFileSync(varsGradlePath, 'utf8');
+  const targetSdkMatch = varsContent.match(/targetSdkVersion\s*=\s*(\d+)/);
+  if (targetSdkMatch) {
+    const targetSdk = parseInt(targetSdkMatch[1], 10);
+    if (targetSdk < 36) {
+      console.error(`\n❌ [ERROR] Google Play Target SDK Policy Violation!`);
+      console.error(`   Your app currently targets API level ${targetSdk}.`);
+      console.error(`   Google Play requires targeting at least API level 36.`);
+      console.error(`   Update targetSdkVersion in android/variables.gradle to 36.\n`);
+      process.exit(1);
+    } else {
+      console.log(`🛡️ Target SDK Compliance: API ${targetSdk} (Compliant with Google Play 36+ requirement)`);
+    }
+  }
+}
+
 async function publish() {
   const play = google.androidpublisher({ version: 'v3', auth: authClient });
   let editId = null;
@@ -164,6 +183,7 @@ async function publish() {
       console.log('✔ Validation passed without errors.');
     } catch (valErr) {
       const valErrMsg = valErr.response?.data?.error?.message || valErr.message || '';
+      console.log('Validation initial notice:', valErrMsg);
       if (valErrMsg.includes('draft app') || valErrMsg.includes('status draft')) {
         console.log('ℹ Notice: App is currently in Draft state in Play Console. Switching release status to "draft"...');
         releaseStatus = 'draft';
@@ -195,12 +215,13 @@ async function publish() {
     console.log('====================================================\n');
   } catch (error) {
     console.warn('\n⚠️ Google Play Console Notice:');
+    if (error.response?.data?.error) {
+      console.warn('Google API Error Details:', JSON.stringify(error.response.data.error, null, 2));
+    }
     const errMsg = error.response?.data?.error?.message || error.message || String(error);
     console.warn(`Reason: ${errMsg}`);
-    if (errMsg.includes('not found') || errMsg.includes('Package not found')) {
-      console.warn(`ℹ️ The package "${PACKAGE_NAME}" hasn't been initially registered in Play Console yet or is pending initial first-bundle upload.`);
-      console.warn(`👉 The signed bundle is generated and ready at:\n   ${aabPath}`);
-    }
+    console.warn(`👉 The signed bundle is generated and ready at:\n   ${aabPath}`);
+    process.exit(1);
   }
 }
 
