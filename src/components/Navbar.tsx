@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Wallet, 
   BookOpen, 
@@ -25,8 +25,9 @@ import {
   Sliders
 } from 'lucide-react';
 import { PrivacyShieldBadge } from './PrivacyShieldBadge';
-import { FXValuationMode } from '../types';
+import { FXValuationMode, Transaction } from '../types';
 import { SadaAppSwitcher } from './SadaAppSwitcher';
+import { calculateLoggingStreak } from '../utils/streakTracker';
 
 export type NavTabType = 
   | 'dashboard' 
@@ -65,6 +66,7 @@ interface NavbarProps {
   setFxValuationMode: (m: FXValuationMode) => void;
   isPrivacyMasked?: boolean;
   onTogglePrivacyMask?: () => void;
+  transactions?: Transaction[];
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -87,8 +89,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   fxValuationMode,
   setFxValuationMode,
   isPrivacyMasked = false,
-  onTogglePrivacyMask
+  onTogglePrivacyMask,
+  transactions = []
 }) => {
+  const streakInfo = useMemo(() => calculateLoggingStreak(transactions), [transactions]);
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -363,6 +367,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Trash2 className="h-3.5 w-3.5" />
                 <span className="hidden xl:inline">Clear</span>
               </button>
+            )}
+
+            {/* Logging Streak Badge (Karachi Runner blueprint) */}
+            {streakInfo.currentStreak > 0 && (
+              <div 
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold shrink-0 shadow-sm transition hover:scale-105 cursor-pointer"
+                title={`${streakInfo.badgeTitle} • ${streakInfo.currentStreak} day streak (${streakInfo.loggedToday ? 'Logged today' : 'Log today to maintain streak!'})`}
+              >
+                <span className="text-sm">🔥</span>
+                <span>{streakInfo.currentStreak}d</span>
+                <span className="hidden xl:inline text-[10px] text-amber-300/80 font-medium">streak</span>
+              </div>
             )}
 
             {/* Sada Suite Cross-App Ecosystem Switcher */}

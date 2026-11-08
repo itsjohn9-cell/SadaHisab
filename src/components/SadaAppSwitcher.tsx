@@ -19,6 +19,15 @@ export interface AppRegistryItem {
   capabilities: string[];
 }
 
+export interface PeerAppItem {
+  id: string;
+  name: string;
+  tagline: string;
+  prodUrl: string;
+  accentColor: string;
+  category?: string;
+}
+
 const DEFAULT_REGISTRY: AppRegistryItem[] = (bundledRegistry as any)?.apps || [
   {
     id: 'sadalink',
@@ -49,6 +58,25 @@ const DEFAULT_REGISTRY: AppRegistryItem[] = (bundledRegistry as any)?.apps || [
   },
 ];
 
+const DEFAULT_PEER_APPS: PeerAppItem[] = (bundledRegistry as any)?.peerApps || [
+  {
+    id: 'sajdah',
+    name: 'Sajdah',
+    tagline: 'Tasbeeh, Qaza balances & prayer tracker',
+    prodUrl: 'https://itsjohn9-cell.github.io/sajdah/',
+    accentColor: '#8b5cf6',
+    category: 'Islamic Companion'
+  },
+  {
+    id: 'karachi-runner',
+    name: 'Karachi Runner',
+    tagline: '3D parkour street runner game',
+    prodUrl: 'https://itsjohn9-cell.github.io/karachi.hole/',
+    accentColor: '#f59e0b',
+    category: '3D WebGL Game'
+  }
+];
+
 interface Props {
   currentAppId: 'sadalink' | 'sadaflow' | 'sadahisaab' | string;
   session?: SadaPassportSession | null;
@@ -57,6 +85,7 @@ interface Props {
 export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [apps, setApps] = useState<AppRegistryItem[]>(DEFAULT_REGISTRY);
+  const [peerApps, setPeerApps] = useState<PeerAppItem[]>(DEFAULT_PEER_APPS);
 
   useEffect(() => {
     fetch('https://35.209.1.82.nip.io/api/sada-registry')
@@ -64,6 +93,9 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
       .then((data) => {
         if (data?.apps && Array.isArray(data.apps)) {
           setApps(data.apps);
+        }
+        if (data?.peerApps && Array.isArray(data.peerApps)) {
+          setPeerApps(data.peerApps);
         }
       })
       .catch(() => {});
@@ -153,6 +185,44 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
                 );
               })}
             </div>
+
+            {peerApps.length > 0 && (
+              <div className="pt-2 mt-2 border-t border-slate-800">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block px-1 pb-1">
+                  Peer Projects
+                </span>
+                <div className="space-y-1">
+                  {peerApps.map((peer) => (
+                    <a
+                      key={peer.id}
+                      href={peer.prodUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
+                      className="w-full flex items-center justify-between p-1.5 rounded-lg text-left hover:bg-slate-900 border border-transparent hover:border-slate-800/80 transition-all group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="w-5 h-5 rounded flex items-center justify-center text-white font-bold text-[10px] shrink-0"
+                          style={{ backgroundColor: peer.accentColor }}
+                        >
+                          {peer.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-medium text-slate-300 group-hover:text-white truncate block">
+                            {peer.name}
+                          </span>
+                          <span className="text-[10px] text-slate-500 truncate block">
+                            {peer.tagline}
+                          </span>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-slate-600 group-hover:text-slate-400 shrink-0 ml-1" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

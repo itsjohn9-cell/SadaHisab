@@ -75,6 +75,24 @@
         "sada-passport"
       ]
     }
+  ],
+  "peerApps": [
+    {
+      "id": "sajdah",
+      "name": "Sajdah",
+      "tagline": "Tasbeeh, Qaza balances & prayer tracker",
+      "prodUrl": "https://itsjohn9-cell.github.io/sajdah/",
+      "accentColor": "#8b5cf6",
+      "category": "Islamic Companion"
+    },
+    {
+      "id": "karachi-runner",
+      "name": "Karachi Runner",
+      "tagline": "3D parkour street runner game",
+      "prodUrl": "https://itsjohn9-cell.github.io/karachi.hole/",
+      "accentColor": "#f59e0b",
+      "category": "3D WebGL Game"
+    }
   ]
 }
 

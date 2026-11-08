@@ -46,6 +46,8 @@ import {
   Cell 
 } from 'recharts';
 import { KematiTrackerCard } from './KematiTrackerCard';
+import { calculateBudgetForecast } from '../services/budgetForecastEngine';
+import { Flame } from 'lucide-react';
 
 interface DashboardViewProps {
   accounts: Account[];
@@ -96,6 +98,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const aedRate = fxMap.get('AED') || 74.31;
   const usdRate = fxMap.get('USD') || 278.50;
+
+  // Predictive Budget Variance & Burn Rate (Tahaluf Dashboard blueprint)
+  const budgetTarget = primaryCurrency === 'PKR' ? 450000 : primaryCurrency === 'AED' ? 12000 : 3500;
+  const budgetForecast = useMemo(() => {
+    return calculateBudgetForecast(transactions, budgetTarget, primaryCurrency);
+  }, [transactions, budgetTarget, primaryCurrency]);
 
   // Calculate high-level financial KPIs
   const metrics = useMemo(() => {
@@ -590,6 +598,119 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
+      </div>
+
+      {/* 3.5 Predictive Budget & Burn Rate Forecasting (Tahaluf Blueprint) */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+              <Flame className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Predictive Burn Rate & Budget Forecast ({budgetForecast.monthName})
+                </h4>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border ${
+                  budgetForecast.status === 'on-track'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : budgetForecast.status === 'near-budget'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                }`}>
+                  {budgetForecast.status === 'on-track' ? '🟢 On Track' : budgetForecast.status === 'near-budget' ? '🟡 Near Cap' : '🔴 Over Pacing'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Day {budgetForecast.daysElapsed} of {budgetForecast.daysTotal} ({budgetForecast.daysRemaining} days remaining) • Zero-division safe projection
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-semibold uppercase text-slate-400">Target Budget</span>
+            <div className="text-sm font-mono font-bold text-white">
+              {formatCurrencyMasked(budgetForecast.budgetTarget, primaryCurrency, isPrivacyMasked)}
+            </div>
+          </div>
+        </div>
+
+        {/* Forecast Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Daily Burn Rate</span>
+            <div className="text-xl font-bold font-mono text-orange-400 mt-1">
+              {formatCurrencyMasked(budgetForecast.dailyBurnRate, primaryCurrency, isPrivacyMasked)}
+              <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ day</span>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">Actual spending velocity this month</p>
+          </div>
+
+          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Month-to-Date Spent</span>
+            <div className="text-xl font-bold font-mono text-white mt-1">
+              {formatCurrencyMasked(budgetForecast.totalSpentSoFar, primaryCurrency, isPrivacyMasked)}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">{Math.round(budgetForecast.pacingPercent)}% of target consumed</p>
+          </div>
+
+          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Projected Month-End</span>
+            <div className={`text-xl font-bold font-mono mt-1 ${
+              budgetForecast.projectedVariance > 0 ? 'text-rose-400' : 'text-emerald-400'
+            }`}>
+              {formatCurrencyMasked(budgetForecast.projectedMonthEndSpend, primaryCurrency, isPrivacyMasked)}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              {budgetForecast.projectedVariance > 0 
+                ? `+${formatCurrencyMasked(budgetForecast.projectedVariance, primaryCurrency, isPrivacyMasked)} projected overrun`
+                : `${formatCurrencyMasked(Math.abs(budgetForecast.projectedVariance), primaryCurrency, isPrivacyMasked)} surplus buffer`}
+            </p>
+          </div>
+        </div>
+
+        {/* Pacing Comparison Progress Bar */}
+        <div className="mt-4 pt-3 border-t border-slate-800/60 space-y-2">
+          <div className="flex justify-between text-xs text-slate-400 font-medium">
+            <span>Spend Pacing ({Math.min(100, Math.round(budgetForecast.pacingPercent))}%) vs Month Elapsed ({Math.round((budgetForecast.daysElapsed / budgetForecast.daysTotal) * 100)}%)</span>
+            <span className="font-mono text-slate-300">
+              {budgetForecast.daysRemaining} days left
+            </span>
+          </div>
+          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
+            <div 
+              className={`h-full transition-all duration-500 ${
+                budgetForecast.status === 'on-track' 
+                  ? 'bg-emerald-500' 
+                  : budgetForecast.status === 'near-budget' 
+                  ? 'bg-amber-500' 
+                  : 'bg-rose-500'
+              }`}
+              style={{ width: `${Math.min(100, budgetForecast.pacingPercent)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Top Categories Pacing Tags */}
+        {budgetForecast.categoryPacing.length > 0 && (
+          <div className="mt-3.5 flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Top Drivers:</span>
+            {budgetForecast.categoryPacing.slice(0, 4).map(cat => (
+              <span 
+                key={cat.category}
+                className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 font-medium flex items-center space-x-1"
+              >
+                <span className="text-slate-400">{cat.category}:</span>
+                <span className="font-mono font-bold text-white">
+                  {formatCurrencyMasked(cat.spent, primaryCurrency, isPrivacyMasked)}
+                </span>
+                <span className="text-orange-400 text-[10px]">
+                  ({formatCurrencyMasked(cat.dailyRate, primaryCurrency, isPrivacyMasked)}/d)
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 4. Kemati (Committee) & Special Assets Tracker Card */}

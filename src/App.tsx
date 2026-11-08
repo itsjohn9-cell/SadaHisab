@@ -424,6 +424,7 @@ export const App: React.FC = () => {
         setFxValuationMode={handleFXModeChange}
         isPrivacyMasked={isPrivacyMasked}
         onTogglePrivacyMask={handleTogglePrivacyMask}
+        transactions={transactions}
       />
 
       {/* Global High-Visibility Currency Switcher & Filter Bar */}

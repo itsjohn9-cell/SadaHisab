@@ -25,11 +25,13 @@ import {
   Lock,
   KeyRound,
   X,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react';
 import { db } from '../db/db';
 import { Transaction } from '../types';
 import { TimeMachineCard } from './TimeMachineCard';
+import { generateExecutiveHtmlDossier } from '../services/exportExecutiveReport';
 
 interface ImportExportViewProps {
   onRefreshData: () => void;
@@ -463,12 +465,12 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
         </div>
       )}
 
-      {/* Export Section with 3 Formats */}
+      {/* Export Section with 4 Formats */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
         <h4 className="text-sm font-bold text-white uppercase tracking-wider">
           Export & Local Backup Formats
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Format 1: AES-256 Encrypted .khumsvault */}
           <div className="bg-slate-950/70 border border-emerald-900/60 rounded-xl p-4 flex flex-col justify-between space-y-3">
@@ -527,6 +529,26 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
             >
               <Download className="h-3.5 w-3.5" />
               <span>Export JSON</span>
+            </button>
+          </div>
+
+          {/* Format 4: Executive Presentation Dossier (Tahaluf Blueprint) */}
+          <div className="bg-slate-950/70 border border-purple-900/60 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center space-x-2 text-purple-300 font-bold text-sm">
+                <FileText className="h-4 w-4 text-purple-400" />
+                <span>Executive Dossier</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Printable executive financial dossier & slide summary: Net Worth, burn rate pacing, & Khums audit.
+              </p>
+            </div>
+            <button
+              onClick={() => generateExecutiveHtmlDossier()}
+              className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md transition"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Generate Dossier</span>
             </button>
           </div>
 
