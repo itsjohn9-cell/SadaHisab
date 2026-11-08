@@ -99,6 +99,8 @@
     "Dexie_Outbox": "/Users/mohammadjhone/Projects/SadaFlow/client/src/services/outbox.ts",
     "SadaPassportLogin": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/SadaPassportLogin.tsx",
     "SadaAppSwitcher": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/SadaAppSwitcher.tsx",
+    "SadaHisaabBudgetWidget": "/Users/mohammadjhone/Projects/SadaFlow/client/src/components/SadaHisaabBudgetWidget.tsx",
+    "LiveBridgeSync": "/Users/mohammadjhone/Projects/SadaHisab/src/services/liveBridgeSync.ts",
     "SQLite_WAL_Relay": "/Users/mohammadjhone/Projects/SadaLink/server/src/db/sqlite.ts",
     "PWA_ShareTarget": "/Users/mohammadjhone/Projects/SadaLink/client/public/manifest.json"
   },
@@ -117,7 +119,9 @@
       "PBKDF2/HKDF",
       "Dexie_Outbox",
       "SadaPassportLogin",
-      "SadaAppSwitcher"
+      "SadaAppSwitcher",
+      "SadaHisaabBudgetWidget",
+      "LiveBridgeSync"
     ],
     "candidate_pool": []
   }
