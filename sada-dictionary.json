@@ -114,6 +114,22 @@
       "imported_blueprints": [],
       "isolation_verified": true,
       "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
+    },
+    "Tahaluf-Dashboard": {
+      "name": "Tahaluf-Dashboard",
+      "path": "/Users/mohammadjhone/Projects/Tahaluf-Dashboard",
+      "registered_at": "2026-11-08T08:48:51.493Z",
+      "imported_blueprints": [],
+      "isolation_verified": true,
+      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
+    },
+    "STC-Kuwait-Dashboard": {
+      "name": "STC-Kuwait-Dashboard",
+      "path": "/Users/mohammadjhone/Projects/STC-Kuwait-Dashboard",
+      "registered_at": "2026-11-08T08:48:51.566Z",
+      "imported_blueprints": [],
+      "isolation_verified": true,
+      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
     }
   },
   "capability_cache": {
