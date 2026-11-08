@@ -11,6 +11,7 @@ import {
   SADA_RELAY_URL,
   bridgeDb,
 } from '../services/sada-bridge';
+import { checkBiometricsSupported, authenticateWithBiometrics } from '../services/cryptoSecurity';
 
 interface Props {
   accentColor?: string;
@@ -41,11 +42,9 @@ export const SadaPassportLogin: React.FC<Props> = ({ accentColor = '#16a34a', on
       });
     }
 
-    if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable?.()
-        .then((available) => setBiometricsAvailable(!!available))
-        .catch(() => setBiometricsAvailable(false));
-    }
+    checkBiometricsSupported()
+      .then((available) => setBiometricsAvailable(!!available))
+      .catch(() => setBiometricsAvailable(false));
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -167,15 +166,9 @@ export const SadaPassportLogin: React.FC<Props> = ({ accentColor = '#16a34a', on
         throw new Error('No cached Sada Passport found on this device. Please log in with PIN first.');
       }
 
-      if (window.PublicKeyCredential) {
-        const challenge = crypto.getRandomValues(new Uint8Array(32));
-        await navigator.credentials.get({
-          publicKey: {
-            challenge,
-            timeout: 60000,
-            userVerification: 'preferred',
-          },
-        }).catch(() => {});
+      const res = await authenticateWithBiometrics();
+      if (!res.success) {
+        throw new Error(res.error || 'Biometric authentication failed.');
       }
 
       setError('Biometric verified. Please confirm your 6-digit PIN.');

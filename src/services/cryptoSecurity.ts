@@ -72,15 +72,28 @@ export async function verifyPin(inputPin: string, storedHash: string, storedSalt
   return result.hash === storedHash;
 }
 
-// WebAuthn Biometrics: Synchronous check for API existence
+// Unified Biometrics: Synchronous check for API existence (Native or Web)
 export function isBiometricsAvailable(): boolean {
+  if (Capacitor.isNativePlatform()) {
+    return true;
+  }
   return typeof window !== 'undefined' && 
          typeof window.PublicKeyCredential !== 'undefined' &&
          typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
 }
 
-// WebAuthn Biometrics: Asynchronous check for actual sensor availability
+// Unified Biometrics: Asynchronous check for actual sensor availability
 export async function checkBiometricsSupported(): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const res = await NativeBiometric.isAvailable({ useFallback: false });
+      return !!res.isAvailable;
+    } catch (e) {
+      console.warn('[Biometrics] NativeBiometric.isAvailable error:', e);
+      return false;
+    }
+  }
+
   if (!isBiometricsAvailable()) {
     return false;
   }
@@ -91,11 +104,35 @@ export async function checkBiometricsSupported(): Promise<boolean> {
   }
 }
 
-// Register Biometric Authenticator (TouchID / FaceID / Android Fingerprint)
+// Register Biometric Authenticator (Native Android/iOS or Web WebAuthn)
 export async function registerBiometricCredential(): Promise<{ success: boolean; credentialId?: string; error?: string }> {
   try {
+    // 1. Native Mobile Platform (Android Fingerprint/Face or iOS TouchID/FaceID)
+    if (Capacitor.isNativePlatform()) {
+      const available = await checkBiometricsSupported();
+      if (!available) {
+        return { 
+          success: false, 
+          error: 'No biometric enrolled on this device. Please enroll a fingerprint or face unlock in your phone Settings.' 
+        };
+      }
+
+      await NativeBiometric.verifyIdentity({
+        reason: 'Authenticate to enable biometric unlock for Sada Hisab',
+        title: 'Register Biometrics',
+        subtitle: 'Sada Hisab Security Vault',
+        description: 'Verify your fingerprint or face to enable instant biometric login.'
+      });
+
+      return {
+        success: true,
+        credentialId: 'native-biometric-credential'
+      };
+    }
+
+    // 2. Web WebAuthn Platform
     if (!isBiometricsAvailable()) {
-      return { success: false, error: 'WebAuthn platform biometrics not supported on this device/browser.' };
+      return { success: false, error: 'WebAuthn platform biometrics is not supported on this browser or requires a secure HTTPS connection.' };
     }
 
     const available = await checkBiometricsSupported();
@@ -137,18 +174,36 @@ export async function registerBiometricCredential(): Promise<{ success: boolean;
       credentialId: bytesToBase64(rawIdBytes)
     };
   } catch (err: any) {
-    if (err?.name === 'NotAllowedError') {
-      return { success: false, error: 'Biometric registration prompt was cancelled or timed out.' };
+    if (
+      err?.name === 'NotAllowedError' || 
+      err?.message?.toLowerCase().includes('cancel') ||
+      err?.code === 10 || 
+      err?.code === 13
+    ) {
+      return { success: false, error: 'Biometric prompt was cancelled.' };
     }
     return { success: false, error: err.message || 'Failed to register biometrics.' };
   }
 }
 
-// Verify Biometric Authenticator
+// Verify Biometric Authenticator (Native Android/iOS or Web WebAuthn)
 export async function authenticateWithBiometrics(credentialIdBase64?: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // 1. Native Mobile Platform
+    if (Capacitor.isNativePlatform()) {
+      await NativeBiometric.verifyIdentity({
+        reason: 'Scan your biometric to unlock Sada Hisab',
+        title: 'Unlock Sada Hisab',
+        subtitle: 'Protected by Zero-Trust Encryption',
+        description: 'Verify your fingerprint or face to access your vault.'
+      });
+      return { success: true };
+    }
+
+    // 2. Web WebAuthn Platform
     const challenge = window.crypto.getRandomValues(new Uint8Array(32));
-    const allowCredentials: PublicKeyCredentialDescriptor[] = credentialIdBase64 ? [{
+    const isNativeId = credentialIdBase64?.startsWith('native-biometric');
+    const allowCredentials: PublicKeyCredentialDescriptor[] = (credentialIdBase64 && !isNativeId) ? [{
       type: 'public-key',
       id: base64ToBytes(credentialIdBase64) as unknown as BufferSource
     }] : [];
@@ -164,8 +219,13 @@ export async function authenticateWithBiometrics(credentialIdBase64?: string): P
 
     return { success: !!assertion };
   } catch (err: any) {
-    if (err?.name === 'NotAllowedError') {
-      return { success: false, error: 'Biometric verification cancelled.' };
+    if (
+      err?.name === 'NotAllowedError' || 
+      err?.message?.toLowerCase().includes('cancel') ||
+      err?.code === 10 || 
+      err?.code === 13
+    ) {
+      return { success: false, error: 'Biometric scan was cancelled.' };
     }
     return { success: false, error: err.message || 'Biometric authentication cancelled or failed.' };
   }

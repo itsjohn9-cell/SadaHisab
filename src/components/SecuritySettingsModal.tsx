@@ -369,8 +369,8 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({
                         {hasBiometrics 
                           ? 'Active — unlock instantly with fingerprint or face' 
                           : biometricsSupported 
-                            ? 'Sensor ready — toggle on to enable instant unlock' 
-                            : 'Platform biometrics requires sensor & HTTPS/localhost'}
+                            ? 'Device sensor ready — toggle on to enable instant unlock' 
+                            : 'No enrolled biometric detected in device settings'}
                       </p>
                     </div>
                   </div>
