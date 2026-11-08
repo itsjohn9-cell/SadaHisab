@@ -73,7 +73,7 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
 
   // Handle file drop / upload
   const handleFileUpload = async (file: File) => {
-    if (file.name.endsWith('.khumsvault')) {
+    if (file.name.endsWith('.khumsvault') || file.name.endsWith('.sadavault')) {
       const text = await file.text();
       setPendingVaultFileContent(text);
       setShowDecryptModal(true);
@@ -81,7 +81,7 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
     }
 
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      setErrorMessage('Please upload a valid Excel (.xlsx / .xls) workbook or an encrypted .khumsvault file.');
+      setErrorMessage('Please upload a valid Excel (.xlsx / .xls) workbook or an encrypted .sadavault / .khumsvault file.');
       return;
     }
 
@@ -353,7 +353,7 @@ export const ImportExportView: React.FC<ImportExportViewProps> = ({
             <span>Restore .khumsvault</span>
             <input
               type="file"
-              accept=".khumsvault"
+              accept=".khumsvault,.sadavault"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleFileUpload(file);
