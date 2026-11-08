@@ -25,7 +25,7 @@ import {
   checkBackupRecency 
 } from './services/cryptoSecurity';
 import { Navbar, NavTabType } from './components/Navbar';
-import { startLiveBridgeListener } from './services/liveBridgeSync';
+import { startLiveBridgeListener, broadcastBudgetSnapshot, broadcastFXRates } from './services/liveBridgeSync';
 import { parseSsoHashOnBoot, getActivePassportSession } from './services/sada-bridge';
 import { DashboardView } from './components/DashboardView';
 import { LedgerView } from './components/LedgerView';
@@ -201,6 +201,17 @@ export const App: React.FC = () => {
       setSponsorships(spons);
       setSecuritySettings(sec);
       setBackupReminder(bRecency);
+
+      // Sada Suite: Broadcast budget snapshot to SadaFlow
+      const totalBalancePKR = accs.reduce((sum, a) => sum + (a.currency === 'PKR' ? a.currentBalance : 0), 0);
+      const totalAED = accs.filter(a => a.currency === 'AED').reduce((sum, a) => sum + a.currentBalance, 0);
+      const totalUSD = accs.filter(a => a.currency === 'USD').reduce((sum, a) => sum + a.currentBalance, 0);
+      void broadcastBudgetSnapshot({
+        totalBalancePKR,
+        totalAED,
+        totalUSD,
+        accountsCount: accs.length,
+      });
     } catch (err) {
       console.error('Error refreshing local database:', err);
     }
@@ -315,6 +326,12 @@ export const App: React.FC = () => {
     await refreshAllData();
     setIsSyncingFX(false);
     showToast(res.message);
+
+    // Broadcast live FX rates across Sada Suite
+    const ratesMap: Record<string, number> = {};
+    const fxList = await db.fx_rates.toArray();
+    fxList.forEach(r => { ratesMap[r.currency] = r.effectiveRate || r.liveRate; });
+    void broadcastFXRates(ratesMap);
   };
 
   // Global Filters application

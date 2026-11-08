@@ -6,7 +6,19 @@
 
 import { db, recalculateAllAccountBalances } from '../db/db';
 import { Transaction, Currency } from '../types';
-import { pullPackets, ackPackets, decryptPayload, bridgeDb, SadaPacket, getActivePassportSession } from './sada-bridge';
+import { 
+  pullPackets, 
+  ackPackets, 
+  pushPacket, 
+  decryptPayload, 
+  encryptPayload, 
+  generateUUID, 
+  sha256Hex, 
+  deriveDeterministicMasterKey, 
+  bridgeDb, 
+  SadaPacket, 
+  getActivePassportSession 
+} from './sada-bridge';
 
 let activeSyncInterval: any = null;
 
@@ -14,6 +26,36 @@ export async function processBridgePacket(packet: SadaPacket, masterKey: Uint8Ar
   try {
     const payload = await decryptPayload(packet.encrypted_payload, packet.iv, masterKey);
     const today = new Date().toISOString().split('T')[0];
+
+    // Handle batched items (e.g. from SadaFlow #hisaab slip note)
+    if (Array.isArray(payload.items) && payload.items.length > 0) {
+      const accounts = await db.accounts.toArray();
+      for (let i = 0; i < payload.items.length; i++) {
+        const item = payload.items[i];
+        const amount = Number(item.amount) || 0;
+        const currency = (item.currency || 'AED') as Currency;
+        const defaultAccount = accounts.find((a) => a.currency === currency) || accounts[0];
+
+        const tx: Transaction = {
+          id: `${packet.idempotency_key}_item_${i}`,
+          date: item.date || today,
+          type: item.type === 'income' ? 'INCOME' : 'EXPENSE',
+          amount,
+          currency,
+          convertedAmountPKR: amount,
+          fxRateUsed: 1.0,
+          category: item.category || 'Notes Slip',
+          merchantOrRecipient: item.description || 'SadaFlow Slip',
+          description: `Synced from FLOW: ${item.description || ''}`,
+          status: 'CONFIRMED',
+          sourceAccountId: defaultAccount?.id || 'cash_wallet',
+          sourceChannel: 'MANUAL',
+        };
+        await db.transactions.put(tx);
+      }
+      await recalculateAllAccountBalances();
+      return true;
+    }
 
     const amount = Number(payload.amount) || 0;
     const currency = (payload.currency || 'PKR') as Currency;
@@ -46,6 +88,68 @@ export async function processBridgePacket(packet: SadaPacket, masterKey: Uint8Ar
   } catch (err) {
     console.warn('[liveBridgeSync] Failed to process packet:', err);
     return false;
+  }
+}
+
+/**
+ * Broadcasts latest budget & cash balance snapshot to SadaFlow
+ */
+export async function broadcastBudgetSnapshot(snapshot: {
+  totalBalancePKR: number;
+  totalAED: number;
+  totalUSD: number;
+  accountsCount: number;
+}): Promise<void> {
+  try {
+    const session = getActivePassportSession();
+    const identifier = session?.identifier || 'sadahisab_user';
+    const uidHash = session?.sada_uid_hash || await sha256Hex(identifier);
+    const masterKey = session?.master_key_raw || await deriveDeterministicMasterKey(identifier);
+
+    const { ciphertext, iv } = await encryptPayload(snapshot, masterKey);
+    await pushPacket({
+      packet_id: generateUUID(),
+      idempotency_key: `hisaab_budget_${Date.now()}`,
+      sada_uid_hash: uidHash,
+      source_app: 'sadahisaab',
+      target_app: 'sadaflow',
+      action: 'BUDGET_SNAPSHOT',
+      encrypted_payload: ciphertext,
+      iv,
+      created_at: Date.now(),
+    });
+  } catch (e) {
+    console.warn('[liveBridgeSync] Failed to broadcast budget snapshot:', e);
+  }
+}
+
+/**
+ * Broadcasts updated live FX rate cache to SadaFlow and SadaLink
+ */
+export async function broadcastFXRates(rates: Record<string, number>): Promise<void> {
+  try {
+    const session = getActivePassportSession();
+    const identifier = session?.identifier || 'sadahisab_user';
+    const uidHash = session?.sada_uid_hash || await sha256Hex(identifier);
+    const masterKey = session?.master_key_raw || await deriveDeterministicMasterKey(identifier);
+
+    const { ciphertext, iv } = await encryptPayload({ rates, updatedAt: Date.now() }, masterKey);
+    
+    for (const target_app of ['sadaflow', 'sadalink'] as const) {
+      await pushPacket({
+        packet_id: generateUUID(),
+        idempotency_key: `hisaab_fx_${target_app}_${Date.now()}`,
+        sada_uid_hash: uidHash,
+        source_app: 'sadahisaab',
+        target_app,
+        action: 'FX_RATES_SYNC',
+        encrypted_payload: ciphertext,
+        iv,
+        created_at: Date.now(),
+      });
+    }
+  } catch (e) {
+    console.warn('[liveBridgeSync] Failed to broadcast FX rates:', e);
   }
 }
 
