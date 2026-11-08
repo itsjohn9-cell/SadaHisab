@@ -1,7 +1,7 @@
-# 🧠 Sada Suite — Cloud Brain & Architectural Manifesto (v2.1)
+# 🧠 Sada Suite — Cloud Brain & Architectural Manifesto (v2.2)
 
 > **Autonomous Ecosystem Specification & Reusable Blueprint Vault**  
-> *Last Synced:* 2026-11-07  
+> *Last Synced:* 2026-11-08  
 > *Relay Host:* `https://35.209.1.82.nip.io` | *Webhook Sync:* Google Apps Script Cloud Webhook
 
 ---
@@ -10,11 +10,11 @@
 
 The **Sada Suite** is a decoupled, local-first, zero-paid-dependency ecosystem of progressive web and native mobile applications. Each application operates 100% independently with its own database and hosting provider, exchanging encrypted payloads exclusively via client-side WebCrypto and a lightweight transit relay.
 
-| Application | Production URL | Platform / Runtime | Primary Storage | Core Mission |
-| :--- | :--- | :--- | :--- | :--- |
-| **SadaLink** | `https://35.209.1.82.nip.io/` | React, TS, Vite, Express, Socket.io, Capacitor | SQLite WAL (Server) + Dexie (Client) | Real-time messaging, contact-based P2P communication, action triggers |
-| **SadaFlow** | `https://sadaflow.onrender.com/` | React, TS, Vite, Node.js, WebSockets | Dexie IndexedDB (Local-First) + E2EE | Frictionless clip capture, notes workspace, scratchpad slips |
-| **Sada Hisaab** | `https://itsjohn9-cell.github.io/SadaHisab/` | React, TS, Vite, GitHub Pages static hosting | Dexie IndexedDB (Local-First Ledger) | Financial ledger, double-entry math, khums calculations, zero vanity |
+| Application | Production URL | Play Console Track | Direct APK Download | Primary Storage | Core Mission |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **SadaLink** | `https://35.209.1.82.nip.io/` | `com.sadalink.app` (v1.2.0, Code 21) | [sadalink.apk](https://35.209.1.82.nip.io/download/sadalink.apk) | SQLite WAL (Server) + Dexie (Client) | Real-time messaging, contact-based P2P communication, action triggers |
+| **SadaFlow** | `https://sadaflow.onrender.com/` | `app.sadaflow.sadaflow` (v1.2.2, Code 23) | [sadaflow.apk](https://35.209.1.82.nip.io/download/sadaflow.apk) | Dexie IndexedDB (Local-First) + E2EE | Frictionless clip capture, notes workspace, scratchpad slips |
+| **Sada Hisaab** | `https://itsjohn9-cell.github.io/SadaHisab/` | `sada.hisab` (v1.0.2, Code 9) | [sadahisab.apk](https://35.209.1.82.nip.io/download/sadahisab.apk) | Dexie IndexedDB (Local-First Ledger) | Financial ledger, double-entry math, khums calculations, zero vanity |
 
 ### Invariant Laws:
 1. **100% Free-Tier Law**: 0 paid APIs, 0 paid cloud DBs, 0 paid authentication services.
@@ -199,8 +199,12 @@ The **Sada Suite** is a decoupled, local-first, zero-paid-dependency ecosystem o
     "Dexie_Outbox": "SadaFlow/client/src/services/outbox.ts",
     "SadaPassportLogin": "SadaLink/client/src/components/SadaPassportLogin.tsx",
     "SadaAppSwitcher": "SadaLink/client/src/components/SadaAppSwitcher.tsx",
+    "SadaHisaabBudgetWidget": "SadaFlow/client/src/components/SadaHisaabBudgetWidget.tsx",
+    "LiveBridgeSync": "SadaHisab/src/services/liveBridgeSync.ts",
     "SQLite_WAL_Relay": "SadaLink/server/src/db/sqlite.ts",
-    "PWA_ShareTarget": "SadaLink/client/public/manifest.json"
+    "PWA_ShareTarget": "SadaLink/client/public/manifest.json",
+    "BillSplitModal": "SadaLink/client/src/components/chat/BillSplitModal.tsx",
+    "VoiceLoggerModal": "SadaHisab/src/components/VoiceLoggerModal.tsx"
   },
   "peer_projects": {
     "karachi-runner": {

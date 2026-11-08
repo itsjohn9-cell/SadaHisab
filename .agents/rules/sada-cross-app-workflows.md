@@ -80,3 +80,15 @@ The persistent VM server at `https://35.209.1.82.nip.io` acts as the encrypted r
 - 1-tap "Save Message to SadaFlow" in SadaLink.
 - 1-tap "Drop Note to SadaLink" in SadaFlow.
 - Native Android and PWA `manifest.json` `share_target` support for OS-level sharing.
+
+### F. Group Bill Split & Settlement in SadaLink ➔ Sada Hisaab
+- Open attachment modal in SadaLink chat &rarr; **"Split Bill / Udhaar"** (`BillSplitModal.tsx`).
+- Enter total amount, currency (AED, PKR, USD, EUR, etc.), description, and toggle group members.
+- Dispatches an encrypted `ADD_EXPENSE` packet to Sada Hisaab committing the user's personal share to the ledger, and renders an itemized debt card directly in the chat stream with 1-tap settlement.
+
+### G. Suite-Wide FX Rates Sync (Sada Hisaab ➔ SadaLink & SadaFlow)
+- Sada Hisaab broadcasts `FX_RATES_SYNC` whenever live exchange rates refresh.
+- SadaLink and SadaFlow cache rates in `localStorage` (`sada_fx_rates_cache`) to provide instant offline currency conversions without rate-limit issues.
+
+### H. Native Voice Dictation
+- Supported via browser-native Web Speech API in both Sada Hisaab (`VoiceLoggerModal.tsx`) and SadaFlow (`NotesView.tsx` microphone action bar), requiring 0 paid transcription APIs.

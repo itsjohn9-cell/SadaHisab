@@ -102,7 +102,9 @@
     "SadaHisaabBudgetWidget": "/Users/mohammadjhone/Projects/SadaFlow/client/src/components/SadaHisaabBudgetWidget.tsx",
     "LiveBridgeSync": "/Users/mohammadjhone/Projects/SadaHisab/src/services/liveBridgeSync.ts",
     "SQLite_WAL_Relay": "/Users/mohammadjhone/Projects/SadaLink/server/src/db/sqlite.ts",
-    "PWA_ShareTarget": "/Users/mohammadjhone/Projects/SadaLink/client/public/manifest.json"
+    "PWA_ShareTarget": "/Users/mohammadjhone/Projects/SadaLink/client/public/manifest.json",
+    "BillSplitModal": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/chat/BillSplitModal.tsx",
+    "VoiceLoggerModal": "/Users/mohammadjhone/Projects/SadaHisab/src/components/VoiceLoggerModal.tsx"
   },
   "peer_projects": {
     "karachi-runner": {
@@ -121,7 +123,9 @@
       "SadaPassportLogin",
       "SadaAppSwitcher",
       "SadaHisaabBudgetWidget",
-      "LiveBridgeSync"
+      "LiveBridgeSync",
+      "BillSplitModal",
+      "VoiceLoggerModal"
     ],
     "candidate_pool": []
   }
