@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "updatedAt": "2026-11-07T05:11:00Z",
+  "version": "1.1.0",
+  "updatedAt": "2026-11-08T12:26:00Z",
   "apps": [
     {
       "id": "sadalink",
@@ -13,6 +13,8 @@
       "serverPort": 4000,
       "prodUrl": "https://35.209.1.82.nip.io",
       "customScheme": "sadalink://",
+      "playPackage": "com.sadalink.app",
+      "apkUrl": "https://35.209.1.82.nip.io/download/sadalink.apk",
       "accentColor": "#00A884",
       "theme": "wa-teal",
       "capabilities": [
@@ -35,6 +37,8 @@
       "serverPort": 3000,
       "prodUrl": "https://sadaflow.onrender.com",
       "customScheme": "sadaflow://",
+      "playPackage": "app.sadaflow.sadaflow",
+      "apkUrl": "https://35.209.1.82.nip.io/download/sadaflow.apk",
       "accentColor": "#4f46e5",
       "theme": "indigo",
       "capabilities": [
@@ -56,6 +60,8 @@
       "serverPort": null,
       "prodUrl": "https://itsjohn9-cell.github.io/SadaHisab",
       "customScheme": "sadahisaab://",
+      "playPackage": "sada.hisab",
+      "apkUrl": "https://35.209.1.82.nip.io/download/sadahisab.apk",
       "accentColor": "#16a34a",
       "theme": "emerald",
       "capabilities": [
