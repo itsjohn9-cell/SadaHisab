@@ -130,6 +130,22 @@
       "imported_blueprints": [],
       "isolation_verified": true,
       "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
+    },
+    "sajdah": {
+      "name": "sajdah",
+      "path": "/Users/mohammadjhone/Projects/sajdah",
+      "registered_at": "2026-11-08T08:55:09.299Z",
+      "imported_blueprints": [],
+      "isolation_verified": true,
+      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
+    },
+    "SadaVPN": {
+      "name": "SadaVPN",
+      "path": "/Users/mohammadjhone/Projects/SadaVPN",
+      "registered_at": "2026-11-08T08:55:09.404Z",
+      "imported_blueprints": [],
+      "isolation_verified": true,
+      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
     }
   },
   "capability_cache": {
