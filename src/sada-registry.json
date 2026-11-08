@@ -23,7 +23,8 @@
         "ephemeral-media",
         "relay-host",
         "hisaab-bot",
-        "sada-passport"
+        "sada-passport",
+        "unified-biometrics"
       ]
     },
     {
@@ -46,7 +47,8 @@
         "notes",
         "checklists",
         "hisaab-slips",
-        "sada-passport"
+        "sada-passport",
+        "unified-biometrics"
       ]
     },
     {
@@ -72,7 +74,8 @@
         "bill-scanner",
         "udhaar-reminders",
         "budget-pin",
-        "sada-passport"
+        "sada-passport",
+        "unified-biometrics"
       ]
     }
   ],
