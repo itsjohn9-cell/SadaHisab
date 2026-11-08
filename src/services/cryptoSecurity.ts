@@ -1,5 +1,7 @@
 import { AppSecuritySettings } from '../types';
 import { db } from '../db/db';
+import { Capacitor } from '@capacitor/core';
+import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 
 // Convert Uint8Array to hex string
 export function bytesToHex(bytes: Uint8Array): string {

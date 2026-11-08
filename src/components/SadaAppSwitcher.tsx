@@ -74,6 +74,14 @@ const DEFAULT_PEER_APPS: PeerAppItem[] = (bundledRegistry as any)?.peerApps || [
     prodUrl: 'https://itsjohn9-cell.github.io/karachi.hole/',
     accentColor: '#f59e0b',
     category: '3D WebGL Game'
+  },
+  {
+    id: 'sadavpn',
+    name: 'SadaVPN',
+    tagline: 'WireGuard encrypted tunnel & US gateway',
+    prodUrl: 'https://vpn.35.209.1.82.nip.io',
+    accentColor: '#06b6d4',
+    category: 'Encrypted Tunnel & Gateway'
   }
 ];
 
