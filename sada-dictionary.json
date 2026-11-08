@@ -92,6 +92,37 @@
         "outbox": "src/services/sada-bridge.ts",
         "theme_config": "tailwind.config.js"
       }
+    },
+    "sadavpn": {
+      "name": "Sada VPN",
+      "root_path": "SadaVPN",
+      "core_mission": "Zero-trust encrypted WireGuard gateway, bandwidth telemetry, and regional routing",
+      "immutable_boundaries": [
+        "Must remain 100% free-tier compliant, zero-logs privacy architecture, zero payload interception"
+      ],
+      "capabilities": [
+        "wireguard_tunnel",
+        "traffic_inspector",
+        "qr_pairing",
+        "unified_biometrics",
+        "sada_passport"
+      ],
+      "consumes": [
+        "auth_tokens",
+        "relay_endpoints"
+      ],
+      "produces": [
+        "gateway_telemetry",
+        "tunnel_status"
+      ],
+      "file_index_cache": {
+        "bridge_adapter": "client/src/services/sada-bridge.ts",
+        "auth_gate": "client/src/components/SadaPassportLogin.tsx",
+        "biometrics": "client/src/services/biometrics.ts",
+        "db_store": "client/src/services/sada-bridge.ts",
+        "outbox": "client/src/services/sada-bridge.ts",
+        "theme_config": "client/tailwind.config.js"
+      }
     }
   },
   "reusable_blueprints": {
@@ -136,14 +167,6 @@
       "name": "sajdah",
       "path": "/Users/mohammadjhone/Projects/sajdah",
       "registered_at": "2026-11-08T08:55:09.299Z",
-      "imported_blueprints": [],
-      "isolation_verified": true,
-      "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."
-    },
-    "SadaVPN": {
-      "name": "SadaVPN",
-      "path": "/Users/mohammadjhone/Projects/SadaVPN",
-      "registered_at": "2026-11-08T08:55:09.404Z",
       "imported_blueprints": [],
       "isolation_verified": true,
       "notes": "Independent peer project utilizing Sada Suite architectural patterns. Zero shared auth, zero shared DB."

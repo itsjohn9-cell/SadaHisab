@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "updatedAt": "2026-11-08T12:26:00Z",
+  "version": "1.2.0",
+  "updatedAt": "2026-11-08T13:45:00Z",
   "apps": [
     {
       "id": "sadalink",
@@ -77,6 +77,29 @@
         "sada-passport",
         "unified-biometrics"
       ]
+    },
+    {
+      "id": "sadavpn",
+      "name": "SadaVPN",
+      "tagline": "WireGuard encrypted tunnel & US gateway",
+      "folder": "SadaVPN",
+      "canonicalClient": "@SadaVPN/client/src",
+      "canonicalServer": null,
+      "localPort": 5174,
+      "serverPort": null,
+      "prodUrl": "https://vpn.35.209.1.82.nip.io",
+      "customScheme": "sadavpn://",
+      "playPackage": "app.sadavpn.sadavpn",
+      "apkUrl": "https://35.209.1.82.nip.io/download/sadavpn.apk",
+      "accentColor": "#06b6d4",
+      "theme": "cyan",
+      "capabilities": [
+        "wireguard-tunnel",
+        "traffic-inspector",
+        "qr-pairing",
+        "sada-passport",
+        "unified-biometrics"
+      ]
     }
   ],
   "peerApps": [
@@ -95,15 +118,6 @@
       "prodUrl": "https://itsjohn9-cell.github.io/karachi.hole/",
       "accentColor": "#f59e0b",
       "category": "3D WebGL Game"
-    },
-    {
-      "id": "sadavpn",
-      "name": "SadaVPN",
-      "tagline": "WireGuard encrypted tunnel & US gateway",
-      "prodUrl": "https://vpn.35.209.1.82.nip.io",
-      "accentColor": "#06b6d4",
-      "category": "Encrypted Tunnel & Gateway"
     }
   ]
 }
-

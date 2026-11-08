@@ -24,6 +24,7 @@ const APP_ROOTS = [
   path.join(ROOT_DIR, 'SadaLink'),
   path.join(ROOT_DIR, 'SadaFlow'),
   path.join(ROOT_DIR, 'SadaHisab'),
+  path.join(ROOT_DIR, 'SadaVPN'),
 ];
 
 const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyZLwh810biSPJ6UbKoJgE5hsm8z0Mor6pnzgTmE7UptrMEiwwhzNdW8IMk2Eewgps4/exec';
@@ -85,6 +86,8 @@ export function mirrorBrainLocally() {
     { src: REGISTRY_PATH, dest: path.join(ROOT_DIR, 'SadaFlow/client/src/sada-registry.json') },
     { src: REGISTRY_PATH, dest: path.join(ROOT_DIR, 'SadaFlow/server/src/sada-registry.json') },
     { src: REGISTRY_PATH, dest: path.join(ROOT_DIR, 'SadaHisab/src/sada-registry.json') },
+    { src: REGISTRY_PATH, dest: path.join(ROOT_DIR, 'SadaVPN/client/src/sada-registry.json') },
+    { src: REGISTRY_PATH, dest: path.join(ROOT_DIR, 'SadaVPN/sada-registry.json') },
     { src: DICTIONARY_PATH, dest: path.join(ROOT_DIR, 'SadaLink/server/src/sada-dictionary.json') },
     { src: DICTIONARY_PATH, dest: path.join(ROOT_DIR, 'SadaLink/server/dist/sada-dictionary.json') },
     { src: CLOUD_BRAIN_PATH, dest: path.join(ROOT_DIR, 'SadaLink/server/src/SADA_CLOUD_BRAIN.md') },

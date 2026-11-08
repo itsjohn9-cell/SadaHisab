@@ -26,6 +26,7 @@ const appRoots = [
   path.join(workspaceRoot, 'SadaLink'),
   path.join(workspaceRoot, 'SadaFlow'),
   path.join(workspaceRoot, 'SadaHisab'),
+  path.join(workspaceRoot, 'SadaVPN'),
 ];
 
 for (const appDir of appRoots) {
@@ -83,6 +84,7 @@ const clientServerRegistryTargets = [
   path.join(workspaceRoot, 'SadaFlow/client/src/sada-registry.json'),
   path.join(workspaceRoot, 'SadaFlow/server/src/sada-registry.json'),
   path.join(workspaceRoot, 'SadaHisab/src/sada-registry.json'),
+  path.join(workspaceRoot, 'SadaVPN/client/src/sada-registry.json'),
 ];
 for (const target of clientServerRegistryTargets) {
   try {
@@ -90,18 +92,20 @@ for (const target of clientServerRegistryTargets) {
     fs.copyFileSync(rootRegistryPath, target);
   } catch {}
 }
-console.log('📦 [sada-sync] Physical brain mirror complete: .agents, sada-dictionary.json, and sada-registry.json mirrored into all 3 apps for Git portability');
+console.log('📦 [sada-sync] Physical brain mirror complete: .agents, sada-dictionary.json, and sada-registry.json mirrored into all 4 apps for Git portability');
 
 const bridgePaths = {
   link: path.join(workspaceRoot, 'SadaLink/client/src/services/sada-bridge.ts'),
   flow: path.join(workspaceRoot, 'SadaFlow/client/src/services/sada-bridge.ts'),
-  hisaab: path.join(workspaceRoot, 'SadaHisab/src/services/sada-bridge.ts')
+  hisaab: path.join(workspaceRoot, 'SadaHisab/src/services/sada-bridge.ts'),
+  vpn: path.join(workspaceRoot, 'SadaVPN/client/src/services/sada-bridge.ts'),
 };
 
 const manifests = {
   link: path.join(workspaceRoot, 'SadaLink/client/public/manifest.json'),
   flow: path.join(workspaceRoot, 'SadaFlow/client/public/manifest.json'),
-  hisaab: path.join(workspaceRoot, 'SadaHisab/public/manifest.json')
+  hisaab: path.join(workspaceRoot, 'SadaHisab/public/manifest.json'),
+  vpn: path.join(workspaceRoot, 'SadaVPN/client/public/manifest.json'),
 };
 
 let hasErrors = false;
