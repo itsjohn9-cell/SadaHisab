@@ -18,6 +18,14 @@
     <meta name="theme-color" content="#090d16" />
     <meta name="description" content="Local-first Multi-Currency Cash Management, Sponsorships & Annual Khums Accounting" />
     <link rel="manifest" href="/manifest.json" />
+    <script src="https://sync.35.209.1.82.nip.io/sada-sync-sdk.js" defer></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', function () {
+        if (window.SadaSync) {
+          window.SadaSync.init({ projectId: 'sadahisaab' });
+        }
+      });
+    </script>
     
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

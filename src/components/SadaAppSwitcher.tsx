@@ -94,6 +94,21 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [apps, setApps] = useState<AppRegistryItem[]>(DEFAULT_REGISTRY);
   const [peerApps, setPeerApps] = useState<PeerAppItem[]>(DEFAULT_PEER_APPS);
+  const [isEcosystemVisible, setIsEcosystemVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    if (document.documentElement.getAttribute('data-sada-ecosystem-links') === 'visible') return true;
+    return localStorage.getItem('sada_show_ecosystem_links') === 'true';
+  });
+
+  useEffect(() => {
+    const handleEntitlements = (e: any) => {
+      if (e.detail?.features?.show_ecosystem_links !== undefined) {
+        setIsEcosystemVisible(Boolean(e.detail.features.show_ecosystem_links));
+      }
+    };
+    window.addEventListener('sada:entitlements_loaded', handleEntitlements);
+    return () => window.removeEventListener('sada:entitlements_loaded', handleEntitlements);
+  }, []);
 
   useEffect(() => {
     fetch('https://35.209.1.82.nip.io/api/sada-registry')
@@ -108,6 +123,10 @@ export const SadaAppSwitcher: React.FC<Props> = ({ currentAppId, session }) => {
       })
       .catch(() => {});
   }, []);
+
+  if (!isEcosystemVisible) {
+    return null;
+  }
 
   const handleLaunch = async (app: AppRegistryItem) => {
     let target = app.prodUrl;

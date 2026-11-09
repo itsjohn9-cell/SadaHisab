@@ -132,26 +132,28 @@ export const SadaCommandMenu: React.FC<SadaCommandMenuProps> = ({
       },
     },
 
-    // 2. Ecosystem Navigation
-    ...apps.map((app: any) => ({
-      id: `app-nav-${app.id}`,
-      title: `Switch to ${app.name}`,
-      subtitle: app.tagline || app.core_mission,
-      category: 'Ecosystem Navigation' as const,
-      icon: (
-        <span
-          className="w-2.5 h-2.5 rounded-full inline-block"
-          style={{ backgroundColor: app.accentColor || '#059669' }}
-        />
-      ),
-      shortcut: app.id === currentAppId ? 'Current' : undefined,
-      onSelect: () => {
-        if (app.id !== currentAppId) {
-          window.location.href = app.prodUrl || '#';
-        }
-        onClose();
-      },
-    })),
+    // 2. Ecosystem Navigation (Hidden unless show_ecosystem_links is enabled)
+    ...((typeof document !== 'undefined' && (document.documentElement.getAttribute('data-sada-ecosystem-links') === 'visible' || localStorage.getItem('sada_show_ecosystem_links') === 'true'))
+      ? apps.map((app: any) => ({
+          id: `app-nav-${app.id}`,
+          title: `Switch to ${app.name}`,
+          subtitle: app.tagline || app.core_mission,
+          category: 'Ecosystem Navigation' as const,
+          icon: (
+            <span
+              className="w-2.5 h-2.5 rounded-full inline-block"
+              style={{ backgroundColor: app.accentColor || '#059669' }}
+            />
+          ),
+          shortcut: app.id === currentAppId ? 'Current' : undefined,
+          onSelect: () => {
+            if (app.id !== currentAppId) {
+              window.location.href = app.prodUrl || '#';
+            }
+            onClose();
+          },
+        }))
+      : []),
 
     // 3. Preferences & Vault
     {
