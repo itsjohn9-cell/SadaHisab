@@ -1,0 +1,165 @@
+/**
+ * Sada Suite Design Tokens & Theme Standards (Cloud Brain v2.3)
+ * Provides semantic color tokens, OLED True Black (#000000), 
+ * dynamic app accents, dual-fallback safe area insets, and touch ergonomics.
+ */
+
+:root {
+  /* Dual-Fallback Safe Area Insets */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+
+  /* Base Typography & Ergonomics */
+  --radius: 0.75rem; /* rounded-lg */
+  --radius-xl: 1rem; /* rounded-xl */
+  --touch-target-min: 48px;
+
+  /* Semantic Theme Tokens - Light Mode */
+  --background: 210 40% 98%;      /* #f8fafc */
+  --foreground: 222.2 84% 4.9%;   /* #020617 */
+  --card: 0 0% 100%;             /* #ffffff */
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 160 84% 39%;        /* default green */
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;    /* #f1f5f9 */
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;   /* #e2e8f0 */
+  --input: 214.3 31.8% 91.4%;
+  --ring: 160 84% 39%;
+}
+
+/* Dark Mode - Deep Slate & Navy */
+.dark {
+  --background: 222.2 84% 4.9%;   /* #020617 */
+  --foreground: 210 40% 98%;      /* #f8fafc */
+  --card: 222.2 84% 6.5%;        /* #050a19 */
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 5.5%;
+  --popover-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;/* #1e293b */
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 160 84% 39%;
+}
+
+/* OLED Mode - Pitch Black (#000000) for Battery & High Contrast */
+.oled, [data-theme="oled"] {
+  --background: 0 0% 0%;         /* #000000 */
+  --foreground: 210 40% 98%;     /* #f8fafc */
+  --card: 0 0% 4%;              /* #0a0a0a */
+  --card-foreground: 210 40% 98%;
+  --popover: 0 0% 2%;           /* #050505 */
+  --popover-foreground: 210 40% 98%;
+  --secondary: 0 0% 10%;        /* #1a1a1a */
+  --secondary-foreground: 210 40% 98%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 0 0% 16%;           /* #292929 */
+  --input: 0 0% 16%;
+  --ring: 160 84% 39%;
+}
+
+/* Dynamic App Identity Accents via [data-sada-app="..."] */
+[data-sada-app="sadalink"] {
+  --primary: 168 100% 33%;      /* #00A884 Emerald Teal */
+  --ring: 168 100% 33%;
+}
+
+[data-sada-app="sadaflow"] {
+  --primary: 243 75% 59%;       /* #4f46e5 Indigo */
+  --ring: 243 75% 59%;
+}
+
+[data-sada-app="sadahisab"] {
+  --primary: 160 84% 39%;       /* #059669 Ledger Green */
+  --ring: 160 84% 39%;
+}
+
+[data-sada-app="karachi-runner"] {
+  --primary: 38 92% 50%;        /* #f59e0b Truck-Art Amber */
+  --ring: 38 92% 50%;
+}
+
+[data-sada-app="sadavpn"] {
+  --primary: 188 94% 43%;       /* #06b6d4 Cyan */
+  --ring: 188 94% 43%;
+}
+
+[data-sada-app="sada-sync"] {
+  --primary: 217 91% 60%;       /* #3b82f6 Blue */
+  --ring: 217 91% 60%;
+}
+
+/* iOS & Android Virtual Keyboard Compensation */
+:root.is-keyboard-open, html.is-keyboard-open, body.is-keyboard-open {
+  --safe-bottom: 0px !important;
+}
+
+/* Safe Area Utility Classes */
+.pt-safe { padding-top: var(--safe-top) !important; }
+.pb-safe { padding-bottom: var(--safe-bottom) !important; }
+.ps-safe { padding-inline-start: var(--safe-left) !important; }
+.pe-safe { padding-inline-end: var(--safe-right) !important; }
+.top-safe { top: var(--safe-top) !important; }
+.bottom-safe { bottom: var(--safe-bottom) !important; }
+.min-h-screen-safe { min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom)); }
+
+/* Dynamic Viewport Units */
+.h-dvh { height: 100dvh; }
+.min-h-dvh { min-height: 100dvh; }
+.h-svh { height: 100svh; }
+.min-h-svh { min-height: 100svh; }
+.h-lvh { height: 100lvh; }
+.min-h-lvh { min-height: 100lvh; }
+
+/* Financial & Numeric Tabular Alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touch Ergonomics & Rubber-Band Prevention */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Slim Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+.oled ::-webkit-scrollbar-thumb, [data-theme="oled"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+

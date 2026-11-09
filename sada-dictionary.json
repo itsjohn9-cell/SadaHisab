@@ -1,6 +1,6 @@
 {
-  "$schema": "sada-ecosystem-v2.1",
-  "version": "2.1.0",
+  "$schema": "sada-ecosystem-v2.3",
+  "version": "2.3.0",
   "cloud_brain_webhook": "https://script.google.com/macros/s/AKfycbyZLwh810biSPJ6UbKoJgE5hsm8z0Mor6pnzgTmE7UptrMEiwwhzNdW8IMk2Eewgps4/exec",
   "apps": {
     "sadalink": {
@@ -123,6 +123,37 @@
         "outbox": "client/src/services/sada-bridge.ts",
         "theme_config": "client/tailwind.config.js"
       }
+    },
+    "sada-sync": {
+      "name": "Sada Sync",
+      "root_path": "sada-sync",
+      "core_mission": "Fleet control plane, sync daemon, telemetry monitor, and multi-tenant portal",
+      "immutable_boundaries": [
+        "Must remain 100% free-tier compliant ($0/mo cloud + local bridge)",
+        "Zero paid cloud DBs or auth services"
+      ],
+      "capabilities": [
+        "fleet_sync",
+        "telemetry_ingestion",
+        "docs_hub",
+        "tahaluf_admin_rbac",
+        "pwa"
+      ],
+      "consumes": [
+        "gateway_telemetry",
+        "contract_verifications",
+        "error_logs"
+      ],
+      "produces": [
+        "fleet_health_matrix",
+        "audit_ledger",
+        "client_api_keys"
+      ],
+      "file_index_cache": {
+        "db_store": "lib/db.ts",
+        "agent": "agent/sada-agent.js",
+        "theme_config": "tailwind.config.js"
+      }
     }
   },
   "reusable_blueprints": {
@@ -136,7 +167,14 @@
     "PWA_ShareTarget": "/Users/mohammadjhone/Projects/SadaLink/client/public/manifest.json",
     "BillSplitModal": "/Users/mohammadjhone/Projects/SadaLink/client/src/components/chat/BillSplitModal.tsx",
     "VoiceLoggerModal": "/Users/mohammadjhone/Projects/SadaHisab/src/components/VoiceLoggerModal.tsx",
-    "UnifiedBiometrics": "/Users/mohammadjhone/Projects/SadaHisab/src/services/cryptoSecurity.ts"
+    "UnifiedBiometrics": "/Users/mohammadjhone/Projects/SadaHisab/src/services/cryptoSecurity.ts",
+    "SadaThemeCSS": "/Users/mohammadjhone/Projects/SadaHisab/src/sada-theme.css",
+    "SadaDataBoundary": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaDataBoundary.tsx",
+    "SadaScannerOverlay": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaScannerOverlay.tsx",
+    "SadaCommandMenu": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaCommandMenu.tsx",
+    "SadaHeaderBar": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaHeaderBar.tsx",
+    "SadaSettingsView": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaSettingsView.tsx",
+    "SadaAppShell": "/Users/mohammadjhone/Projects/SadaHisab/src/components/shared/SadaAppShell.tsx"
   },
   "peer_projects": {
     "karachi-runner": {
@@ -181,7 +219,14 @@
       "SadaHisaabBudgetWidget",
       "LiveBridgeSync",
       "BillSplitModal",
-      "VoiceLoggerModal"
+      "VoiceLoggerModal",
+      "SadaThemeCSS",
+      "SadaDataBoundary",
+      "SadaScannerOverlay",
+      "SadaCommandMenu",
+      "SadaHeaderBar",
+      "SadaSettingsView",
+      "SadaAppShell"
     ],
     "candidate_pool": []
   }

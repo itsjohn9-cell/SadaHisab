@@ -1,4 +1,4 @@
-# 🧠 Sada Suite — Cloud Brain & Architectural Manifesto (v2.2)
+# 🧠 Sada Suite — Cloud Brain & Architectural Manifesto (v2.3)
 
 > **Autonomous Ecosystem Specification & Reusable Blueprint Vault**  
 > *Last Synced:* 2026-11-08  
@@ -309,4 +309,67 @@ To prevent slow, heavy browser tests on routine edits, the ecosystem enforces a 
   ```bash
   node .agents/skills/sada-sync/scripts/sync-cloud-brain.mjs
   ```
+
+---
+
+## 9. UI Standards, Design Tokens & Hardware Safe-Area Contracts (v2.3)
+
+### 9.1 Semantic Color System & Multi-Theme Architecture
+All applications in the Sada Suite adhere to strict semantic color tokens via `sada-theme.css` and extended `tailwind.config.js`:
+- **Light Mode**: High-contrast, crisp daytime layout (`bg-background: #f8fafc`, `text-foreground: #020617`, `bg-card: #ffffff`, `border: #e2e8f0`).
+- **Dark Mode**: Deep slate and navy tones (`bg-background: #020617`, `text-foreground: #f8fafc`, `border: #1e293b`).
+- **OLED Pitch Black Mode (`.oled`, `[data-theme="oled"]`)**: True black `#000000` background and `#0a0a0a` cards for zero-power pixel shutoff on AMOLED displays and maximum visual punch.
+- **Dynamic `<meta name="theme-color">` Syncing**: Synchronizes PWA window chrome on every theme change.
+
+### 9.2 Per-App Dynamic Accent Tokens
+Primary and focus ring tokens are dynamically bound to the application's canonical identity declared in `sada-registry.json` via the `[data-sada-app="..."]` container attribute:
+
+| Application ID | Canonical Accent Color | Semantic Role |
+| :--- | :--- | :--- |
+| `sadalink` | `#00A884` (Emerald Teal) | Real-time chat & contact messaging |
+| `sadaflow` | `#4f46e5` (Indigo) | Universal clipboards & scratchpads |
+| `sadahisab` | `#059669` (Ledger Green) | Cash ledger & khums accounts |
+| `karachi-runner` | `#f59e0b` (Truck-Art Amber) | 3D street runner & parkour |
+| `sadavpn` | `#06b6d4` (Cyan) | WireGuard gateway & telemetry |
+| `sada-sync` | `#3b82f6` (Blue) | Multi-tenant control plane |
+
+### 9.3 Hardware Safe-Area & Virtual Keyboard Contracts
+To prevent notch clipping on modern mobile devices and eliminate layout jumps when the on-screen keyboard appears:
+1. **Dual-Fallback Safe Insets**:
+   ```css
+   :root {
+     --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+     --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+     --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+     --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+   }
+   ```
+2. **Virtual Keyboard Inset Neutralizer**:
+   When the mobile software keyboard opens, `visualViewport` shrinks. The shell adds `.is-keyboard-open` to `document.documentElement`, neutralizing `--safe-bottom` to `0px` to keep inputs and action buttons flush with the keyboard:
+   ```css
+   :root.is-keyboard-open, html.is-keyboard-open {
+     --safe-bottom: 0px !important;
+   }
+   ```
+3. **Dynamic Viewport Units**:
+   Ban static `100vh`. Use `100dvh` for full viewport shells (`.h-dvh`), `100svh` for modals/sheets (`.h-svh`), and `100lvh` for fixed canvases (`.h-lvh`).
+4. **Touch Ergonomics & Gesture Shields**:
+   Minimum `48x48px` hit targets (`--touch-target-min`), `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, and `overscroll-behavior-y: contain`.
+
+### 9.4 Reusable Shared Layout Blueprints Vault
+Canonical reference implementations located in `SadaHisab/src/components/shared/` and mirrored across all suite applications:
+
+1. **`<SadaAppShell />` (`src/components/shared/SadaAppShell.tsx`)**:
+   - Master layout container integrating top header, adaptive navigation (desktop collapsible rail `>= 768px`, mobile safe-area bottom bar `< 768px`), safe-area padding (`pt-safe`, `pb-safe`), `visualViewport` keyboard detection, and Android hardware back-button listener.
+2. **`<SadaHeaderBar />` (`src/components/shared/SadaHeaderBar.tsx`)**:
+   - Persistent top header bar with notch safe padding, brand identity, global search / command menu trigger (`Cmd+K`), live `Dexie_Outbox` queue status badge (`Online`, `Offline Vault`, `Syncing N packets`), and cross-app `<SadaAppSwitcher />`.
+3. **`<SadaCommandMenu />` (`src/components/shared/SadaCommandMenu.tsx`)**:
+   - Global keyboard-first command launcher (`Cmd+K` / `Ctrl+K` / ESC) for quick actions (*"Record Expense"*, *"New Scratchpad Slip"*, *"Send Message"*), fast app switching, theme toggling, and vault security locking.
+4. **`<SadaSettingsView />` (`src/components/shared/SadaSettingsView.tsx`)**:
+   - Standardized 2-column layout on Desktop/Tablet collapsing to segmented stack on Mobile. Houses 5 core tabs: `General` (language, numeric scale), `Appearance` (Light/Dark/OLED, density), `Passport & Security` (`sada_uid_hash`, WebAuthn biometrics, PIN rotation), `Bridge & Sync` (relay latency test, outbox flush), and `Local Vault & Backup` (encrypted JSON export, quota meter).
+5. **`<SadaDataBoundary />` (`src/components/shared/SadaDataBoundary.tsx`)**:
+   - Tri-state container with built-in React error boundary: skeleton shimmer loading state, contextual empty state with action CTA, and error alert with retry button.
+6. **`<SadaScannerOverlay />` (`src/components/shared/SadaScannerOverlay.tsx`)**:
+   - Notch-safe full-screen HUD overlay for camera feeds, receipt OCR, QR scanners, and 3D scenes. Features glowing corner reticle, animated laser scanning beam, hardware torch/flash toggle, and gallery file picker.
+
 

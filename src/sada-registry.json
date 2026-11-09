@@ -100,6 +100,31 @@
         "sada-passport",
         "unified-biometrics"
       ]
+    },
+    {
+      "id": "sada-sync",
+      "name": "Sada Sync",
+      "tagline": "Fleet control plane, telemetry monitor & local sync daemon",
+      "folder": "sada-sync",
+      "canonicalClient": "sada-sync/app",
+      "canonicalServer": "sada-sync/app/api",
+      "localPort": 3005,
+      "serverPort": null,
+      "prodUrl": "https://sync.35.209.1.82.nip.io",
+      "customScheme": null,
+      "playPackage": "app.sadasync.sadasync",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=app.sadasync.sadasync",
+      "optInUrl": "https://play.google.com/apps/testing/app.sadasync.sadasync",
+      "apkUrl": "https://35.209.1.82.nip.io/download/sadasync.apk",
+      "accentColor": "#cedc28",
+      "theme": "tahaluf-navy",
+      "capabilities": [
+        "fleet-sync",
+        "telemetry-ingestion",
+        "docs-hub",
+        "tahaluf-admin-rbac",
+        "pwa"
+      ]
     }
   ],
   "peerApps": [
